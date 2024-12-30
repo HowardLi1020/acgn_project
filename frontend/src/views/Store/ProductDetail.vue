@@ -52,7 +52,11 @@ const checkQuantity = () => {
 
 // 获取当前主图 URL 的函数
 const getMainImageUrl = () => {
+    console.log('apiUrl:', apiUrl); // 檢查 API URL
+    console.log('product images:', product.value?.images); // 檢查圖片數據
     if (product.value?.images?.length > 0) {
+
+        
         // 直接使用當前選中的圖片索引
         const currentImage = product.value.images[currentImageIndex.value];
         return currentImage ? `${apiUrl}${currentImage.image_url}` : '/placeholder.png';
@@ -97,6 +101,7 @@ onMounted(async () => {
                         :alt="product.product_name"
                         class="main-image"
                         @error="$event.target.src = '/placeholder.png'"
+                        crossorigin="anonymous"
                     />
                 </div>
 
@@ -111,6 +116,7 @@ onMounted(async () => {
                         :class="{ active: currentImageIndex === index }"
                         @click="switchMainImage(index)"
                         @error="$event.target.src = '/placeholder.png'"
+                        crossorigin="anonymous"
                     />
                 </div>
             </div>
@@ -210,6 +216,7 @@ onMounted(async () => {
 .thumbnail-images {
     display: flex;
     margin-top: 10px;
+    justify-content: center;
 }
 
 .thumbnail {

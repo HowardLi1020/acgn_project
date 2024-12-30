@@ -152,8 +152,7 @@ def create_product(request):
 @api_view(['DELETE'])
 def delete_product(request, product_id):
     try:
-        # 獲取商品
-        product = Products.objects.get(product_id=product_id)
+        
         
         # 從請求中獲取用戶ID
         user_id = request.query_params.get('user_id')
@@ -161,13 +160,18 @@ def delete_product(request, product_id):
             return Response({
                 'detail': '未提供用戶ID'
             }, status=status.HTTP_400_BAD_REQUEST)
-            
+
+        # 獲取商品
+        product = Products.objects.get(product_id=product_id)
+
         # 檢查是否為商品擁有者
-        if str(product.user.user_id) != str(user_id):  # 轉換為字符串進行比較
+        if str(product.user_id) != str(user_id):  # 轉換為字符串進行比較
             return Response({
                 'detail': '您沒有權限刪除此商品'
             }, status=status.HTTP_403_FORBIDDEN)
         
+        ProductImages.objects.filter(product=product).delete()
+
         # 刪除商品
         product.delete()
         
@@ -185,42 +189,10 @@ def delete_product(request, product_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-def search(request):
-    query = request.GET.get('query', '')
-    sort_field = request.GET.get('sort_field', 'product_name')
-    sort_order = request.GET.get('sort_order', 'asc')
-
-    if query:
-        products = Products.objects.filter(product_name__icontains=query).select_related('brand', 'category', 'series')
-    else:
-        products = Products.objects.all().select_related('brand', 'category', 'series')
-
-    if sort_order == 'desc':
-        sort_field = '-' + sort_field
-
-    products = products.order_by(sort_field)
-
-    products_data = [
-        {
-            'product_id': product.product_id,
-            'product_name': product.product_name,
-            'price': str(product.price),
-            'stock': product.stock,
-            'image_url': ProductImages.objects.filter(product=product).first().image_url if ProductImages.objects.filter(product=product).exists() else '',
-            'brand_name': product.brand.brand_name if product.brand else '未指定',
-            'category_name': product.category.category_name if product.category else '未指定',
-            'series_name': product.series.series_name if product.series else '未指定'
-        }
-        for product in products
-    ]
-
-    return JsonResponse({'products': products_data})
-
-@api_view(['GET'])
 def view_all_products(request):
     try:
-
-        # 获取筛选条件
+        # 獲取查詢參數
+        search_query = request.query_params.get('search', '')
         min_price = request.GET.get('min_price')
         max_price = request.GET.get('max_price')
         category_id = request.GET.get('category')
@@ -230,8 +202,12 @@ def view_all_products(request):
 
         logger.debug(f"min_price: {min_price}, max_price: {max_price}")  # 打印 min_price 和 max_price
 
-        # 初始化产品查询
+        # 基本查詢
         products = Products.objects.all().select_related('brand', 'category', 'series')
+
+        # 應用搜索過濾
+        if search_query:
+            products = products.filter(product_name__icontains=search_query)
 
         # 根据价格进行筛选
         if min_price and min_price.isdigit():  # 确保 min_price 是有效的数字
@@ -273,7 +249,7 @@ def view_all_products(request):
             }
             products_data.append(product_data)
 
-        return JsonResponse({'products': products_data}, status=200)
+        return JsonResponse({'products': products_data, 'total': len(products_data)}, status=200)
     except Exception as e:
         logger.error(f"处理请求时出错: {e}")  # 打印错误信息
         return JsonResponse({'error': 'An error occurred during the product loading'}, status=500)
@@ -453,6 +429,8 @@ class ProductDetail(APIView):
 @api_view(['GET'])
 def my_products(request):
     user_id = request.query_params.get('user_id')  # 從查詢參數中獲取 user_id
+    logger.debug(f"Received request for user_id: {user_id}")
+    
     if not user_id:
         return Response({'detail': '未提供用戶ID'}, status=status.HTTP_400_BAD_REQUEST)
     try:

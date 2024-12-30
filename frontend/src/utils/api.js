@@ -136,7 +136,14 @@ export const storeAPI = {
     // 刪除商品
     deleteProduct: async (productId) => {
         try {
-            const response = await api.delete(`/store/delete_product/${productId}/`);
+            const memberData = JSON.parse(localStorage.getItem("memberData"));
+            const userId = memberData?.user_id;
+
+            if (!userId) {
+                throw new Error("未找到用戶 ID");
+            }
+            const params = new URLSearchParams({ user_id: userId });
+            const response = await api.delete(`/store/delete_product/${productId}/?${params}`);
             return response.data;
         } catch (error) {
             console.error('刪除商品失敗:', error);

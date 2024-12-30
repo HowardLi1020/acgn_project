@@ -16,7 +16,7 @@ class Products(models.Model):
     brand = models.ForeignKey('products.ProductBrands', models.DO_NOTHING, blank=True, null=True)
     series = models.ForeignKey('products.ProductSeries', models.DO_NOTHING, blank=True, null=True)
     category = models.ForeignKey('products.ProductCategories', models.DO_NOTHING, blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=0)
     stock = models.IntegerField()
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
@@ -62,7 +62,7 @@ class ProductSeries(models.Model):
 class ProductImages(models.Model):
     image_id = models.AutoField(primary_key=True)
     product = models.ForeignKey(Products, models.DO_NOTHING)
-    image_url = models.CharField(max_length=255)
+    image_url = models.ImageField(upload_to='products/')
     is_main = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
 

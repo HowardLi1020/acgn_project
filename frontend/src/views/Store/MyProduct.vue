@@ -26,7 +26,11 @@ const fetchUserProducts = async () => {
 
         // 假設您有一個獲取用戶產品的 API
         const response = await storeAPI.getUserProducts(userId); // 傳遞 userId
-        products.value = response.products; // 假設返回的數據在 products 屬性中
+        if (response && response.products) {
+            products.value = response.products;
+        } else {
+            throw new Error("無效的響應數據");
+        }
     } catch (err) {
         console.error("獲取產品失敗:", err);
         error.value = err.response?.data?.detail || "獲取產品失敗";

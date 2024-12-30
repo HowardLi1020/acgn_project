@@ -10,7 +10,6 @@ app_name = 'products'
 urlpatterns = [
     # 公開 API 端點
     path('', views.index, name='index'),
-    path('search/', views.search, name='search'),
     path('edit_product/<int:product_id>/', views.edit_product, name='edit_product'),
     path('delete_product/<int:product_id>/', views.delete_product, name='delete_product'),
     path('view_all_products/', views.view_all_products, name='view_all_products'),
@@ -25,9 +24,7 @@ urlpatterns = [
     path('products/<int:product_id>/reviews/', views.ProductReviewsView.as_view(), name='get_reviews'),
     path('recommendations/similar/<int:product_id>/', views.ProductRecommendationsView.as_view(), name='product-recommendations'),
     
-
     path('create_product/', views.create_product, name='create_product'),
-    
     path('create_brand/', views.create_brand, name='create_brand'),
     path('create_category/', views.create_category, name='create_category'),
     path('create_series/', views.create_series, name='create_series'),
