@@ -1,0 +1,334 @@
+{% extends '[BASE]ALL.html' %}
+
+{% load static %}
+
+{% block app_css %}
+<style>
+    .message-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        z-index: 9999;
+    }
+
+    .message-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+
+{% block app_title %}
+<div class="d-flex align-items-center justify-content-between">
+    <h3>用戶資料總覽</h3>
+    <a href="{% url 'users:index'%}" class="btn btn-outline-primary me-md-2">用戶系統首頁</a>
+</div>
+{% endblock %}
+
+
+{% block app_content %}
+<div class="container-xl">
+			    
+    <!-- <h1 class="app-page-title">帳號總覽</h1> -->
+    <div class="row gy-4">
+        <div class="col-12 col-lg-6">
+            <div class="app-card app-card-account shadow-sm d-flex flex-column align-items-start">
+                <div class="app-card-header p-3 border-bottom-0">
+                    <div class="row align-items-center gx-3">
+                        <div class="col-auto">
+                            <div class="app-icon-holder">
+                                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-person" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" d="M10 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm6 5c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+</svg>
+                            </div><!--//icon-holder-->
+                            
+                        </div><!--//col-->
+                        <div class="col-auto">
+                            <h4 class="app-card-title">基本資料</h4>
+                        </div><!--//col-->
+                    </div><!--//row-->
+                </div><!--//app-card-header-->
+                    
+                    <div class="app-card-body px-4 w-100">
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label"><strong>個人頭像</strong></div>
+                                    <img class="profile-image" src="{{ MEDIA_URL }}{{ member.user_avatar }}" alt="">
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label"><strong>註冊姓名</strong></div>
+                                    <div class="item-data">{{ member.user_name }}</div>
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label mb-2"><strong>手機號碼</strong></div>
+                                    <div class="item-data">{{ member.user_phone }}</div>
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label"><strong>電子郵箱</strong></div>
+                                    <div class="item-data">{{ member.user_email }}</div>
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label"><strong>註冊生日</strong></div>
+                                    <div class="item-data">{{ member.user_birth }}</div>
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                    </div><!--//app-card-body-->
+                    <div class="app-card-footer p-4 mt-auto">
+                        <a href="{% url 'users:edit' %}?id={{ member.user_id }}" class="btn btn-primary">編輯資料</a>
+                    </div><!--//app-card-footer-->
+                </div><!--//app-card-->
+            </div><!--//col-->
+            <div class="col-12 col-lg-6">
+                <div class="app-card app-card-account shadow-sm d-flex flex-column align-items-start">
+                    <div class="app-card-header p-3 border-bottom-0">
+                        <div class="row align-items-center gx-3">
+                            <div class="col-auto">
+                                <div class="app-icon-holder">
+                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-sliders" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3h9.05zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8h2.05zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1h9.05z"/>
+    </svg>
+                                </div><!--//icon-holder-->
+                                
+                            </div><!--//col-->
+                            <div class="col-auto">
+                                <h4 class="app-card-title">隱私 / 安全設定</h4>
+                            </div><!--//col-->
+                        </div><!--//row-->
+                    </div><!--//app-card-header-->
+                        <div class="app-card-body px-4 w-100">
+                            <div class="item border-bottom py-3">
+                                <div class="row justify-content-between align-items-center">
+                                    <div class="col-auto">
+                                        <div class="item-label"><strong>註冊手機</strong></div>
+                                        <div class="item-data">{{ member.user_phone }}</div>
+                                    </div><!--//col-->
+                                </div><!--//row-->
+                            </div><!--//item-->
+                            <div class="item border-bottom py-3">
+                                <div class="row justify-content-between align-items-center">
+                                    <div class="col-auto">
+                                        <div class="item-label"><strong>註冊電子郵箱</strong></div>
+                                        <div class="item-data">{{ member.user_email }}</div>
+                                    </div><!--//col-->
+                                </div><!--//row-->
+                            </div><!--//item-->
+                            <div class="item border-bottom py-3">
+                                <div class="row justify-content-between align-items-center">
+                                    <div class="col-auto">
+                                        <div class="item-label"><strong>用戶密碼</strong></div>
+                                        <div class="item-data">********</div>
+                                    </div><!--//col-->
+                                </div><!--//row-->
+                            </div><!--//item-->
+                            <form id="verifyForm" method="POST" enctype="multipart/form-data" action="{% url 'users_api:privacy_setting' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="user" value="{{ member.user_id }}">
+                                <div class="item border-bottom py-3">
+                                    <div class="row justify-content-between align-items-center">
+                                            <div class="col-auto">
+                                                <div class="item-label"><strong>帳戶驗證成功</strong></div>
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="form-check form-switch">
+                                                        <input type="hidden" name="accountOn" value="False">
+                                                        <input class="form-check-input" type="checkbox" id="accountOn" name="accountOn" value="True" {% if account.account_verify %}checked{% endif %}>
+                                                        <label class="form-check-label" for="accountOn" id="checkaccountOn">
+                                                            {% if account.account_verify %}啟動 / On{% else %}關閉 / Off{% endif %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div><!--//col-->
+                                    </div><!--//row-->
+                                </div><!--//item-->
+                                <div class="item border-bottom py-3">
+                                    <div class="row justify-content-between align-items-center">
+                                            <div class="col-auto">
+                                                <div class="item-label"><strong>檢查帳戶活動是否異常</strong></div>
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="form-check form-switch">
+                                                        <input type="hidden" name="activateOn" value="False">
+                                                        <input class="form-check-input" type="checkbox" id="activateOn" name="activateOn" value="True" {% if account.activity_checked %}checked{% endif %}>
+                                                        <label class="form-check-label" for="activateOn" id="checkactivateOn">
+                                                            {% if account.activity_checked %}啟動 / On{% else %}關閉 / Off{% endif %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div><!--//col-->
+                                    </div><!--//row-->
+                                </div><!--//item-->
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn app-btn-secondary" onclick="return confirm('提醒您，本次操作將更新用戶隱私設定，請問是否確定?~')">更新用戶隱私設定</button>
+                                </div>                                
+                            </form>
+                        </div><!--//app-card-body-->
+                    <div class="app-card-footer p-4 mt-auto">
+                       <a class="btn app-btn-secondary" href="{% url 'users_api:send_reset_password' %}?email={{ member.user_email }}" id="resetPasswordBtn">重設密碼</a>
+                    </div><!--//app-card-footer-->
+                   
+                </div><!--//app-card-->
+            </div><!--//col-->
+
+            <div class="col-12 col-lg-6">
+                <div class="app-card app-card-account shadow-sm d-flex flex-column align-items-start">
+                    <div class="app-card-header p-3 border-bottom-0">
+                        <div class="row align-items-center gx-3">
+                            <div class="col-auto">
+                                <div class="app-icon-holder">
+                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-credit-card" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/>
+    <path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/>
+    </svg>
+                                </div><!--//icon-holder-->
+                                
+                            </div>
+                            <div class="col-auto">
+                                <h4 class="app-card-title">支付設定</h4>
+                            </div><!--//col-->
+                        </div><!--//row-->
+                    </div><!--//app-card-header-->
+                    <div class="app-card-body px-4 w-100">
+                        
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label"><i class="fab fa-cc-visa me-2"></i><strong>信用卡</strong></div>
+                                    <div class="item-data">1234*******5678</div>
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                        <div class="item border-bottom py-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <div class="item-label"><i class="fab fa-paypal me-2"></i><strong>銀行帳號</strong></div>
+                                    <div class="item-data">尚未設定</div>
+                                </div><!--//col-->
+                            </div><!--//row-->
+                        </div><!--//item-->
+                    </div><!--//app-card-body-->
+                    <div class="app-card-footer p-4 mt-auto">
+                       <a class="btn app-btn-secondary" href="#">編輯-用戶支付設定</a>
+                    </div><!--//app-card-footer-->
+                   
+                </div><!--//app-card-->
+            </div>
+        </div><!--//row-->
+        
+    </div><!--//container-fluid-->
+
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block app_script %}
+<script>
+    const accountOn = document.querySelector("#accountOn");
+    const checkAccount = document.querySelector("#checkaccountOn");
+    const activateOn = document.querySelector("#activateOn");
+    const checkActivate = document.querySelector("#checkactivateOn");
+    const verifyForm = document.querySelector("#verifyForm");
+    const resetPasswordBtn = document.querySelector("#resetPasswordBtn");
+
+    function updateStatus(checkbox, statusText) {
+        const message = checkbox.checked ? "啟動 / On" : "關閉 / Off";
+        statusText.innerText = message;
+    }
+
+    accountOn.addEventListener("change", () => updateStatus(accountOn, checkAccount));
+    activateOn.addEventListener("change", () => updateStatus(activateOn, checkActivate));
+
+    verifyForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                // 更新狀態與文字
+                accountOn.checked = data.account_verify;
+                checkAccount.innerText = data.verification_message;
+                activateOn.checked = data.activity_checked;
+                checkActivate.innerText = data.activation_message;
+
+                // 新增的 alert 提示
+                alert('更新成功！');
+                
+                console.log('更新後狀態:', {
+                    accountOn: accountOn.checked,
+                    activateOn: activateOn.checked
+                });
+            } else {
+                alert('更新失敗: ' + data.message);
+            }
+        } catch (error) {
+            alert('發生錯誤: ' + error.message);
+        }
+    });
+
+    // 修改重置密碼的事件監聽器
+    resetPasswordBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        const confirmed = confirm('即將發送-忘記密碼驗證連結，請提醒用戶留意郵箱。~');
+        if (confirmed) {
+            const url = this.getAttribute('href');
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                alert(data.message); 
+            } catch (error) {
+                alert('發生錯誤，請稍後重試。');
+            }
+        }
+    });
+</script>
+{% endblock %}
+

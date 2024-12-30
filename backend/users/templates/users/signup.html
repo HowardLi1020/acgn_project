@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <title>註冊頁面／Sign up</title>
+    
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="Portal - Bootstrap 5 Admin Dashboard Template For Developers">
+    <meta name="author" content="Xiaoying Riley at 3rd Wave Media">    
+    
+    {% load static %}
+    <link rel="shortcut icon" href="{% static 'users/favicon.ico' %}"> 
+    
+    <!-- FontAwesome JS-->
+    <script defer src="{% static 'users/scripts/all.min.js' %}"></script>
+    
+    <!-- App CSS -->  
+    <link id="theme-style" rel="stylesheet" href="{% static 'users/styles/portal.css' %}">
+</head> 
+
+<body class="app app-signup p-0">    	
+    <div class="row g-0 app-auth-wrapper">
+        <div class="col-12 col-md-7 col-lg-6 auth-main-col text-center p-5">
+            <div class="d-flex flex-column align-content-end">
+                <div class="app-auth-body mx-auto">	
+                    <div class="app-auth-branding mb-4"><a class="app-logo" href="{% url 'users:signup' %}"><img class="logo-icon me-2" src="{% static 'users/images/app-logo.svg' %}" alt="logo"></a></div>
+                    <h2 class="auth-heading text-center mb-4">Sign up／註冊</h2>					
+    
+                    <div class="auth-form-container text-start mx-auto">
+                        <form class="auth-form auth-signup-form" method="POST" enctype="multipart/form-data" id="signupForm">
+                            {% csrf_token %}
+                            <div class="email mb-3">
+                                <label class="sr-only" for="InputName">姓名</label>
+                                <input id="InputName" name="name" type="text" class="form-control signup-name" placeholder="姓名*" required minlength="2" maxlength="10">
+                                <small class="form-text text-muted">請輸入2-10個字符</small>
+                            </div>
+                            <div class="email mb-3">
+                                <label class="sr-only" for="InputEmail">電子郵箱</label>
+                                <input id="InputEmail" name="email" type="email" class="form-control signup-email" placeholder="電子郵箱*" required>
+                                <small class="form-text text-muted">請輸入有效的電子郵箱地址</small>
+                            </div>
+                            <div class="email mb-3">
+                                <label class="sr-only" for="InputPhone">手機</label>
+                                <input id="InputPhone" name="phone" type="tel" class="form-control signup-email" placeholder="手機09XX-XXX-XXX*" required pattern="09[0-9]{8}" maxlength="10">
+                                <small class="form-text text-muted">請輸入10位數字的手機號碼</small>
+                            </div>
+                            <div class="password mb-3">
+                                <label class="sr-only" for="InputPassword">密碼</label>
+                                <input id="InputPassword" name="password" type="password" class="form-control signup-password" placeholder="密碼*" required minlength="8">
+                                <small class="form-text text-muted">密碼至少需要8個字符，英文(不分大小寫)+數字</small>
+                            </div>
+                            <div class="password mb-3">
+                                <label class="sr-only" for="ConfirmPassword">確認密碼</label>
+                                <input id="ConfirmPassword" name="confirm_password" type="password" class="form-control signup-password" placeholder="確認密碼*" minlength="8" required>
+                            </div>
+                            <div class="extra mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="signupAgreement" required>
+                                    <label class="form-check-label" for="signupAgreement">
+                                    我同意 ACGN的 <a href="#" class="app-link">服務條款</a> 和 <a href="#" class="app-link">隱私政策</a>。
+                                    </label>
+                                </div>
+                            </div><!--//extra-->
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn app-btn-primary w-100 theme-btn mx-auto" id="buttonSubmit">註冊</button>
+                            </div>
+                        </form><!--//auth-form-->
+                        
+                        <div class="auth-option text-center pt-5">已經有帳號? <a class="text-link" href="{% url 'users:login' %}" >Log in／登入</a></div>
+                    </div><!--//auth-form-container-->	
+                </div><!--//auth-body-->
+            
+                <footer class="app-auth-footer">
+                    <div class="container text-center py-3">
+                        <small class="copyright">Designed with <span class="sr-only">love</span><i class="fas fa-heart" style="color: #fb866a;"></i> by <a class="app-link" href="http://themes.3rdwavemedia.com" target="_blank">Xiaoying Riley</a> for developers</small>
+                    </div>
+                </footer><!--//app-auth-footer-->	
+            </div><!--//flex-column-->   
+        </div><!--//auth-main-col-->
+        <div class="col-12 col-md-5 col-lg-6 h-100 auth-background-col" style="background-image: url('{% static 'users/images/background-car.jpg' %}'); background-size: cover;">
+            <div class="auth-background-holder">
+            </div>
+            <div class="auth-background-mask"></div>
+            <div class="auth-background-overlay p-3 p-lg-5">
+                <div class="d-flex flex-column align-content-end h-100">
+                    <div class="h-100"></div>
+                    <div class="overlay-content p-3 p-lg-4 rounded">
+                        <h5 class="mb-3 overlay-title">Explore Portal Admin Template</h5>
+                        <div>Portal is a free Bootstrap 5 admin dashboard template. You can download and view the template license <a href="https://themes.3rdwavemedia.com/bootstrap-templates/admin-dashboard/portal-free-bootstrap-admin-dashboard-template-for-developers/">here</a>.</div>
+                    </div>
+                </div>
+            </div><!--//auth-background-overlay-->
+        </div><!--//auth-background-col-->
+    </div><!--//row-->
+
+    <!-- Alert 提示區域 -->
+    <div id="alertMessage" class="alert alert-warning" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;"></div>
+	{% if messages %}
+	<ul class="messages">
+    {% for message in messages %}
+    	<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+	</ul>
+{% endif %}
+
+<script>
+    const alertDiv = document.querySelector('#alertMessage');
+    const form = document.querySelector('#signupForm');
+
+    const showAlert = (message, type = 'warning') => {
+        alertDiv.textContent = message;
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.style.display = 'block';
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 5000);
+    };
+
+    function isValidPassword(password) {
+			// 檢查密碼長度
+			if (password.length < 8) {
+				return false;
+			}
+			// 檢查是否包含至少一個字母和一個數字
+			const hasLetter = /[a-zA-Z]/.test(password);
+			const hasNumber = /\d/.test(password);
+			return hasLetter && hasNumber;
+		}
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        const password = document.querySelector('#InputPassword').value;
+        const confirmPassword = document.querySelector('#ConfirmPassword').value;
+
+        if (!isValidPassword(password)) {
+            alertDiv.textContent = '密碼必須至少8個字符，並包含字母和數字。';
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.style.display = 'block';
+            return;
+        }
+
+			if (password !== confirmPassword) {
+				alertDiv.textContent = '密碼不一致，請重新輸入。';
+				alertDiv.className = 'alert alert-danger';
+				alertDiv.style.display = 'block';
+				return;
+			}
+
+        try {
+            const response = await fetch('/admin/users_api/signup/', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                showAlert(data.message, 'success');
+                form.reset();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('發生錯誤，請稍後再試。', 'danger');
+        }
+    });
+</script>
+</body>
+</html>
+

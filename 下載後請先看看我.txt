@@ -1,0 +1,37 @@
+** 下載更新檔後
+1. 將裡面的 01.sql檔案 直接在SQL"按閃電圖案"，建資料表
+2. 將裡面的 02.sql檔案 "建立商品跟會員的假資料"
+3. 不用下inspectdb或是migrate的指令，裡面的models都建立好了
+4. frontend記得要下 "npm install指令"
+5. 記得在加入自己的資料表
+6. 資料庫名字是 "shopping"
+
+
+** 目前會員系統進度 =====>
+  users / user_api APP
+1. 後台管理者 - 登入/登出.註冊.忘記密碼功能
+2. 後台管理者頁面 - 全部用戶的CRUD 
+3. 後台管理者頁面 - 手動發驗證信連結(修改手機.郵箱.重置密碼)
+4. 驗證連結如成功跳轉到修改頁面，已有調整該頁面的登入.註冊至前端Vue頁面
+
+  member_api APP
+5. 前端Vue會員系統 - 註冊.登入/登出.忘記密碼.會員中心CURD
+
+----------以上測試可正常運作---------------
+
+
+** 如後台管理者 / 前端 Vue 頁面"大頭照無法顯示"，可嘗試修改下面這段!!
+路徑 ==> users/models.py
+class MemberBasic(models.Model):
+
+# user_avatar = models.CharField(max_length=255, blank=True, null=True)
+user_avatar = models.ImageField(upload_to='avatars/', default='avatars/default.png')
+
+
+** 前端Vue會員登入位置在主版的小人頭!!
+
+
+12/30---------
+1. 後台管理者-登入介面(改用"名稱.密碼")
+2. 後台用戶系統-修改資料(照片可更新至MemberPhotos)
+3. 後台用戶系統-新增用戶(1-修改gender可更新, 2-上傳照片可創建至MemberPhotos)

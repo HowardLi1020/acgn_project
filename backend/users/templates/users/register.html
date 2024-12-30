@@ -1,0 +1,154 @@
+{% extends '[BASE]ALL.html' %}
+
+{% block app_css %}
+<style>
+    #img1 {
+        width: 260px;
+        height: auto;
+    }
+</style>
+{% endblock %}
+
+{% block app_title %}
+<h3>新增用戶資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<form method="POST" enctype="multipart/form-data" id="registerForm">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="InputName" class="form-label">會員姓名：*</label>
+        <input type="text" class="form-control" id="InputName" name="name" required minlength="2" maxlength="10">
+        <small class="form-text text-muted">請輸入2-10個字符</small>
+    </div>
+    <div class="mb-3">
+        <label for="InputPhone" class="form-label">手機：*</label>
+        <input type="tel" class="form-control" id="InputPhone" name="phone" required pattern="09[0-9]{8}" maxlength="10">
+        <small class="form-text text-muted">請輸入10位數字的手機號碼</small>
+    </div>
+    <div class="mb-3">
+        <label for="InputEmail" class="form-label">電子郵箱：*</label>
+        <input type="email" class="form-control" id="InputEmail" name="email" required>
+        <small class="form-text text-muted">請輸入有效的電子郵箱地址</small>
+    </div>
+    <div class="mb-3">
+        <label for="InputPassword" class="form-label">密碼：*</label>
+        <input type="password" class="form-control" id="InputPassword" name="password" required minlength="8">
+        <small class="form-text text-muted">密碼至少需要8個字符，英文(不分大小寫)+數字</small>
+    </div>
+    <div class="mb-3">
+        <label for="ConfirmPassword" class="form-label">確認密碼：*</label>
+        <input type="password" class="form-control" id="ConfirmPassword" name="password1" minlength="8" required>
+    </div>
+    <div class="mb-3">
+        <label for="usernickname" class="form-label">暱稱</label>
+        <input type="text" class="form-control" name="nickname" id="usernickname">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">性別</label>
+        <select class="form-control" name="gender" id="usergender">
+            <option value="male">男</option>
+            <option value="female">女</option>
+            <option value="prefer_not_to_say">不願透漏</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="InputBirth" class="form-label">生日：*</label>
+        <input type="date" class="form-control" id="InputBirth" name="birth" required>
+    </div>
+    <div class="mb-3">
+        <label for="file1" class="form-label">頭像：</label>
+        <input class="form-control" type="file" id="file1" name="avatar">
+        <img id="img1" src="" alt="">
+    </div>
+    <button type="submit" class="btn btn-outline-primary me-md-2" id="buttonSubmit">送出</button>
+    <a href="{% url 'users:index'%}" class="btn btn-outline-primary me-md-2">用戶系統首頁</a>
+</form>
+<br>
+<!-- Alert 提示區域 -->
+<div id="alertMessage" class="alert alert-warning" style="display: none; margin-top: 20px;"></div>
+{% endblock %}
+
+{% block app_script %}
+<script>
+    const theFile1 = document.querySelector("#file1");
+    const theImg1 = document.querySelector("#img1");
+    const btnSubmit = document.querySelector("#buttonSubmit");
+    const alertDiv = document.querySelector("#alertMessage");
+    const registerForm = document.querySelector("#registerForm");
+
+    const showAlert = (message, type = 'warning') => {
+        alertDiv.innerText = message;
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.style.display = 'block';
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 5000);
+    };
+
+    function isValidPassword(password) {
+			// 檢查密碼長度
+			if (password.length < 8) {
+				return false;
+			}
+			// 檢查是否包含至少一個字母和一個數字
+			const hasLetter = /[a-zA-Z]/.test(password);
+			const hasNumber = /\d/.test(password);
+			return hasLetter && hasNumber;
+		}
+
+    theFile1.addEventListener("change", () => {
+        const reader = new FileReader();
+        reader.readAsDataURL(theFile1.files[0]);
+        reader.addEventListener("load", () => {
+            theImg1.src = reader.result;
+        });
+    });
+
+    registerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(registerForm);
+        const password = document.querySelector('#InputPassword').value;
+        const confirmPassword = document.querySelector('#ConfirmPassword').value;
+
+        if (!isValidPassword(password)) {
+            alertDiv.textContent = '密碼必須至少8個字符，並包含字母和數字。';
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.style.display = 'block';
+            return;
+        }
+
+			if (password !== confirmPassword) {
+				alertDiv.textContent = '密碼不一致，請重新輸入。';
+				alertDiv.className = 'alert alert-danger';
+				alertDiv.style.display = 'block';
+				return;
+			}
+
+        try {
+            const response = await fetch('/users_api/register/', {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert(data.message || '註冊成功！', 'success');
+                registerForm.reset();
+                theImg1.src = '';
+            } else {
+                showAlert(data.message || '註冊失敗，請稍後再試。', 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('發生錯誤，請稍後再試。', 'danger');
+        }
+    });
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <title>郵箱重設／Email Reset</title>
+    
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="Portal - Bootstrap 5 Admin Dashboard Template For Developers">
+    <meta name="author" content="Xiaoying Riley at 3rd Wave Media"> 
+	
+	{% load static %}
+    <link rel="shortcut icon" href="{% static 'users/favicon.ico' %}"> 
+	
+
+    <!-- FontAwesome JS-->
+    <script defer src="{% static 'users/scripts/all.min.js' %}"></script>
+    
+    <!-- App CSS -->  
+    <link id="theme-style" rel="stylesheet" href="{% static 'users/styles/portal.css' %}">
+	<style>
+        .alert-success {
+			color: #155724;
+			background-color: #d4edda;
+			border-color: #c3e6cb;
+		}
+
+		.alert-danger {
+			color: #721c24;
+			background-color: #f8d7da;
+			border-color: #f5c6cb;
+		}
+    </style>
+	
+</head> 
+
+<body class="app app-reset p-0">    	
+    <div class="row g-0 app-auth-wrapper">
+	    <div class="col-12 col-md-7 col-lg-6 auth-main-col text-center p-5">
+		    <div class="d-flex flex-column align-content-end">
+			    <div class="app-auth-body mx-auto">	
+				    <div class="app-auth-branding mb-4"><a class="app-logo" href="{% url 'users:email_change' %}"><img class="logo-icon me-2" src="{% static 'users\images\app-logo.svg' %}" alt="logo"></a></div>
+					
+					<h2 class="auth-heading text-center mb-4">Email Reset／郵箱重設</h2>
+
+					<div class="auth-intro mb-4 text-center">請於下方輸入您的新郵箱與密碼，以便為您重設。<br>
+						Enter your new email and password below.<br> We'll reset you a new email.</div>
+					<div class="auth-form-container text-left">
+
+					{% if token %}	
+						<form class="auth-form resetpass-form" id="resetEmailForm" action="{% url 'users_api:reconfirm_email' token %}" method="POST">
+					{% else %}
+					<!-- 當沒有 token 時顯示錯誤信息 -->
+						<div class="error-message">
+							{{ error }}
+						</div>
+					{% endif %}
+						
+							{% csrf_token %}                  
+							<div class="email mb-3">
+								<input type="hidden" id="codeInput" value="{{ request.GET.code }}">
+								<input type="hidden" id="emailInput" value="{{ request.GET.email }}">
+								<label class="sr-only" for="InputEmail">新郵箱：</label>
+								<input id="InputEmail" name="email" type="email" class="form-control login-email" placeholder="新郵箱" required>
+								<label class="sr-only" for="PasswordCheck">註冊密碼：</label>
+								<input id="PasswordCheck" name="password1" type="password" class="form-control login-password1" placeholder="註冊密碼" minlength="8" required>
+
+								<div id="emailHelp" class="alert alert-warning" style="display: none;"></div>
+							</div><!--//form-group-->
+							<div class="text-center">
+								<button type="submit" id="submitCheck" class="btn app-btn-primary btn-block theme-btn mx-auto">修改郵箱</button>
+							</div>
+						</form>
+
+						<div id="message" class="alert" style="display: none;"></div>
+
+						<div class="auth-option text-center pt-5"><a class="app-link" href="{{ frontend_url }}login" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{{ frontend_url }}signup" >Sign up／註冊</a></div>
+					</div><!--//auth-form-container-->
+
+
+			    </div><!--//auth-body-->
+		    
+			    <footer class="app-auth-footer">
+				    <div class="container text-center py-3">
+				         <!--/* This template is free as long as you keep the footer attribution link. If you'd like to use the template without the attribution link, you can buy the commercial license via our website: themes.3rdwavemedia.com Thank you for your support. :) */-->
+			        <small class="copyright">Designed with <span class="sr-only">love</span><i class="fas fa-heart" style="color: #fb866a;"></i> by <a class="app-link" href="http://themes.3rdwavemedia.com" target="_blank">Xiaoying Riley</a> for developers</small>
+				       
+				    </div>
+			    </footer><!--//app-auth-footer-->	
+		    </div><!--//flex-column-->   
+	    </div><!--//auth-main-col-->
+	    <div class="col-12 col-md-5 col-lg-6 h-100 auth-background-col" style="background-image: url('{% static 'users/images/background-3.jpg' %}'); background-size: cover;">
+		    <div class="auth-background-holder">
+		    </div>
+		    <div class="auth-background-mask"></div>
+		    <div class="auth-background-overlay p-3 p-lg-5">
+			    <div class="d-flex flex-column align-content-end h-100">
+				    <div class="h-100"></div>
+				    <div class="overlay-content p-3 p-lg-4 rounded">
+					    <h5 class="mb-3 overlay-title">Explore Portal Admin Template</h5>
+					    <div>Portal is a free Bootstrap 5 admin dashboard template. You can download and view the template license <a href="https://themes.3rdwavemedia.com/bootstrap-templates/admin-dashboard/portal-free-bootstrap-admin-dashboard-template-for-developers/">here</a>.</div>
+				    </div>
+				</div>
+		    </div><!--//auth-background-overlay-->
+	    </div><!--//auth-background-col-->
+    
+    </div><!--//row-->
+
+	<script>
+		const resetEmailForm = document.querySelector('#resetEmailForm');
+		const messageDiv = document.querySelector('#message');
+		const inputEmail = document.querySelector('#InputEmail');
+		const passwordCheck = document.querySelector('#PasswordCheck');
+		const emailHelp = document.querySelector('#emailHelp');
+
+		resetEmailForm.addEventListener('submit', async function(e) {
+			e.preventDefault();
+
+			const confirmEmail = inputEmail.value;
+			const confirmPassword = passwordCheck.value;
+			const code = document.querySelector('#codeInput').value;
+			const email = document.querySelector('#emailInput').value;
+
+			if (email == confirmEmail) {
+				emailHelp.textContent = '郵箱已存在，請重新輸入。';
+				emailHelp.style.display = 'block';
+				return;
+			}
+
+			try {
+				const token = "{{ token }}";
+				const response = await fetch(`/users_api/reconfirm_email/${token}/`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRFToken': '{{ csrf_token }}'
+					},
+					body: JSON.stringify({
+						password: confirmPassword,
+						code: code,
+						newEmail: confirmEmail
+					})
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					messageDiv.textContent = data.message;
+					messageDiv.style.display = 'block';
+					messageDiv.className = 'alert ' + (data.status === 'success' ? 'alert-success' : 'alert-danger');
+
+					if (data.status === 'success') {
+						setTimeout(() => {
+							window.location.href = '{{ frontend_url }}login';
+						}, 3000);
+					}
+				} else {
+					// 處理 HTTP 錯誤
+					console.error('HTTP error:', response.status);
+					messageDiv.textContent = '伺服器回應失敗，請稍後再試。';
+					messageDiv.className = 'alert alert-danger';
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				messageDiv.textContent = '發生錯誤，請稍後再試。';
+				messageDiv.className = 'alert alert-danger';
+				messageDiv.style.display = 'block'; // 確保提示框顯示
+			}
+		});
+	</script>
+</body>
+</html> 
+

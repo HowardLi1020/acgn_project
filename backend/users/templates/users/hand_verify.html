@@ -1,0 +1,214 @@
+{% extends "[BASE]ALL.html" %}
+
+{% block app_title %}
+<h2>發送驗證信</h2>
+{% endblock %}
+
+{% block app_content %}
+<!--
+    檔案上傳表單的必要設定
+    1. form 標籤 enctype="multipart/form-data"
+    2. <input type="file" name="userimage" />
+    -->
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <form class="app-search-form" id="searchForm">
+                {% csrf_token %}
+                <input type="text" placeholder="Search  (姓名.手機.信箱)" name="search" class="form-control search-input" id="search"/>
+                <button type="submit" class="btn search-btn btn-primary" value="Search" id="submitBtn">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </form>
+        </div>
+        <div id="searchResults"></div>
+        <hr>   
+            <div class="mb-3">
+                <input type="hidden" id="userid" name="userid" value="{{member.user_id}}">
+                <label for="userphone" class="form-label">原始手機</label>
+                <input type="text" class="form-control" id="userphone" name="userphone" value="{{member.user_phone}}" disabled>
+                <label for="useremail" class="form-label">原始電子郵箱</label>
+                <input type="email" class="form-control" id="useremail" name="useremail" value="{{member.user_email}}" disabled>
+                <label for="userpassword" class="form-label">原始密碼</label>
+                <input type="password" class="form-control" id="userpassword" name="userpassword" value="{{member.user_password}}" disabled>
+            </div>
+            <div class="d-grid gap-2 col-3 mx-auto">
+                <a class="btn btn-secondary" href="#"  id="resetEmailBtn" onclick="sendEmailChange()">修改郵箱-發送驗證碼</a>
+                <a class="btn btn-info" href="#"  id="resetPhoneBtn" onclick="sendPhoneChange()">修改手機-發送驗證碼</a>
+                <a class="btn btn-warning" href="#"  id="resetPasswordBtn" onclick="sendResetpPassword()">忘記密碼-發送驗證碼</a>
+            </div>
+            <hr>
+            <!-- <div class="mb-3">
+                <label for="newphone" class="form-label">修改手機號</label>
+                <input type="text" class="form-control" id="newphone" name="newphone">
+                <label for="newemail" class="form-label">修改電子郵箱</label>
+                <input type="email" class="form-control" id="newemail" name="newemail">
+            </div>
+            <div class="d-grid gap-2 col-4 mx-auto">
+                <button class="btn app-btn-primary" type="submit" onclick="return confirm('即將修改本次操作，請問是否確定?~')">提交修改手機/郵箱</button>
+            </div> -->
+            <a href="{% url 'users:index'%}" class="btn btn-outline-primary me-md-2">回上一頁</a>
+{% endblock %}
+
+{% block app_script %}
+<script>
+    const searchInput  = document.querySelector("#search");
+    const searchResults = document.querySelector("#searchResults"); 
+    const searchBtn  = document.querySelector("#submitBtn");
+    const searchForm = document.querySelector("#searchForm");
+    const userphone = document.querySelector("#userphone");
+    const useremail = document.querySelector("#useremail");
+    const userpassword = document.querySelector("#userpassword");
+    const userid = document.querySelector("#userid");
+
+    // 填充輸入框的函數
+    function fillUserData(member) {
+        userid.value = member.user_id;
+        userphone.value = member.user_phone;
+        useremail.value = member.user_email;
+        userpassword.value = member.user_password;
+        // 注意：出於安全考慮，我們通常不會直接顯示密碼
+        // 如果確實需要顯示密碼，請確保有適當的安全措施
+        // userpassword.value = '********'; // 或者留空，取決於你的需求
+    }
+
+    const sendResetpPassword = async () => {
+        const email = useremail.value;
+        const userid = document.getElementById('userid').value;
+        if (email && userid) {
+            try {
+                const response = await fetch(`{% url 'users_api:send_reset_password' %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        userid: userid
+                    })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    alert('重置密碼-驗證信已發送，請提醒用戶留意郵箱。');
+                } else {
+                    alert('發送驗證信失敗，請稍後再試。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('發送驗證信時發生錯誤，請稍後再試。');
+            }
+        } else {
+            alert('請先搜索並選擇一個用戶。');
+        }
+    };
+
+    const sendEmailChange = async () => {
+        const email = useremail.value;
+        const userid = document.getElementById('userid').value;
+        if (email && userid) {
+            try {
+                const response = await fetch(`{% url 'users_api:reset_email' %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        userid: userid
+                    })
+                });
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message || '修改郵箱-驗證信已發送，請提醒用戶留意信箱。');
+                } else {
+                    alert(`發送驗證信失敗：${data.message || '請稍後再試'}`);
+                }
+            } catch (error) {
+                    console.error('Error:', error);
+                    alert('發送驗證信時發生錯誤，請稍後再試。');
+            }
+        } else {
+            alert('請先搜索並選擇一個用戶。');
+        }
+};
+
+    const sendPhoneChange = async () => {
+        const phone = userphone.value;
+        const email = useremail.value;
+        if (phone && email) {
+            try {
+                const response = await fetch(`{% url 'users_api:reset_phone' %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        phone: phone,
+                        email: email
+                    })
+                });
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message || '修改手機-驗證信已發送，請提醒用戶留意信箱。');
+                } else {
+                    alert(`發送驗證信失敗：${data.message || '請稍後再試'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('發送驗證信時發生錯誤，請稍後再試。');
+            }
+        } else {
+            alert('請先搜索並選擇一個用戶。');
+        }
+    };
+
+    //將輸入的"資料"傳到 users_api 檢查是否存在
+    searchForm.addEventListener("submit", async (event)=>{
+        event.preventDefault();
+        const searchValue = searchInput.value.trim();
+
+        // 檢查輸入是否為空
+        if (searchValue.length === 0) {
+            searchResults.innerHTML = ''; // 清空結果
+            return;
+        }
+        
+        // 1.  call api 取得資料
+        const response = await fetch(`/users_api/search/?search=${encodeURIComponent(searchValue)}`);
+    const dataInfo = await response.json();
+
+        searchResults.innerHTML = '';
+
+        // 2. 判斷傳到 API 的資料是否已存在資料庫
+        if (dataInfo.length > 0) {
+            dataInfo.forEach(member => {
+                const memberElement = document.createElement('div');
+                memberElement.textContent = `用戶 ID： ${member.user_id}，姓名： ${member.user_name}`;
+                memberElement.addEventListener('click', () => {
+                    // 點擊會員時，把對應資料填充輸入框
+                    fillUserData(member);
+                });    
+            searchResults.appendChild(memberElement);
+        });
+        // 自動填充第一個搜索結果
+        fillUserData(dataInfo[0]);
+    } else {
+        searchResults.innerText = '沒有匹配的會員';
+        // 清空輸入框
+        userid.value = '';
+        userphone.value = '';
+        useremail.value = '';
+        userpassword.value = '';
+    }
+    // 清空搜索輸入框
+    searchForm.reset();
+    
+});
+</script>
+{% endblock %}

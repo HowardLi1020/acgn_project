@@ -1,0 +1,37 @@
+auth_user : admins
+
+member_basic : users
+member_login : users
+member_indextype : users
+member_photos : users
+member_privacy : users
+member_verify : users
+product_wishlist : users
+usercoupons : users
+
+products : products
+product_brands : products
+product_categories : products
+product_series : products
+product_images : products
+product_commets : products
+product_reviews : products
+product_recommendations : products
+
+
+coupons : promotions
+
+order_items : cart
+oders : cart
+shopping_cart_items : cart
+payment_transactions : cart
+shipping_details : cart
+product_member_ratings : cart
+
+models建立指令 :
+
+py manage.py inspectdb auth_user > admins/models.py
+py manage.py inspectdb member_basic member_login member_indextype member_photos  member_privacy member_verify product_wishlist usercoupons > users/models.py
+py manage.py inspectdb products product_brands product_categories product_series product_images product_comments product_reviews product_recommendations > products/models.py
+py manage.py inspectdb coupons > promotions/models.py
+py manage.py inspectdb order_items orders shopping_cart_items payment_transactions shipping_details product_member_ratings > cart/models.py

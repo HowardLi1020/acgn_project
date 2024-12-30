@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <title>忘記後台密碼／Forgot Password</title>
+    
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="Portal - Bootstrap 5 Admin Dashboard Template For Developers">
+    <meta name="author" content="Xiaoying Riley at 3rd Wave Media"> 
+	
+	{% load static %}
+    <link rel="shortcut icon" href="{% static 'users/favicon.ico' %}"> 
+	
+
+    <!-- FontAwesome JS-->
+    <script defer src="{% static 'users/scripts/all.min.js' %}"></script>
+    
+    <!-- App CSS -->  
+    <link id="theme-style" rel="stylesheet" href="{% static 'users/styles/portal.css' %}">
+	
+</head> 
+
+<body class="app app-reset p-0">    	
+    <div class="row g-0 app-auth-wrapper">
+	    <div class="col-12 col-md-7 col-lg-6 auth-main-col text-center p-5">
+		    <div class="d-flex flex-column align-content-end">
+			    <div class="app-auth-body mx-auto">	
+				    <div class="app-auth-branding mb-4"><a class="app-logo" href="{% url 'admins:reset' %}"><img class="logo-icon me-2" src="{% static 'users\images\app-logo.svg' %}" alt="logo"></a></div>
+					
+					<h2 class="auth-heading text-center mb-4">Forgot Password<br>忘記後台密碼</h2>
+
+					<div class="auth-intro mb-4 text-center">請於下方輸入您的電子郵箱，<br>與您的新密碼，以便您快速重設密碼。<br>
+						Enter your email address and new password below. You can easily create a new password.</div>
+					<div class="auth-form-container text-left">
+						<form class="auth-form resetpass-form" method="POST" id="resetForm" enctype="multipart/form-data" action="{% url 'admins_api:reset' %}">
+							{% csrf_token %}                  
+							<div class="email mb-3">
+								<label class="sr-only" for="email">電子郵箱</label>
+								<input id="email" name="email" type="email" class="form-control login-email" placeholder="電子郵箱" required>
+								<label class="sr-only" for="InputPassword">新密碼</label>
+								<input id="InputPassword" name="password" type="password" class="form-control login-email" placeholder="新密碼" minlength="8" required>
+								<label class="sr-only" for="PasswordCheck">確認新密碼</label>
+								<input id="PasswordCheck" name="password1" type="password" class="form-control login-email" placeholder="確認新密碼" minlength="8" required>
+							</div><!--//form-group-->
+							<div id="message" class="alert" style="display: none;"></div>
+							<button type="submit" class="btn app-btn-primary btn-block theme-btn mx-auto">確認送出</button>
+						</form>
+						
+						
+						<div class="auth-option text-center pt-5"><a class="app-link" href="{% url 'admins:login' %}" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{% url 'admins:signup' %}" >Sign up／註冊</a></div>
+					</div><!--//auth-form-container-->
+
+
+			    </div><!--//auth-body-->
+		    
+			    <footer class="app-auth-footer">
+				    <div class="container text-center py-3">
+				         <!--/* This template is free as long as you keep the footer attribution link. If you'd like to use the template without the attribution link, you can buy the commercial license via our website: themes.3rdwavemedia.com Thank you for your support. :) */-->
+			        <small class="copyright">Designed with <span class="sr-only">love</span><i class="fas fa-heart" style="color: #fb866a;"></i> by <a class="app-link" href="http://themes.3rdwavemedia.com" target="_blank">Xiaoying Riley</a> for developers</small>
+				       
+				    </div>
+			    </footer><!--//app-auth-footer-->	
+		    </div><!--//flex-column-->   
+	    </div><!--//auth-main-col-->
+	    <div class="col-12 col-md-5 col-lg-6 h-100 auth-background-col" style="background-image: url('{% static 'users/images/background-3.jpg' %}'); background-size: cover;">
+		    <div class="auth-background-holder">
+		    </div>
+		    <div class="auth-background-mask"></div>
+		    <div class="auth-background-overlay p-3 p-lg-5">
+			    <div class="d-flex flex-column align-content-end h-100">
+				    <div class="h-100"></div>
+				    <div class="overlay-content p-3 p-lg-4 rounded">
+					    <h5 class="mb-3 overlay-title">Explore Portal Admin Template</h5>
+					    <div>Portal is a free Bootstrap 5 admin dashboard template. You can download and view the template license <a href="https://themes.3rdwavemedia.com/bootstrap-templates/admin-dashboard/portal-free-bootstrap-admin-dashboard-template-for-developers/">here</a>.</div>
+				    </div>
+				</div>
+		    </div><!--//auth-background-overlay-->
+	    </div><!--//auth-background-col-->
+    
+    </div><!--//row-->
+
+
+	<script>
+		const form = document.querySelector("#resetForm");
+		const messageDiv = document.querySelector('#message');
+		
+		function isValidPassword(password) {
+			// 檢查密碼長度
+			if (password.length < 8) {
+				return false;
+			}
+			// 檢查是否包含至少一個字母和一個數字
+			const hasLetter = /[a-zA-Z]/.test(password);
+			const hasNumber = /\d/.test(password);
+			return hasLetter && hasNumber;
+		}
+
+		form.addEventListener('submit', async (event) => {
+			event.preventDefault();
+
+			const email = document.querySelector("#email").value;
+        	const password = document.querySelector('#InputPassword').value;
+        	const confirmPassword = document.querySelector('#PasswordCheck').value;
+			
+			if (!isValidPassword(password)) {
+				messageDiv.textContent = '密碼必須至少8個字符，並包含字母和數字。';
+				messageDiv.className = 'alert alert-danger';
+				messageDiv.style.display = 'block';
+				return;
+			}
+
+			if (password !== confirmPassword) {
+				messageDiv.textContent = '密碼不一致，請重新輸入。';
+				messageDiv.className = 'alert alert-danger';
+				messageDiv.style.display = 'block';
+				return;
+			}
+
+			try {
+				const response = await fetch('/admins_api/reset/', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRFToken': '{{ csrf_token }}'
+					},
+					body: JSON.stringify({
+						email: email,
+						password: password,
+						password1: confirmPassword
+					})
+				});
+
+				const data = await response.json();
+				messageDiv.textContent = data.message;
+				messageDiv.style.display = 'block';
+				messageDiv.className = 'alert ' + (data.status === 'success' ? 'alert-success' : 'alert-danger');
+		
+				if (data.status === 'success') {
+					setTimeout(() => {
+						window.location.href = "{% url 'admins:login' %}";
+					}, 3000);
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				messageDiv.textContent = '發生錯誤，請稍後再試。';
+				messageDiv.style.display = 'block';
+				messageDiv.className = 'alert alert-danger';
+			}
+		});
+	</script>
+</body>
+</html> 
+

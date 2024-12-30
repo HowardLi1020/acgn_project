@@ -1,0 +1,146 @@
+{% extends '[BASE]ALL.html' %}
+
+{% load static %}
+
+{% block app_css %}
+<style>
+    .text-highlight {
+        color: #ff0000 !important;
+        transition: color 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+
+{% block app_title %}
+<h3>用戶資料列表</h3>
+{% endblock %}
+
+
+{% block app_content %}
+<!-- <head>
+    <link rel="stylesheet" href="{% static 'path/to/your/styles.css' %}">
+</head> -->
+
+<div class="d-flex align-items-center justify-content-between">
+    <a href="{% url 'users:create' %}" class="btn btn-outline-primary">新增用戶</a>
+    <form class="d-flex ms-auto" role="search" id="searchForm">
+        <input class="form-control me-2" type="search" placeholder="Search-姓名.手機.信箱" aria-label="Search" id="search">
+        <button type="submit" class="btn app-btn-primary" id="submitBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </form>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" id="message-{{ forloop.counter }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div id="searchResults"></div>
+<hr>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>用戶 ID</th>
+            <th>姓名</th>
+            <th>手機</th>
+            <th>電子郵箱</th>
+            <th>暱稱</th>
+            <th>性別</th>
+            <th>生日</th>
+            <th>會員等級</th>
+            <th>頭像</th>
+            <th>編輯</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for member in members %}
+        <tr id="member-{{ member.user_id }}">
+            <td>{{ member.user_id }}</td>
+            <td>{{ member.user_name }}</td>
+            <td>{{ member.user_phone }}</td>
+            <td>{{ member.user_email }}</td>
+            <td>{{ member.user_nickname }}</td>
+            <td>{{ member.user_gender }}</td>
+            <td>{{ member.user_birth }}</td>
+            <td>{{ member.vip_status }}</td>
+
+            <td><img style="height: 80px;" src="{{ MEDIA_URL }}{{ member.user_avatar }}" alt="{{ member.user_name }}"></td>
+            <td>
+                <a href="{% url 'users:personal' %}?id={{ member.user_id }}" class="btn btn-outline-primary">個人頁面</a>
+                <a href="{% url 'users:edit' %}?id={{ member.user_id }}" class="btn btn-outline-primary">修改資料</a>
+                <!-- <a href="{% url 'users:hand_verify' %}?id={{ member.user_id }}"  class = "btn btn-outline-primary">發驗證信</a> -->
+                <a href="{% url 'users:delete' member.user_id %}" class="btn btn-outline-danger" onclick="return confirm('提醒您，本次操作將刪除該會員所有資料，請問是否確定?~')">刪除</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+
+{% block app_script %}
+<script>
+    const searchInput  = document.querySelector("#search");
+    const searchResults = document.querySelector("#searchResults"); 
+    const searchBtn  = document.querySelector("#submitBtn");
+    const searchForm = document.querySelector("#searchForm");
+
+    //將輸入的"資料"傳到 users_api 檢查是否存在
+    searchForm .addEventListener("submit", async (event)=>{
+        event.preventDefault();
+        const searchValue = searchInput.value.trim();
+
+        // 檢查輸入是否為空
+        if (searchValue.length === 0) {
+            searchResults.innerHTML = ''; // 清空結果
+            return;
+        }
+        
+        // 1.  call api 取得資料
+        const response = await fetch(`/users_api/search/?search=${encodeURIComponent(searchValue)}`);
+        const dataInfo = await response.json();
+
+        searchResults.innerHTML = '';
+
+        // 2. 判斷傳到 API 的資料是否已存在資料庫
+        if (dataInfo.length > 0) {
+            dataInfo.forEach(member => {
+                const memberElement = document.createElement('div');
+                memberElement.textContent = `用戶 ID： ${member.user_id}，姓名： ${member.user_name}， 手機： ${member.user_phone}， 電子郵箱： ${member.user_email}`;
+                searchResults.appendChild(memberElement);
+
+                // 自動滾動到匹配的會員資料行
+                const memberRow = document.getElementById(`member-${member.user_id}`);
+                if (memberRow) {
+                    memberRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    memberRow.querySelectorAll('td').forEach(td => td.classList.add('text-highlight'));
+                    setTimeout(() => {
+                        memberRow.querySelectorAll('td').forEach(td => td.classList.remove('text-highlight'));
+                    }, 3000);
+                }
+            });
+        } else {
+            searchResults.innerText = '沒有匹配的會員';
+        }
+        searchInput.value = '';
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+    {% for message in messages %}
+        setTimeout(function() {
+            var alert = document.getElementById('message-{{ forloop.counter }}');
+            if (alert) {
+                alert.classList.remove('show'); 
+                setTimeout(function() {
+                    alert.remove(); 
+                }, 150); // 等待 150 毫秒後再移除
+            }
+        }, 3000); // 3秒後執行
+    {% endfor %}
+});
+</script>
+{% endblock %}
