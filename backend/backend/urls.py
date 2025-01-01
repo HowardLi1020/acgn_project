@@ -28,7 +28,10 @@ urlpatterns = [
     # http://127.0.0.1:8000/member_api/ 
     path('member_api/', include('member_api.urls')), # 包含 member_api 的 URL
 
-    path('store/', include('products.urls'))
+    path('store/', include('products.urls')),
+
+        # http://127.0.0.1:8000/commission/ 
+    path('commission/', include('commission.urls'))
 ]
 
 if settings.DEBUG:

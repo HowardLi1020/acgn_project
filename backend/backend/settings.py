@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'admins_api',   # 串接 後端管理者介面-admin
     'member_api',   # 串接 前端Vue-member
     'promotions',
+    'commission',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
