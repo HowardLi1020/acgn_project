@@ -161,6 +161,24 @@ export const storeAPI = {
     },
 };
 
+// 購物車相關 API
+export const cartAPI = {
+    getCart: () => apiClient.get("/cart_api/cart/"), // 獲取用戶購物車
+    addToCart: (data) => apiClient.post("/cart_api/cart/add/", data), // 添加商品到購物車
+    updateCartItem: (cartItemId, data) =>
+      apiClient.put(`/cart_api/cart/update/${cartItemId}/`, data), // 更新購物車商品數量
+    deleteCartItem: (cartItemId) =>
+      apiClient.delete(`/cart_api/cart/delete/${cartItemId}/`), // 刪除購物車商品
+};
+
+  // 訂單相關 API
+export const orderAPI = {
+    createOrder: (data) => apiClient.post("/cart_api/orders/create/", data), // 提交新訂單
+    getUserOrders: () => apiClient.get("/cart_api/orders/"), // 獲取用戶所有訂單
+    getOrderDetail: (orderId) =>
+      apiClient.get(`/cart_api/orders/${orderId}/`), // 獲取單個訂單詳細信息
+};
+
 // 文件上傳 API
 export const uploadAPI = {
     uploadFile: (formData) => postWithAuth('/media/', formData)
