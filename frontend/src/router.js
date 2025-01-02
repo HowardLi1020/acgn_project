@@ -182,8 +182,8 @@ const routes =[
 },
 {
   //404
-  path:'/:pathMatch(.*)*',
-  component:NotFound
+    path:'/:pathMatch(.*)*',
+    component:NotFound
 }]
 
 const router = createRouter({
