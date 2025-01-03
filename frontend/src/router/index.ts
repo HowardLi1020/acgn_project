@@ -17,6 +17,13 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+
+    {
+      path: '/cart',
+      name: 'Cart',
+      component: () => import('@/views/cart/CartView.vue'), // 動態加載購物車頁面
+      meta: { title: '購物車' }, // 可選，設置頁面標題
+    },    
   ],
 })
 
