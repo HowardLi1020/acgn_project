@@ -161,6 +161,18 @@ export const storeAPI = {
     },
 };
 
+// Cart API
+export const cartAPI = {
+    // 獲取購物車內容
+    getCartItems: () => api.get('/cart/'),
+    // 添加商品到購物車
+    addCartItem: (data) => api.post('/cart/', data),
+    // 更新購物車內商品數量
+    updateCartItem: (cartItemId, data) => api.put(`/cart/${cartItemId}/`, data),
+    // 刪除購物車中的商品
+    deleteCartItem: (cartItemId) => api.delete(`/cart/${cartItemId}/`),
+};
+
 // 文件上傳 API
 export const uploadAPI = {
     uploadFile: (formData) => postWithAuth('/media/', formData)
@@ -171,4 +183,5 @@ export default {
     storeAPI,
     uploadAPI,
     api,
+    cartAPI,
 };

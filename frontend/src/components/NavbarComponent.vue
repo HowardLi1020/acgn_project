@@ -28,29 +28,23 @@ function scrollToTop() {
                 </button>
                 <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
                     <div class="navbar-nav mx-auto">
-                        <router-link to="/" class="nav-item nav-link active" @click="scrollToTop">Home 首頁</router-link>
+                        <router-link to="/" class="nav-item nav-link active" @click="scrollToTop">首頁</router-link>
                         <router-link to="/" class="nav-item nav-link" @click="scrollToTop">討論區</router-link>
                         <router-link to="/store" class="nav-item nav-link" @click="scrollToTop">周邊商店</router-link>
-                        <router-link to="/" class="nav-item nav-link" @click="scrollToTop">活動</router-link>
                         <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link>
                         <div class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages 範例模板</a>
+                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">列表</a>
                             <div class="dropdown-menu m-0 bg-secondary rounded-0">
-                                <router-link to="/Fruitables" class="nav-item nav-link active" @click="scrollToTop">Home 首頁</router-link>
-                                <router-link to="/Fruitables/shop" class="nav-item nav-link" @click="scrollToTop">Shop 商店</router-link>
-                                <router-link to="/Fruitables/detail" class="nav-item nav-link" @click="scrollToTop">Detail 商品詳細</router-link>
-                                <router-link to="/Fruitables/cart" class="nav-item nav-link" @click="scrollToTop">Cart 購物車</router-link>
-                                <router-link to="/Fruitables/checkout" class="nav-item nav-link" @click="scrollToTop">Checkout 結帳</router-link>
-                                <!-- <a href="testimonial.html" class="dropdown-item">Testimonial</a> -->
-                                <router-link to="/Fruitables/404" class="nav-item nav-link" @click="scrollToTop">404 找不到</router-link>
-                                <router-link to="/Fruitables/contact" class="nav-item nav-link" @click="scrollToTop">Contact 聯絡我們</router-link> 
+                                <router-link to="/Fruitables" class="nav-item nav-link active" @click="scrollToTop">首頁</router-link>
+                                <router-link to="/store" class="nav-item nav-link" @click="scrollToTop">商店</router-link>
+                                <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link> 
                             </div>
                         </div>
                         
                     </div>
                     <div class="d-flex m-3 me-0">
                         <button class="btn-search btn border border-secondary btn-md-square rounded-circle bg-white me-4" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="fas fa-search text-primary"></i></button>
-                        <a href="#" class="position-relative me-4 my-auto">
+                        <a href="/shoppingcart" class="position-relative me-4 my-auto">
                             <i class="fa fa-shopping-bag fa-2x"></i>
                             <span class="position-absolute bg-secondary rounded-circle d-flex align-items-center justify-content-center text-dark px-1" style="top: -5px; left: 15px; height: 20px; min-width: 20px;">3</span>
                         </a>
