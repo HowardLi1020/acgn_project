@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineProps } from 'vue';
+import { computed } from 'vue';
 
 // 接收來自父層的 props
 const props = defineProps({
