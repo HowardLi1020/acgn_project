@@ -303,7 +303,10 @@ def ViewFn_need_delete(request, view_fn_need_id):
     return HttpResponseRedirect(referer_url)
 
 def ViewFn_publiccard_list(request):
-    # view_db_usercard_info = DbUserCard.objects.all()
+    # view_db_publiccard_info = DbPublicCard.objects.all()
     context = {
+        'ViewKey_DbPublicCard': DbPublicCard.objects.all()
+        # 'ViewKey_DbNeedInfo_need_id': view_db_need_info_id,
+        # 'ViewKey_DbNeedEdit_sketches': view_db_need_sketches,
     }
     return render(request, 'commission/publiccard_list.html', context)
