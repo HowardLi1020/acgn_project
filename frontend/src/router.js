@@ -21,6 +21,10 @@ import CreateProduct from "./views/Store/CreateProduct.vue";
 import MyProduct from "./views/Store/MyProduct.vue";
 import EditProduct from "./views/Store/EditProduct.vue";
 
+// Cart
+import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
+
+
 // 導入 Pages範例模板
 import FruitablesHomeView from "./views/FruitablesHomeView.vue";
 import FruitablesShopView from "./views/FruitablesShopView.vue";
@@ -145,6 +149,12 @@ const routes =[
     path: '/store/edit-product/:productId', // 添加創建商品的路由
     component: EditProduct,
     name: 'EditProduct',
+},
+
+{
+    path: '/cart',
+    component: CartView, // 可選，設置頁面標題
+    name: 'CartView',
 },
 
 // 以下為 Pages範例模板 連結
