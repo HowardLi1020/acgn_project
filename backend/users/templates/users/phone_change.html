@@ -68,18 +68,18 @@
 							</div><!--//form-group-->
 							<div class="email mb-3">
 								<label class="sr-only" for="old_phone">註冊手機</label>
-								<input id="old_phone" name="old_phone" type="tel" class="form-control login-email" placeholder="註冊手機" required>
+								<input id="old_phone" name="old_phone" type="tel" class="form-control login-email" placeholder="註冊手機" maxlength="10" required>
 							</div><!--//form-group-->
 							<div class="email mb-3">
 								<label class="sr-only" for="new_phone">新手機</label>
-								<input id="new_phone" name="new_phone" type="tel" class="form-control login-email" placeholder="新手機" required>
+								<input id="new_phone" name="new_phone" type="tel" class="form-control login-email" placeholder="新手機" maxlength="10" required>
 							</div><!--//form-group-->
 							<div id="response-message"></div>
 							<button type="submit" class="btn app-btn-primary btn-block theme-btn mx-auto">確認送出</button>
 						</form>
 						
 						
-						<div class="auth-option text-center pt-5"><a class="app-link" href="{{ frontend_url }}login" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{{ frontend_url }}signup" >Sign up／註冊</a></div>
+						<div class="auth-option text-center pt-5"><a class="app-link" href="{% url 'users:login' %}" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{% url 'users:signup' %}" >Sign up／註冊</a></div>
 					</div><!--//auth-form-container-->
 
 
@@ -123,7 +123,7 @@
 			const responseMessage = document.querySelector("#response-message");
 
 			try {
-				const response = await fetch('/admin/users_api/phone_change/', {
+				const response = await fetch('/users_api/phone_change/', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',

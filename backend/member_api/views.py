@@ -72,7 +72,7 @@ class ProtectedRouteView(APIView):
         return Response({"message": "Token 是有效的！"})
 
 
-# 會員登入 與 註冊!!!
+# 會員登入 與 註冊
 class AuthViewSet(viewsets.GenericViewSet):
     queryset = MemberBasic.objects.all()
     permission_classes = [AllowAny]
@@ -268,7 +268,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             'error': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     
-# 註冊 2. 發送帳號驗證信 並跳轉到登入頁面!!!
+# 註冊 2. 發送帳號驗證信 並跳轉到登入頁面
 class VerifyEmailView(APIView):
     permission_classes = [AllowAny]
 
@@ -305,7 +305,7 @@ class VerifyEmailView(APIView):
             print("Error during verification:", str(e))
             return Response({"message": "驗證失敗", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# 更新 前台會員中心資料!!!
+# 更新 前台會員中心資料
 class UpdateUserInfoView(APIView):
 
     parser_classes = (MultiPartParser, FormParser)
@@ -375,23 +375,6 @@ class UpdateUserInfoView(APIView):
                     "updated_at" : now()
                 },
             )
-
-            # # 更新 MemberPrivacy 資料
-            # MemberPrivacy.objects.update_or_create (
-            #     user=user,  # 根據 user 關聯檢查
-            #     defaults={
-            #         "updated_at" : now()
-            #     },
-            # )
-
-            # # 更新 MemberVerify 資料
-            # MemberVerify.objects.update_or_create (
-            #     user=user,  # 根據 user 關聯檢查
-            #     defaults={
-            #         "updated_at" : now()
-            #     },
-            # )
-
             return Response(
                 {"message": "更新成功",},
                 status=status.HTTP_200_OK,
@@ -401,12 +384,8 @@ class UpdateUserInfoView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
 
-        path('rest-password/<int:code>/', SendResetLinkView.as_view(), name='rest_password'),
-
-
-# 會員忘記密碼 1. 發送驗證信!!!
+# 會員忘記密碼 1. 發送驗證信
 class SendResetLinkView(APIView):
     def get(self, request, *args, **kwargs):
         return Response(
@@ -420,6 +399,19 @@ class SendResetLinkView(APIView):
             return Response({"message": "請提供有效的電子郵箱"}, status=status.HTTP_400_BAD_REQUEST)
         
         user = MemberBasic.objects.filter(user_email=email).first()
+
+        # 檢查是否存在未使用的相同請求
+        existing_request = MemberVerify.objects.filter(
+            user=user,
+            verification_type='phone_change',
+            change_value=email,
+            code_used=False,
+            expires_at__gte=now()
+        ).first()
+
+        if existing_request:
+            return Response({'message': '已存在待驗證的修改手機號請求，請勿重複提交'}, status=400)
+        
         if user:
              # 生成6位數驗證碼並創建新的驗證記錄
             code = random.randint(100000, 999999)
@@ -449,27 +441,27 @@ class SendResetLinkView(APIView):
             )
 
         return Response(
-            {"message": "如果電子郵箱存在，我們會發送重置鏈接"},
+            {"message": "如果電子郵箱存在，我們會發送重置連結~!"},
             status=status.HTTP_200_OK
         )
     
-# 會員忘記密碼 2. 按下驗證連結後跳轉重置密碼!!!
+# 會員忘記密碼 2. 按下驗證連結後跳轉重置密碼
 class ResetPasswordView(APIView):
     def get(self, request, code):
         # 驗證碼查詢邏輯
         verify_code = MemberVerify.objects.filter(verification_code=code, code_used=False).first()
         if not verify_code :
-            return Response({"message": "無效的驗證碼"}, status=status.HTTP_400_BAD_REQUEST)
+            # 無效的驗證碼，重定向到前端
+            return HttpResponseRedirect(f"{settings.FRONTEND_URL}reset-verify/{code}?status=invalid")
         
         # 驗證碼過期檢查
         if now() > verify_code.expires_at:
-                return Response({"message": "驗證碼已過期"}, status=status.HTTP_400_BAD_REQUEST)
+                # 驗證碼已過期，重定向到前端
+                return HttpResponseRedirect(f"{settings.FRONTEND_URL}reset-verify/{code}?status=expired")
 
+        # 成功狀態
         return HttpResponseRedirect(f"{settings.FRONTEND_URL}reset-verify/{code}?status=success")
-        return HttpResponseRedirect(f"{settings.FRONTEND_URL}reset/{code}?status=success")
     
-    
-        
     def post(self, request, code):
         new_password = request.data.get("new_password")
         verify_code = MemberVerify.objects.filter(verification_code=code, code_used=False).first()
@@ -486,6 +478,7 @@ class ResetPasswordView(APIView):
 
         # 更新密碼
         user.user_password = make_password(new_password)
+        user.updated_at = now()
         user.save()
 
         # 標記驗證碼為已使用
@@ -493,4 +486,228 @@ class ResetPasswordView(APIView):
         verify_code.save()
 
         # 密碼重置成功，重定向到前端登入頁面
-        return Response({"message": "密碼已成功重置，請重新登錄"}, status=status.HTTP_200_OK)
+        return Response({"message": "密碼已成功重置，請重新登入"}, status=status.HTTP_200_OK)
+
+# 會員欲修改手機 1. 發送驗證信
+class SendPhoneLinkView(APIView):
+    def get(self, request, *args, **kwargs):
+        return Response(
+            {"message": "不支持的請求方法，請使用 POST"},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
+    def post(self, request):
+        email = request.data.get("user_email")
+        oldphone = request.data.get("user_phone")
+        newphone = request.data.get("new_phone")
+
+        if not oldphone or not newphone or not email:
+            return Response({"message": "請輸入有效的手機號和郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not MemberBasic.objects.filter(user_phone=oldphone, user_email=email).exists():
+            return Response({'message': '輸入的手機號和郵箱不匹配或不存在。'}, status=400)
+        
+        # 獲取對應用戶
+        user = MemberBasic.objects.get(user_phone=oldphone, user_email=email)
+        
+        if MemberBasic.objects.filter(user_phone=newphone).exists():
+            return Response({'message': '新手機號已被使用，請更換手機號。'}, status=400)
+
+
+        # 檢查是否存在未使用的相同請求
+        existing_request = MemberVerify.objects.filter(
+            user=user,
+            verification_type='phone_change',
+            change_value=newphone,
+            code_used=False,
+            expires_at__gte=now()
+        ).first()
+
+        if existing_request:
+            return Response({'message': '已存在待驗證的修改手機號請求，請勿重複提交'}, status=400)
+
+        if user:
+             # 生成6位數驗證碼並創建新的驗證記錄
+            code = random.randint(100000, 999999)
+            MemberVerify.objects.create(
+                user=user,
+                verification_type='phone_change',
+                verification_code=code,
+                change_value=newphone,  # 記錄用戶請求修改手機時輸入的新手機號
+                code_used=False,
+                created_at=now(),
+                expires_at=now() + timedelta(days=1),   # 設置驗證碼過期時間
+            )
+
+            # 構建驗證連結
+            reset_link = request.build_absolute_uri(
+                reverse('member_api:reset_phone', args=[code])
+            )
+            print(f"Generated reset link: {reset_link}")
+
+            # 發送驗證郵件
+            send_mail(
+                subject='請求修改手機號',
+                message=f'請您點擊以下連結進行操作修改手機號：{reset_link}',
+                from_email='forworkjayjay@gmail.com',
+                recipient_list=[user.user_email],
+                fail_silently=False,
+            )
+
+        return Response(
+            {"message": "如果電子郵箱存在，您將會收到修改手機號連結~!"},
+            status=status.HTTP_200_OK
+        )
+    
+# 會員欲修改手機 2. 按下驗證連結後跳轉修改手機
+class ResetPhoneView(APIView):
+    def get(self, request, code):
+        # 驗證碼查詢邏輯
+        verify_code = MemberVerify.objects.filter(verification_code=code, code_used=False).first()
+        if not verify_code :
+            # 無效的驗證碼，重定向到前端
+            return HttpResponseRedirect(f"{settings.FRONTEND_URL}phone-verify/{code}?status=invalid")
+        
+        # 驗證碼過期檢查
+        if now() > verify_code.expires_at:
+                # 驗證碼已過期，重定向到前端
+                return HttpResponseRedirect(f"{settings.FRONTEND_URL}phone-verify/{code}?status=expired")
+
+        # 成功狀態
+        return HttpResponseRedirect(f"{settings.FRONTEND_URL}phone-verify/{code}?status=success")
+     
+    def post(self, request, code):
+        new_phone = request.data.get("new_phone")
+        verify_code = MemberVerify.objects.filter(verification_code=code, code_used=False).first()
+
+        if not verify_code:
+            return Response({"message": "無效的驗證碼"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if verify_code.change_value != new_phone:
+            return Response({'message': '新手機號與記錄不匹配。'}, status=400)
+        
+        if MemberBasic.objects.filter(user_phone=new_phone).exists():
+            return Response({'message': '該手機號已被註冊使用。'}, status=400)
+        
+        user = verify_code.user
+
+        # 更新手機號
+        user.user_phone = new_phone
+        user.updated_at = now()
+        user.save()
+
+        # 標記驗證碼為已使用
+        verify_code.code_used = True
+        verify_code.save()
+
+        # 手機號修改成功，重定向到前端登入頁面
+        return Response({"message": "手機號已成功修改，請重新登入"}, status=status.HTTP_200_OK)
+
+# 會員欲修改郵箱 1. 發送驗證信
+class SendEmailLinkView(APIView):
+    def get(self, request, *args, **kwargs):
+        return Response(
+            {"message": "不支持的請求方法，請使用 POST"},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
+    def post(self, request):
+        email = request.data.get("user_email")
+        newemail = request.data.get("new_email")
+
+        if not email or not newemail or not email:
+            return Response({"message": "請提供有效的電子郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if MemberBasic.objects.filter(user_email=newemail).exists():
+            return Response({'message': '該電子郵箱地址已被使用。'}, status=400)
+        
+        # 獲取對應用戶
+        user = MemberBasic.objects.filter(user_email=email).first()
+
+        # 檢查是否存在未使用的相同請求
+        existing_request = MemberVerify.objects.filter(
+            user=user,
+            verification_type='email_change',
+            change_value=newemail,
+            code_used=False,
+            expires_at__gte=now()
+        ).first()
+
+        # if existing_request:
+        #     return Response({'message': '已存在待驗證的修改郵箱請求，請勿重複提交'}, status=400)
+        
+        if user:
+             # 生成6位數驗證碼並創建新的驗證記錄
+            code = random.randint(100000, 999999)
+            verification = MemberVerify.objects.create(
+                user=user,
+                verification_type='email_change',
+                verification_code=code,
+                change_value=newemail,  # 記錄用戶請求修改郵箱時輸入的新郵箱
+                code_used=False,
+                created_at=now(),
+                expires_at=now() + timedelta(days=1),   # 設置驗證碼過期時間
+            )
+
+            # 構建驗證連結
+            reset_link = request.build_absolute_uri(
+                reverse('member_api:reset_email', args=[code])
+            )
+            print(f"Generated reset link: {reset_link}")
+
+            # 發送驗證郵件
+            send_mail(
+                subject='請求修改電子郵箱',
+                message=f'請您點擊以下連結進行操作修改電子郵箱：{reset_link}',
+                from_email='forworkjayjay@gmail.com',
+                recipient_list=[verification.change_value],
+                fail_silently=False,
+            )
+
+        return Response(
+            {"message": "如果新郵箱存在，您將會收到修改連接~!"},
+            status=status.HTTP_200_OK
+        )
+    
+# 會員欲修改郵箱2. 按下驗證連結後跳轉修改郵箱
+class ResetEmailView(APIView):
+    def get(self, request, code):
+        # 驗證碼查詢邏輯
+        verify_code = MemberVerify.objects.filter(verification_code=code, code_used=False).first()
+        if not verify_code :
+            # 無效的驗證碼，重定向到前端
+            return HttpResponseRedirect(f"{settings.FRONTEND_URL}email-verify/{code}?status=invalid")
+        
+        # 驗證碼過期檢查
+        if now() > verify_code.expires_at:
+                # 驗證碼已過期，重定向到前端
+                return HttpResponseRedirect(f"{settings.FRONTEND_URL}email-verify/{code}?status=expired")
+
+        # 成功狀態
+        return HttpResponseRedirect(f"{settings.FRONTEND_URL}email-verify/{code}?status=success")
+    
+    def post(self, request, code):
+        new_email = request.data.get("new_email")
+        verify_code = MemberVerify.objects.filter(verification_code=code, code_used=False).first()
+
+        if not verify_code:
+            return Response({"message": "無效的驗證碼"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if verify_code.change_value != new_email:
+            return Response({'message': '新郵箱與記錄不匹配。'}, status=400)
+        
+        if MemberBasic.objects.filter(user_email=new_email).exists():
+            return Response({'message': '該電子郵箱地址已被使用。'}, status=400)
+
+        user = verify_code.user
+        # 更新郵箱
+        user.user_email = new_email
+        user.updated_at = now()
+        user.save()
+
+        # 標記驗證碼為已使用
+        verify_code.code_used = True
+        verify_code.save()
+
+        # 郵箱修改成功，重定向到前端登入頁面
+        return Response({"message": "郵箱已成功修改，請重新登入"}, status=status.HTTP_200_OK)

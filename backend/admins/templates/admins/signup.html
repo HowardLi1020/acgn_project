@@ -33,27 +33,27 @@
                         <form class="auth-form auth-signup-form" method="POST" enctype="multipart/form-data" id="signupForm" action="{% url 'admins_api:signup' %}">  
                             {% csrf_token %}
                             <div class="email mb-3">
-                                <label class="sr-only" for="InputName">姓名</label>
-                                <input id="InputName" name="auth_username" type="text" class="form-control signup-name" placeholder="姓名*" required minlength="2" maxlength="10">
+                                <label class="sr-only" for="InputName">管理者名稱</label>
+                                <input id="InputName" name="auth_username" type="text" class="form-control signup-name" placeholder="管理者名稱" required minlength="2" maxlength="10">
                                 <small class="form-text text-muted">請輸入2-10個字符</small>
                             </div>
                             <div class="email mb-3">
                                 <label class="sr-only" for="InputEmail">電子郵箱</label>
-                                <input id="InputEmail" name="auth_useremail" type="email" class="form-control signup-email" placeholder="電子郵箱*" required>
+                                <input id="InputEmail" name="auth_useremail" type="email" class="form-control signup-email" placeholder="電子郵箱" required>
                                 <small class="form-text text-muted">請輸入有效的電子郵箱地址</small>
                             </div>
                             <div class="password mb-3">
                                 <label class="sr-only" for="InputPassword">密碼</label>
-                                <input id="InputPassword" name="password" type="password" class="form-control signup-password" placeholder="密碼*" required minlength="8">
+                                <input id="InputPassword" name="password" type="password" class="form-control signup-password" placeholder="密碼" required minlength="8">
                                 <small class="form-text text-muted">密碼至少需要8個字符，英文(不分大小寫)+數字</small>
                             </div>
                             <div class="password mb-3">
                                 <label class="sr-only" for="ConfirmPassword">確認密碼</label>
-                                <input id="ConfirmPassword" name="confirm_password" type="password" class="form-control signup-password" placeholder="確認密碼*" minlength="8" required>
+                                <input id="ConfirmPassword" name="confirm_password" type="password" class="form-control signup-password" placeholder="確認密碼" minlength="8" required>
                             </div>
                             <div id="passwordHelp" class="alert alert-warning" style="display: none;"></div>
                             <div class="text-center">
-                                <button type="submit" class="btn app-btn-primary w-100 theme-btn mx-auto" id="buttonSubmit">使用者註冊</button>
+                                <button type="submit" class="btn app-btn-primary w-100 theme-btn mx-auto" id="buttonSubmit">確認註冊</button>
                             </div>
                         </form><!--//auth-form-->
                         

@@ -47,6 +47,8 @@ urlpatterns = [
     
     # http://127.0.0.1:8000/users_api/verify-email/
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
+    # http://127.0.0.1:8000/users_api/resend-verify-email/
+    path('resend-verify-email/', views.resend_verify_email, name='resend_verify_email'),
 
     
     # http://127.0.0.1:8000/users_api/reset_email/

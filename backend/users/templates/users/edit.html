@@ -37,7 +37,7 @@
             <input type="password" class="form-control" name="userpassword" value="{{member.user_password}}" disabled>
         </div>
         <div class="mb-3">
-            <label for="vip_status" class="form-label">VIP 狀態</label>
+            <label for="vip_status" class="form-label">VIP 等級</label>
             <select class="form-control" name="vip_status" id="vip_status" disabled>
                 <option value="0" {% if member.vip_status == '0' %}selected{% endif %}>一般用户</option>
                 <option value="1" {% if member.vip_status == '1' %}selected{% endif %}>VIP 用户</option>
