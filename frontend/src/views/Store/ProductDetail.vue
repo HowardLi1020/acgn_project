@@ -54,17 +54,21 @@ const checkQuantity = () => {
 // 加入購物車
 const addToCart = async () => {
     try {
+        console.log('Product ID:', product.value.product_id);
+        console.log('Quantity:', quantity.value);
         const payload = {
             product_id: product.value.product_id,
             quantity: quantity.value,
         };
-        await storeAPI.post('/cart/add/', payload); // 刪除 response
+        console.log('Payload:', payload); // 打印傳遞的數據
+        await storeAPI.post('/cart_api/add/', payload);
         alert('商品已成功加入購物車！');
     } catch (error) {
         console.error('加入購物車失敗:', error.response || error);
         alert('加入購物車失敗，請稍後再試！');
     }
 };
+
 
 // 立即購買
 const buyNow = async () => {
@@ -73,7 +77,7 @@ const buyNow = async () => {
             product_id: product.value.product_id,
             quantity: quantity.value,
         };
-        await storeAPI.post('/cart/add/', payload);
+        await storeAPI.post('/cart_api/add/', payload);
         router.push('/shoppingcart'); // 跳轉到購物車頁面
     } catch (error) {
         console.error('立即購買失敗:', error);
