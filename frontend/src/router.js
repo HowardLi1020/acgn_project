@@ -152,9 +152,9 @@ const routes =[
 },
 
 {
-    path: '/cart',
-    component: CartView, // 可選，設置頁面標題
-    name: 'CartView',
+    path: '/shoppingcart',
+    name: 'ShoppingCart',
+    component: CartView,
 },
 
 // 以下為 Pages範例模板 連結
