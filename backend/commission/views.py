@@ -303,10 +303,10 @@ def ViewFn_need_delete(request, view_fn_need_id):
     return HttpResponseRedirect(referer_url)
 
 def ViewFn_publiccard_list(request):
-    # view_db_publiccard_info = DbPublicCard.objects.all()
+    # 獲取所有公開名片資料，並關聯到 MemberBasic
+    view_db_publiccard_info = DbPublicCardInfo.objects.select_related('member_basic').all()
+
     context = {
-        'ViewKey_DbPublicCard': DbPublicCard.objects.all()
-        # 'ViewKey_DbNeedInfo_need_id': view_db_need_info_id,
-        # 'ViewKey_DbNeedEdit_sketches': view_db_need_sketches,
+        'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
     }
     return render(request, 'commission/publiccard_list.html', context)

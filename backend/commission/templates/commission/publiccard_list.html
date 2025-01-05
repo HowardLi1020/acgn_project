@@ -107,50 +107,64 @@
     id="orders-table-tab"
     class="orders-table-tab app-nav-tabs nav shadow-sm flex-column flex-sm-row"
     >
+    
+    <a
+    class="flex-sm-fill text-sm-center nav-link"
+    id="orders-paid-tab"
+    data-status="公開"
+    >公開</a
+    >
+    <a
+    class="flex-sm-fill text-sm-center nav-link"
+    id="orders-paid-tab"
+    data-status="非公開"
+    >非公開</a
+    >
+    <a
+    class="flex-sm-fill text-sm-center nav-link"
+    id="orders-paid-tab"
+    data-status="未啟用"
+    >未啟用</a
+    >
     <a
     class="flex-sm-fill text-sm-center nav-link active"
     id="orders-all-tab"
     data-status="all"
     >所有名片</a
     >
-    <a
-    class="flex-sm-fill text-sm-center nav-link"
-    id="orders-paid-tab"
-    data-status="徵件中"
-    >公開</a
-    >
-    <a
-    class="flex-sm-fill text-sm-center nav-link"
-    id="orders-paid-tab"
-    data-status="徵件中"
-    >非公開</a
-    >
 </div>
 </div><!--//mb-3-->
 
 <!-- 名片列表 -->
 <div class="row g-4">
-    {% for HTML_publiccard in ViewKey_DbPublicCard %}
+    {% for HTML_publiccard in ViewKey_DbPublicCardInfo %}
     <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
         <a href="#file-link">
         <div class="app-card app-card-doc shadow-sm h-100">
             <!-- 名片橫幅 -->
-            <div class="app-card-thumb-holder p-3" style="background-image: url('{{ MEDIA_URL }}commission/publiccard/banner/banner_unknown.png'); background-size: cover; background-position: center;">
+            <div class="app-card-thumb-holder p-3" style="background-image: url('{{ MEDIA_URL }}commission/publiccard/banner/{% if HTML_publiccard.member_basic.user_gender == 'female' %}banner_female.png{% elif HTML_publiccard.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}'); background-size: cover; background-position: center;">
                 <!-- 使用者頭像 -->
-                    <img src="https://avatars.plurk.com/6948085-big1679512.jpg" alt="{{ViewKey_DbPublicCard.user_nickname}}的頭像" class="img-fluid rounded-circle" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                    <img src="https://avatars.plurk.com/6948085-big1679512.jpg" alt="{{HTML_publiccard.user_nickname}}的頭像" class="img-fluid rounded-circle" style="max-width: 100%; max-height: 100%; object-fit: cover;">
                 
-                <span class="badge bg-success">{{ViewKey_DbPublicCard.user_id}}</span>
+                <span class="badge {% if HTML_publiccard.card_status == '公開' %}bg-success{% elif HTML_publiccard.card_status == '非公開' %}bg-warning{% else %}bg-secondary{% endif %}">
+                    {{ HTML_publiccard.member_basic.user_id }}
+                </span>
                  <!-- <a class="app-card-link-mask" href="#file-link">123</a> -->
             </div>
             </a>
             <div class="app-card-body p-3 has-card-actions">
-                
-                <h4 class="app-doc-title truncate mb-0">{{ViewKey_DbPublicCard.user_nickname}}</h4>
+                <!-- 名片暱稱 (用戶暱稱) -->
+                <h4 class="app-doc-title truncate mb-0">
+                    {{HTML_publiccard.user_nickname}}
+                    {% if HTML_publiccard.user_nickname != HTML_publiccard.member_basic.user_nickname %}
+                        ({{HTML_publiccard.member_basic.user_nickname}})
+                    {% endif %}
+                </h4>
                 <div class="app-doc-meta">
                     <ul class="list-unstyled mb-0">
-                        <li><span class="app-doc-title truncate mb-0">{{ViewKey_DbPublicCard.user_introduction}}</span></li>
-                        <!-- <li><span class="text-muted">用戶ID:</span> 76</li> -->
-                        <li><span class="text-muted">最後更新:</span> {{ViewKey_DbPublicCard.last_update}}</li>
+                        <li><span class="app-doc-title truncate mb-0">{{ HTML_publiccard.user_introduction|default:"-" }}</span></li>
+                        <!-- <li><span class="text-muted">用戶ID:</span> {{HTML_publiccard.user_id}}</li> -->
+                        <li><span class="text-muted">最後更新:</span> {{HTML_publiccard.last_update}}</li>
                         <!-- <li><span class="text-muted">帳號暱稱:</span> </li> -->
                         
                     </ul>

@@ -166,6 +166,15 @@ INSERT INTO db_need_images (need_id, step, image_url) VALUES
 (17, 3, '17_sketch3.png'),
 (17, 4, '17_sketch4.png'),
 (17, 5, '17_sketch5.png');
+
+-- 5-3 公開名片表導入會員資料
+INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, user_introduction)
+SELECT 
+    user_id,
+    user_nickname,
+    user_avatar,
+    NULL -- 初始時用 NULL 填充 user_introduction
+FROM member_basic;
 SET FOREIGN_KEY_CHECKS = 1;
 
 --
