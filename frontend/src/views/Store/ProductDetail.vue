@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeAPI } from "../../utils/api";
+import { cartAPI } from '@/utils/api';
 import StarRating from "../../components/store/StarRating.vue";
 import ProductReviews from "../../components/store/ProductReviews.vue";
 import WishlistButton from "../../components/store/WishlistButton.vue";
@@ -56,18 +57,22 @@ const addToCart = async () => {
     try {
         console.log('Product ID:', product.value.product_id);
         console.log('Quantity:', quantity.value);
+
         const payload = {
             product_id: product.value.product_id,
             quantity: quantity.value,
         };
         console.log('Payload:', payload); // 打印傳遞的數據
-        await storeAPI.post('/cart_api/add/', payload);
+
+        // 調用 cartAPI.addCartItem 添加商品到購物車
+        await cartAPI.addCartItem(payload);
         alert('商品已成功加入購物車！');
     } catch (error) {
-        console.error('加入購物車失敗:', error.response || error);
+        console.error('加入購物車失敗:', error.response?.data || error.message);
         alert('加入購物車失敗，請稍後再試！');
     }
 };
+
 
 
 // 立即購買
@@ -77,10 +82,14 @@ const buyNow = async () => {
             product_id: product.value.product_id,
             quantity: quantity.value,
         };
-        await storeAPI.post('/cart_api/add/', payload);
-        router.push('/shoppingcart'); // 跳轉到購物車頁面
+
+        // 調用 cartAPI.addCartItem 添加商品到購物車
+        await cartAPI.addCartItem(payload);
+
+        // 跳轉到購物車頁面
+        router.push('/shoppingcart');
     } catch (error) {
-        console.error('立即購買失敗:', error);
+        console.error('立即購買失敗:', error.response?.data || error.message);
         alert('立即購買失敗，請稍後再試！');
     }
 };
