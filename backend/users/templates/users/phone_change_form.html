@@ -42,7 +42,7 @@
 								<input type="hidden" id="emailInput" name="email" value="{{ email }}">
 								<input type="hidden" id="codeInput" name="verification_code" value="{{ verification_code }}"> 
 								<label class="sr-only" for="InputPhone">新手機：</label>
-								<input id="InputPhone" name="phone" type="tel" class="form-control login-phone" placeholder="新手機" required>
+								<input id="InputPhone" name="phone" type="tel" class="form-control login-phone" placeholder="新手機" maxlength="10" required>
 								<label class="sr-only" for="PasswordCheck">密碼：</label>
 								<input id="PasswordCheck" name="password" type="password" class="form-control login-password" placeholder="密碼" minlength="8" required>
 
@@ -127,7 +127,7 @@
 				if (data.status === 'success') {
 					setTimeout(() => {
 						window.location.href = '{% url "users:login" %}';
-					}, 5000);
+					}, 3000);
 				}
 			} catch (error) {
 				console.error('Error:', error);

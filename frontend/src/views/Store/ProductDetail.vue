@@ -1,12 +1,14 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { storeAPI } from "../../utils/api";
+import { cartAPI } from '@/utils/api';
 import StarRating from "../../components/store/StarRating.vue";
 import ProductReviews from "../../components/store/ProductReviews.vue";
 import WishlistButton from "../../components/store/WishlistButton.vue";
 import ProductRecommendations from "../../components/store/ProductRecommendations.vue";
 
+const router = useRouter();
 const route = useRoute();
 const product = ref({});
 const loading = ref(true);
@@ -48,6 +50,48 @@ const checkQuantity = () => {
     }
     // 確保是整數
     quantity.value = Math.floor(quantity.value);
+};
+
+// 加入購物車
+const addToCart = async () => {
+    try {
+        console.log('Product ID:', product.value.product_id);
+        console.log('Quantity:', quantity.value);
+
+        const payload = {
+            product_id: product.value.product_id,
+            quantity: quantity.value,
+        };
+        console.log('Payload:', payload); // 打印傳遞的數據
+
+        // 調用 cartAPI.addCartItem 添加商品到購物車
+        await cartAPI.addCartItem(payload);
+        alert('商品已成功加入購物車！');
+    } catch (error) {
+        console.error('加入購物車失敗:', error.response?.data || error.message);
+        alert('加入購物車失敗，請稍後再試！');
+    }
+};
+
+
+
+// 立即購買
+const buyNow = async () => {
+    try {
+        const payload = {
+            product_id: product.value.product_id,
+            quantity: quantity.value,
+        };
+
+        // 調用 cartAPI.addCartItem 添加商品到購物車
+        await cartAPI.addCartItem(payload);
+
+        // 跳轉到購物車頁面
+        router.push('/shoppingcart');
+    } catch (error) {
+        console.error('立即購買失敗:', error.response?.data || error.message);
+        alert('立即購買失敗，請稍後再試！');
+    }
 };
 
 // 获取当前主图 URL 的函数
@@ -154,8 +198,8 @@ onMounted(async () => {
                 </div>
 
                 <div class="actions">
-                    <button class="add-to-cart">加入購物車</button>
-                    <button class="buy-now">立即購買</button>
+                    <button class="add-to-cart" @click="addToCart">加入購物車</button>
+                    <button class="buy-now" @click="buyNow">立即購買</button>
                     <WishlistButton :product-id="String(product.product_id)" />
                 </div>
             </div>

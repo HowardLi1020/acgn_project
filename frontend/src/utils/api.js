@@ -164,13 +164,13 @@ export const storeAPI = {
 // Cart API
 export const cartAPI = {
     // 獲取購物車內容
-    getCartItems: () => api.get('/cart/'),
+    getCartItems: () => api.get('/cart_api/'),
     // 添加商品到購物車
-    addCartItem: (data) => api.post('/cart/', data),
+    addCartItem: (data) => api.post('/cart_api/add/', data),
     // 更新購物車內商品數量
-    updateCartItem: (cartItemId, data) => api.put(`/cart/${cartItemId}/`, data),
+    updateCartItem: (cartItemId, data) => api.put(`/cart_api/update/${cartItemId}/`, data),
     // 刪除購物車中的商品
-    deleteCartItem: (cartItemId) => api.delete(`/cart/${cartItemId}/`),
+    deleteCartItem: (cartItemId) => api.delete(`/cart_api/delete/${cartItemId}/`),
 };
 
 // 文件上傳 API

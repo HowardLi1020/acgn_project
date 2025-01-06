@@ -83,16 +83,16 @@
                         <div class="item border-bottom py-3">
                             <div class="row justify-content-between align-items-center">
                                 <div class="col-auto">
-                                    <div class="item-label mb-2"><strong>手機號碼</strong></div>
-                                    <div class="item-data">{{ member.user_phone }}</div>
+                                    <div class="item-label mb-2"><strong>VIP 等級</strong></div>
+                                    <div class="item-data">{{ member.vip_status }}</div>
                                 </div><!--//col-->
                             </div><!--//row-->
                         </div><!--//item-->
                         <div class="item border-bottom py-3">
                             <div class="row justify-content-between align-items-center">
                                 <div class="col-auto">
-                                    <div class="item-label"><strong>電子郵箱</strong></div>
-                                    <div class="item-data">{{ member.user_email }}</div>
+                                    <div class="item-label"><strong>個人暱稱</strong></div>
+                                    <div class="item-data">{{ member.user_nickname }}</div>
                                 </div><!--//col-->
                             </div><!--//row-->
                         </div><!--//item-->
@@ -139,7 +139,7 @@
                             <div class="item border-bottom py-3">
                                 <div class="row justify-content-between align-items-center">
                                     <div class="col-auto">
-                                        <div class="item-label"><strong>註冊電子郵箱</strong></div>
+                                        <div class="item-label"><strong>註冊郵箱</strong></div>
                                         <div class="item-data">{{ member.user_email }}</div>
                                     </div><!--//col-->
                                 </div><!--//row-->
@@ -148,7 +148,7 @@
                                 <div class="row justify-content-between align-items-center">
                                     <div class="col-auto">
                                         <div class="item-label"><strong>用戶密碼</strong></div>
-                                        <div class="item-data">********</div>
+                                        <div class="item-data">**********</div>
                                     </div><!--//col-->
                                 </div><!--//row-->
                             </div><!--//item-->
@@ -193,7 +193,7 @@
                             </form>
                         </div><!--//app-card-body-->
                     <div class="app-card-footer p-4 mt-auto">
-                       <a class="btn app-btn-secondary" href="{% url 'users_api:send_reset_password' %}?email={{ member.user_email }}" id="resetPasswordBtn">重設密碼</a>
+                       <a class="btn app-btn-secondary" href="{% url 'users_api:send_reset_password' %}" id="resetPasswordBtn" data-email="{{ member.user_email }}" data-userid="{{ member.user_id }}">重設密碼</a>
                     </div><!--//app-card-footer-->
                    
                 </div><!--//app-card-->
@@ -320,8 +320,21 @@
         const confirmed = confirm('即將發送-忘記密碼驗證連結，請提醒用戶留意郵箱。~');
         if (confirmed) {
             const url = this.getAttribute('href');
+            const email = this.dataset.email;
+            const userid = this.dataset.userid;
             try {
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        userid: userid
+                    })
+                });
+
                 const data = await response.json();
                 alert(data.message); 
             } catch (error) {

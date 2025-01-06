@@ -7,55 +7,17 @@ from django.utils.timezone import now
 # from django.contrib.auth import authenticate
 # from rest_framework_simplejwt.tokens import RefreshToken
 
+# 1. 用戶資料序列化
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberBasic
-        fields = '__all__'
-        # fields = ['user_id', 'user_name', 'user_email', 'user_phone', 'user_nickname', 'user_gender', 'user_birth', 'user_address', 'vip_status', 'user_avatar']
+        # fields = '__all__'
+        fields = ['user_id', 'user_name', 'user_email', 'user_phone', 'user_nickname', 'user_gender', 'user_birth', 'user_address', 'vip_status', 'user_avatar']
 
     def validate_user_password(self, value):
         return make_password(value)
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MemberIndextype
-        fields = '__all__'
-
-# 尚未使用 MemberPrivacy
-class PrivacySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MemberPrivacy
-        fields = '__all__'
-
-
-# 尚未使用 Coupon
-class CouponSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Coupons
-        fields = '__all__'
-
-# 尚未使用 第三方登入
-class ThirdLoginSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MemberLogin
-        fields = '__all__'
-
-# 尚未使用 Orderdetails
-class OrderdetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Orders
-        fields = '__all__'
-
-# 尚未使用 MemberPhotos
-class PhotoSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = MemberPhotos
-        fields = '__all__'
-
-
-
-# 登入
+# 2. 登入資料序列化
 class LoginSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(write_only=True)
     user_password = serializers.CharField(
@@ -95,7 +57,7 @@ class LoginSerializer(serializers.ModelSerializer):
         
         raise serializers.ValidationError('必須提供email和密碼')
 
-# 註冊
+# 3. 註冊資料序列化
 class RegisterSerializer(serializers.ModelSerializer):
     user_password = serializers.CharField(
         write_only=True, 
@@ -153,8 +115,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         return user
-    
-# 驗證 MemberVerify
+
+# 4. 驗證資料序列化
 class VerifySerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberVerify
@@ -169,6 +131,45 @@ class VerifySerializer(serializers.ModelSerializer):
         ('email_change', 'email_change'),
     ])
 
-
+# 5. 使用者頭像資料序列化
 class UploadAvatarSerializer(serializers.Serializer):
     avatar = serializers.ImageField(required=True)
+
+
+
+# 尚未使用 MemberIndextype
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MemberIndextype
+        fields = '__all__'
+
+# 尚未使用 MemberPrivacy
+class PrivacySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MemberPrivacy
+        fields = '__all__'
+
+# 尚未使用 Coupon
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupons
+        fields = '__all__'
+
+# 尚未使用 第三方登入
+class ThirdLoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MemberLogin
+        fields = '__all__'
+
+# 尚未使用 Orderdetails
+class OrderdetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Orders
+        fields = '__all__'
+
+# 尚未使用 MemberPhotos
+class PhotoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = MemberPhotos
+        fields = '__all__'

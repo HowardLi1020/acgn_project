@@ -10,7 +10,7 @@ from django.core.mail import EmailMessage
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.urls import reverse
-from django.utils import timezone
+from django.utils.timezone import now, timedelta
 from users.models import MemberBasic, MemberVerify, MemberPrivacy, MemberPhotos
 from django.utils.crypto import get_random_string
 import random
@@ -18,6 +18,8 @@ from django.db.models import Q
 import json
 import re
 from django.db import transaction
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 
 # Create your views here.
@@ -43,7 +45,7 @@ def search(request):
 
     return JsonResponse(result, safe=False)
 
-# 1.2 後台-用戶個人資料頁面(總覽)  未完成!!!
+# 1.2 後台-用戶個人資料頁面(總覽)  支付設定    not yet
 def personal(request):
     if request.method == 'POST':
         data = json.loads(request.body)  # 解析請求的 JSON
@@ -52,6 +54,7 @@ def personal(request):
 
         member = MemberBasic.objects.get(user_id=id)
         member.user_password = password  # 修改密碼
+        member.updated_at = now()
         member.save()  # 保存到資料庫
             # return render(request, "users/personal.html", {"member": member})
         return JsonResponse({"success": True, "message": "修改成功"})
@@ -69,6 +72,7 @@ def privacy_setting(request):
             member_privacy, created = MemberPrivacy.objects.get_or_create(user_id=user_id)
             member_privacy.account_verify = account_verify
             member_privacy.activity_checked = activity_checked
+            member_privacy.updated_at = now()
             member_privacy.save()
 
             # 獲取最新的 MemberBasic 對象
@@ -85,7 +89,7 @@ def privacy_setting(request):
         return JsonResponse({'status': 'error','message': str(e)}, status=500)
     return JsonResponse({"success": False, "message": "請求錯誤"}, status=400)
 
-# 2. 後台-手動新增用戶(註冊)  跟 signup 類似   OKOK!!
+# 2. 後台-手動新增用戶(註冊)  跟 前台-signup 類似   OKOK!!
 def register(request):
     if request.method == "POST":
         name = request.POST.get("name","GUEST")
@@ -132,8 +136,6 @@ def register(request):
             fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'avatars'))  # 儲存到 avatars 子目錄
             file_name = f"avatars/{fs.save(uploaded_file.name, uploaded_file)}"
             
-
-
             # 將表單傳過來的資料寫進資料庫
         try:
             member = MemberBasic.objects.create(
@@ -146,24 +148,20 @@ def register(request):
                 user_birth = birth,
                 user_avatar = file_name,
                 vip_status = vip_status,
-                created_at = timezone.now()
+                created_at = now()
             )
 
             # 創建 pohtos進資料庫
             MemberPhotos.objects.create(
                 user=member,  # 根據 member 關聯檢查
-                created_at = timezone.now(),
+                created_at = now(),
                 photo_url = member.user_avatar.url if member.user_avatar and member.user_avatar.name else None
             )
-                # defaults={
-                #     "photo_url": member.user_avatar.url if member.user_avatar and member.user_avatar.name else None,
-                #     "created_at" : timezone.now()
-                # })
 
             # 產生隱私設定-預設為未驗證
             MemberPrivacy.objects.create(
                 user=member,
-                created_at=timezone.now(),
+                created_at=now(),
                 email_verified=False,     # 郵箱驗證預設為未驗證
                 account_verify=False      # 初始帳號預設為未驗證
             )
@@ -172,11 +170,11 @@ def register(request):
             verification_token = get_random_string(16)
             MemberVerify.objects.create(
                 user=member,
-                change_value=None,
+                change_value=email,
                 verification_type='registration',
                 verification_token=verification_token,
-                created_at=timezone.now(),
-                expires_at=timezone.now() + timezone.timedelta(days=1),
+                created_at=now(),
+                expires_at=now() + timedelta(days=1),
                 token_used=False    # 初始驗證碼預設為未使用
             )
 
@@ -259,19 +257,20 @@ def send_reset_password(request):
                     if member.user_email != email:
                         return JsonResponse({'status': 'error', 'message': '用戶ID與郵箱不匹配'})
                     
-                    # # 刪除該信箱的所有舊驗證記錄
-                    # MemberVerify.objects.filter(user=member).delete()
+                    member.user_password = make_password(data.get('password'))
+                    member.updated_at = now()
+                    member.save()
                     
                     # 創建新的驗證記錄
                     verify_code = random.randint(100000, 999999)
-                    expiration_time = timezone.now() + timezone.timedelta(hours=24)
+                    expiration_time = now() + timedelta(hours=24)
                     
                     MemberVerify.objects.create(
                         user=member,
                         verification_type='password_change',
                         verification_code=verify_code,
                         change_value=email,
-                        created_at=timezone.now(),
+                        created_at=now(),
                         expires_at=expiration_time,
                         code_used=False
                     )
@@ -301,24 +300,17 @@ def request_verification(request):
             
             # 創建新的驗證記錄
             verify_code = random.randint(100000, 999999)
-            expiration_time = timezone.now() + timezone.timedelta(hours=24)
+            expiration_time = now() + timedelta(hours=24)
             
             MemberVerify.objects.create(
                 user=member,
                 verification_type='password_change',
                 verification_code=verify_code,
                 change_value=email_address,
-                created_at=timezone.now(),
+                created_at=now(),
                 expires_at=expiration_time,
                 code_used=False
             )
-            
-            # MemberVerify.objects.create(
-            #     user_email=email_address,
-            #     verification_code=verify_code,
-            #     expires_at=expiration_time,
-            #     code_used=False
-            # )
             
             send_verification_email(email_address, verify_code)
             return JsonResponse({"message": "重置密碼-驗證信已發送，請留意註冊郵箱。"}, status=200)
@@ -407,11 +399,12 @@ def reset_confirm(request):
                 user = verification.user
                 with transaction.atomic():
                     user.user_password = make_password(new_password)
+                    user.updated_at = now()
                     user.save()
                     verification.code_used = True
                     verification.save()
             
-                return JsonResponse({'status': 'success', 'message': '密碼已更新，請使用新密碼登入。'})
+                return JsonResponse({'status': 'success', 'message': '密碼已更新，稍後請使用新密碼登入。'})
             
             except MemberBasic.DoesNotExist:
                 return JsonResponse({'status': 'error', 'message': '用戶不存在。'})
@@ -427,6 +420,7 @@ def reset_confirm(request):
             'error': '發生錯誤，請稍後再試。',
             'frontend_url': settings.FRONTEND_URL,
         })
+
 
 # 後台-用戶"修改信箱"  1.發送驗證信  OKOK!!
 def reset_email(request):
@@ -446,7 +440,7 @@ def reset_email(request):
 
             # 生成驗證碼
             verification_token = get_random_string(length=16)
-            expiration_time = timezone.now() + timezone.timedelta(hours=24)
+            expiration_time = now() + timedelta(hours=24)
 
             # 保存驗證碼(24H)
             MemberVerify.objects.create(
@@ -454,16 +448,10 @@ def reset_email(request):
                 verification_type='email_change',
                 verification_token=verification_token,
                 change_value=email,
-                created_at=timezone.now(),
+                created_at=now(),
                 expires_at=expiration_time,
                 token_used=False
             )
-            # MemberVerify.objects.create(
-            #     user=member,
-            #     verification_token=verification_token,
-            #     expires_at=timezone.now() + timezone.timedelta(hours=24),
-            #     token_used=False
-            # )
 
             # 構建驗證 URL
             verification_url = request.build_absolute_uri(
@@ -486,7 +474,7 @@ def reset_email(request):
 def reconfirm_email(request, token=None):
     try:
         verification = MemberVerify.objects.get(verification_token=token, token_used=False)
-        if timezone.now() > verification.expires_at:
+        if now() > verification.expires_at:
             return render(request, 'users/email_reconfirm.html', {
                 'error': '驗證連結已過期，請重新申請修改郵箱。',
                 'frontend_url': settings.FRONTEND_URL
@@ -509,10 +497,12 @@ def reconfirm_email(request, token=None):
                 with transaction.atomic():
                     # 更新 MemberBasic 的郵箱
                     user.user_email = new_email
+                    user.updated_at = now()
                     user.save()
 
-                    # 更新 MemberVerify 的 token_used
+                    # 更新 MemberVerify 的 token_used email
                     verification.token_used = True
+                    verification.change_value = new_email
                     verification.save()
 
                 return JsonResponse({'status': 'success', 'message': '郵箱修改成功，3秒後跳轉登入頁面。'})
@@ -534,6 +524,7 @@ def reconfirm_email(request, token=None):
         }
         return render(request, 'users/email_change.html', context)
     
+
 # 後台-用戶"修改手機"  1.發送驗證信  OKOK!!
 def reset_phone(request):
     if request.method == 'POST':
@@ -552,7 +543,7 @@ def reset_phone(request):
 
             # 生成驗證碼
             verification_token = get_random_string(length=16)
-            expiration_time = timezone.now() + timezone.timedelta(hours=24)
+            expiration_time = now() + timedelta(hours=24)
 
             # 保存驗證碼(24H)
             MemberVerify.objects.create(
@@ -560,7 +551,7 @@ def reset_phone(request):
                 verification_type='phone_change',
                 verification_token=verification_token,
                 change_value=email,
-                created_at=timezone.now(),
+                created_at=now(),
                 expires_at=expiration_time,
                 token_used=False
             )
@@ -586,7 +577,7 @@ def reset_phone(request):
 def reconfirm_phone(request, token=None):
     try:
         verification = MemberVerify.objects.get(verification_token=token, token_used=False)
-        if timezone.now() > verification.expires_at:
+        if now() > verification.expires_at:
             return render(request, 'users/phone_reconfirm.html', {
                 'error': '驗證連結已過期，請重新申請修改手機。',
                 'frontend_url': settings.FRONTEND_URL
@@ -605,19 +596,13 @@ def reconfirm_phone(request, token=None):
             new_phone = data.get('newPhone')
             password = data.get('password')
 
-        # if request.method == 'POST':
-        #     try:
-        #         data = json.loads(request.body)
-        #     except json.JSONDecodeError:
-        #         return JsonResponse({'status': 'error', 'message': '請求格式不正確，應為 JSON。'})
-            
-        #     data = json.loads(request.body)
-        #     new_phone = data.get('newPhone')
-        #     password = data.get('password')
-
             # 添加手機號碼格式驗證
             if not re.match(r'^09\d{8}$', new_phone):
                 return JsonResponse({'status': 'error', 'message': '請輸入有效的手機號碼格式。'})
+            
+            # 添加新手機號是否已存在於資料庫中
+            if MemberBasic.objects.filter(user_phone=new_phone).exists():
+                return JsonResponse({'status': 'error', 'message': '新手機號已被其他用戶使用。'})
 
             try:
                 user = verification.user
@@ -630,6 +615,7 @@ def reconfirm_phone(request, token=None):
                 with transaction.atomic():
                     # 更新 MemberBasic 的手機
                     user.user_phone = new_phone
+                    user.updated_at = now()
                     user.save()
                 
                     verification.token_used = True
@@ -683,10 +669,12 @@ def signup(request):
         
         # 如果沒有上傳文件，使用默認頭像
         if not uploaded_file:
-            file_name = "default.png"
+            file_name = "avatars/default.png"   # 修改為 avatars 路徑
         else:
-            fs = FileSystemStorage()
-            file_name = fs.save(uploaded_file.name, uploaded_file)
+            # fs = FileSystemStorage()
+            # file_name = fs.save(uploaded_file.name, uploaded_file)
+            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'avatars'))  # 儲存到 avatars 子目錄
+            file_name = f"avatars/{fs.save(uploaded_file.name, uploaded_file)}"
 
         try:
             member = MemberBasic.objects.create(
@@ -696,12 +684,12 @@ def signup(request):
                 user_password=make_password(password),
                 user_avatar = file_name,
                 vip_status = vip_status,
-                created_at=timezone.now(),
+                created_at=now(),
             )
 
             MemberPrivacy.objects.create(
                 user=member,
-                created_at=timezone.now(),
+                created_at=now(),
                 email_verified=False,     # 郵箱驗證預設為未驗證
                 account_verify=False      # 初始帳號預設為未驗證
             )
@@ -713,8 +701,8 @@ def signup(request):
                 verification_type='registration',
                 change_value=email,
                 verification_token=verification_token,
-                created_at=timezone.now(),
-                expires_at=timezone.now() + timezone.timedelta(days=1),
+                created_at=now(),
+                expires_at=now() + timedelta(days=1),
                 token_used=False # 初始驗證碼預設為未使用
             )
 
@@ -739,35 +727,79 @@ def signup(request):
 # 前後台-首次註冊(驗證帳號郵箱)
 def verify_email(request, token):
     try:
-        verification = MemberVerify.objects.get(verification_token=token, token_used=False)
-        if timezone.now() > verification.expires_at:
-            # messages.error(request, "驗證連結已過期，請重新註冊。")
-            # return redirect('users:signup')
+        verification = MemberVerify.objects.filter(verification_token=token, token_used=False).first()
+        if not verification :
+            # 無效的驗證碼，重定向到前端
+            return HttpResponseRedirect(f"{settings.FRONTEND_URL}verify-email/{token}?status=invalid")
+        
+        if now() > verification.expires_at:
+            # 過期 刪除用戶及相關資料
+            member = verification.user
+            member.delete()
+            verification.delete()  # 刪除驗證記錄
+
             # 驗證連結過期，重定向到前端註冊頁面
-            # return HttpResponseRedirect(f"{settings.FRONTEND_URL}signup?error=expired")
-            return HttpResponseRedirect(
-                    f"{settings.FRONTEND_URL}signup?message=驗證連結已過期，請重新註冊。&type=error"
-                )
+            return HttpResponseRedirect(f"{settings.FRONTEND_URL}verify-email/{token}?status=expired")
         else:
             member = verification.user
             member_privacy = MemberPrivacy.objects.get(user=member)
             member_privacy.account_verify = True
             member_privacy.email_verified = True
+            member_privacy.updated_at = now()
             member_privacy.save()
 
             verification.token_used = True
             verification.save()
 
-            return HttpResponseRedirect(
-                f"{settings.FRONTEND_URL}login?message=帳號已成功驗證，您現在可以登入了。&type=success"
-            )
+            return HttpResponseRedirect(f"{settings.FRONTEND_URL}verify-email/{token}?status=success")
     except MemberVerify.DoesNotExist:
-        return HttpResponseRedirect(
-            f"{settings.FRONTEND_URL}signup?message=無效的驗證連結，請重新嘗試。&type=error"
-        )
+        return HttpResponseRedirect(f"{settings.FRONTEND_URL}verify-email/{token}?status=invalid")
+
+# 前後台-首次註冊(重新發送驗證郵件)  not yet
+def resend_verify_email(request):
+    if request.method == 'POST':
+        try:
+            # 解析請求的 JSON 資料
+            data = json.loads(request.body)
+            user_email = data.get('user_email')
+
+            # 驗證 email 是否提供
+            if not user_email:
+                return JsonResponse({"message": "未提供電子郵件。", "type": "error"}, status=400)
+
+            # 確認用戶是否存在
+            try:
+                user = MemberBasic.objects.get(user_email=user_email)
+            except MemberBasic.DoesNotExist:
+                return JsonResponse({"message": "用戶不存在。", "type": "error"}, status=404)
+
+            # 建立新的驗證記錄
+            verification = MemberVerify.objects.create(
+                user=user,
+                verification_token=get_random_string(32),
+                created_at=now(),
+                expires_at=now() + timedelta(hours=24),  # 新的有效期限
+                token_used=False,
+            )
+
+            # 發送驗證信
+            send_mail(
+                '重新驗證您的帳號',
+                f"請點擊以下連結完成驗證：{settings.FRONTEND_URL}/verify-email/{verification.verification_token}/",
+                settings.DEFAULT_FROM_EMAIL,
+                [user_email],
+            )
+
+            return JsonResponse({"message": "驗證信已重新發送。", "type": "success"})
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "無效的請求格式。", "type": "error"}, status=400)
+        except Exception as e:
+            return JsonResponse({"message": f"發送驗證信時發生錯誤：{str(e)}", "type": "error"}, status=500)
+    else:
+        return JsonResponse({"message": "僅支持 POST 請求。", "type": "error"}, status=405)
+
 
 # 前台-用戶"修改信箱" 1.發送驗證信
-@csrf_exempt
 def email_change(request):
     if request.method == 'POST':
         try:
@@ -781,8 +813,16 @@ def email_change(request):
         if not new_email or not old_email:
             return JsonResponse({'message': '請輸入有效的電子郵箱地址。'}, status=400)
         
+        # 驗證新郵箱格式
+        try:
+            validate_email(new_email)
+        except ValidationError:
+            return JsonResponse({'message': '新電子郵箱地址格式無效。'}, status=400)
+        
         if MemberBasic.objects.filter(user_email=old_email).exists():
             member = MemberBasic.objects.get(user_email=old_email)
+        else:
+            return JsonResponse({'message': '舊電子郵箱地址不存在。'}, status=400)
         
         if MemberBasic.objects.filter(user_email=new_email).exists():
             return JsonResponse({'message': '該電子郵箱地址已被使用。'}, status=400)
@@ -796,11 +836,14 @@ def email_change(request):
         # 保存驗證信息
         MemberVerify.objects.create(
             user=member,
-            user_email=old_email,
+            change_value=new_email,
+            verification_type='email_change',
             verification_token=verification_token,
             verification_code=verification_code,  # 保存驗證碼
-            expires_at=timezone.now() + timezone.timedelta(hours=24),
-            token_used=False
+            created_at=now(),
+            expires_at=now() + timedelta(hours=24),
+            token_used=False,
+            code_used=False
         )
         
         # 構建驗證 URL
@@ -813,87 +856,159 @@ def email_change(request):
         message = f'請點擊以下連結來修改您的電子郵箱地址：\n\n{verification_url}\n\n如果您沒有請求修改電子郵箱，請忽略此郵件。\n\n您的驗證碼是：{verification_code}'
         send_mail(subject, message, 'forworkjayjay@gmail.com', [new_email])
         
-        return JsonResponse({'message': '驗證信已發送到您的新郵箱，請查收。'}, status=200)
+        return JsonResponse({'status': 'success','message': '驗證信已發送到您的新郵箱，請查收。'}, status=200)
     
-    return JsonResponse({'message': '不支援的請求方法'}, status=405)
+    return JsonResponse({'status': 'error', 'message': '不支援的請求方法。'}, status=405)
 
 # 前台-用戶"修改信箱" 2.用戶輸入驗證碼 進入修改郵箱頁面
 def email_change_confirm(request, token):
     try:
         verification = MemberVerify.objects.get(verification_token=token, token_used=False)
-        if timezone.now() > verification.expires_at:
-            return render(request, 'users/email_change_confirm.html', {'error': '驗證連結已過期，請重新申請修改郵箱。'})
+
+        if now() > verification.expires_at:
+            return render(request, 'member/email_change_confirm.html', {'error': '驗證連結已過期，請重新申請修改郵箱。'})
+            # return JsonResponse({
+            #     'status': 'error',
+            #     'message': '驗證連結已過期，請重新申請修改郵箱。',
+            #     'redirect_url': f"{settings.FRONTEND_URL}email-change"
+            # })
         
-        old_email = verification.user_email 
+        if request.method == 'GET':
+            # 返回驗證頁面的前端 URL 和相關信息
+            return render(request, 'users/email_change_confirm.html', {'token': token})
+            # return JsonResponse({
+            #     'status': 'success',
+            #     'message': '驗證連結有效，請輸入驗證碼。',
+            #     'redirect_url': f"{settings.FRONTEND_URL}email-verify?token={token}"
+            # })
 
         if request.method == 'POST':
-            data = json.loads(request.body)
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 'error', 'message': '請求格式無效。'}, status=400)
+            
             verification_code = data.get('verification_code')  # 接收用戶輸入的驗證碼
             
             # 檢查驗證碼是否正確
             if verification_code != verification.verification_code:
                 return JsonResponse({'status': 'error', 'message': '驗證碼錯誤。'})
-
+                # return JsonResponse({
+                #     'status': 'error', 
+                #     'message': '驗證碼錯誤,請再次確認。',
+                #     'stay_on_page': True  # 停留在當前頁面
+                #     }, status=400)
             
             # 驗證碼正確，返回修改信箱的頁面 URL
             return JsonResponse({
                 'status': 'success',
-                'message': '驗證碼正確，請進入修改郵箱頁面。',
+                'message': '驗證碼正確，即將進入修改郵箱頁面。',
                 'redirect_url': reverse('users_api:email_change_form', args=[verification.verification_code])  # 返回修改信箱的 URL
+                # 'redirect_url': f"{settings.FRONTEND_URL}email-reset"
             })
         
-        return render(request, 'users/email_change_confirm.html', {'token': token})
+        # 非 POST 請求的處理
+        return JsonResponse({'status': 'error', 'message': '不支援的請求方法。'}, status=405)
+    
     except MemberVerify.DoesNotExist:
+        # 當驗證記錄不存在或已被使用
         return JsonResponse({'status': 'error', 'message': '無效的驗證連結。'})
+        # return JsonResponse({
+        #     'status': 'error',
+        #     'message': '無效的驗證連結，請重新申請修改郵箱。',
+        #     'redirect_url': f"{settings.FRONTEND_URL}email-change"
+        # }, status=404)
 
 # 前台-用戶"修改信箱" 3.更新驗證碼狀態 並於輸入新郵箱.密碼 更新資料庫
 def email_change_form(request, code):
     try:
         verification = MemberVerify.objects.get(verification_code=code, code_used=False)
-        if timezone.now() > verification.expires_at:
-            return render(request, 'users/email_change_confirm.html', {'error': '驗證連結已過期，請重新申請修改郵箱。'})
+        if now() > verification.expires_at:
+            return render(request, 'member/email_change_confirm.html', {'error': '驗證連結已過期，請重新申請修改郵箱。'})
+            # return JsonResponse({
+            #     'status': 'error',
+            #     'message': '驗證連結已過期，請重新申請修改郵箱。',
+            #     'redirect_url': f"{settings.FRONTEND_URL}email-change"
+            # })
         
-        old_email = verification.user_email 
+        user_id = verification.user.user_id
 
         if request.method == 'POST':
-            data = json.loads(request.body)
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 'error', 'message': '請求格式無效。'}, status=400)
+            
             new_email = data.get('email')
             password = data.get('password')
             verification_code = data.get('verification_code')  # 接收用戶輸入的驗證碼
             
             # 檢查驗證碼是否正確
             if verification_code != verification.verification_code:
-                return JsonResponse({'status': 'error', 'message': '驗證碼錯誤。'})
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '驗證碼錯誤,請再次確認。',
+                    'stay_on_page': True  # 停留在當前頁面
+                    }, status=400)
+            
+            # 檢查新郵箱是否已被使用
+            if new_email != verification.change_value:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '新郵箱與輸入不相符，請再次確認。',
+                    'stay_on_page': True  # 停留在當前頁面
+                    }, status=400)
             
             try:
-                user = MemberBasic.objects.get(user_email=old_email)
+                user = MemberBasic.objects.get(user_id=user_id)
                 if not check_password(password, user.user_password):
-                    return JsonResponse({'status': 'error', 'message': '密碼錯誤。'})
+                    return JsonResponse({'status': 'error', 'message': '密碼錯誤。'}, status=401)
                 
                 # 更新用戶郵箱
                 user.user_email = new_email
+                user.updated_at = now()
                 user.save()
-                
-                # 更新相關表的郵箱
-                MemberPrivacy.objects.filter(user_email=old_email).update(user_email=new_email)
-                MemberVerify.objects.filter(user_email=old_email).update(user_email=new_email)
-                
+                                
                 # 設置驗證碼為已使用
                 verification.code_used = True
-                verification.save()  # 確保保存到資料庫
+                verification.token_used = True
+                verification.save()  # 保存到資料庫
                 
-                return JsonResponse({'status': 'success', 'message': '郵箱修改成功。'})
+                return JsonResponse({
+                'status': 'success',
+                'message': '郵箱修改成功。',
+                'redirect_url': f"{settings.FRONTEND_URL}login"
+            })
+            
             except MemberBasic.DoesNotExist:
-                return JsonResponse({'status': 'error', 'message': '用戶不存在。'})
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '用戶不存在，請重新註冊或再次確認信息。',
+                    'redirect_url': f"{settings.FRONTEND_URL}signup"
+                    }, status=404)
         
+
         # 如果是 GET 請求，渲染修改郵箱的表單
-        return render(request, 'users/email_change_form.html', {'old_email': old_email, 'code': code, 'verification_code': verification.verification_code})
+        if request.method == 'GET':
+            return render(request, 'users/email_change_form.html', {
+                'user_id': user_id, 
+                'code': code, 
+                'verification_code': verification.verification_code
+                })
+        
+        # 其他不支持的請求方法
+        return JsonResponse({'status': 'error', 'message': '不支援的請求方法。'}, status=405)
 
     except MemberVerify.DoesNotExist:
+        # 當驗證記錄不存在或已被使用
         return JsonResponse({'status': 'error', 'message': '無效的驗證碼。'})
+        # return JsonResponse({
+        #     'status': 'error',
+        #     'message': '無效的驗證連結，請重新申請修改郵箱。',
+        #     'redirect_url': f"{settings.FRONTEND_URL}email-change"
+        # }, status=404)
 
 # 前台-用戶"修改手機" 1.發送驗證信
-@csrf_exempt
 def phone_change(request):
     if request.method == 'POST':
         try:
@@ -904,15 +1019,18 @@ def phone_change(request):
         old_phone = data.get('old_phone')
         new_phone = data.get('new_phone')
         email = data.get('email')
+
+        if not old_phone or not new_phone or not email:
+            return JsonResponse({'message': '請輸入有效的手機號和郵箱。'}, status=400)
         
-        if not new_phone or not old_phone:
-            return JsonResponse({'message': '請輸入有效的手機號碼。'}, status=400)
+        if not MemberBasic.objects.filter(user_phone=old_phone, user_email=email).exists():
+            return JsonResponse({'message': '輸入的手機號和郵箱不匹配或不存在。'}, status=400)
         
-        if MemberBasic.objects.filter(user_phone=old_phone).exists():
-            member = MemberBasic.objects.get(user_phone=old_phone)
+        # 獲取對應用戶
+        member = MemberBasic.objects.get(user_phone=old_phone, user_email=email)
         
         if MemberBasic.objects.filter(user_phone=new_phone).exists():
-            return JsonResponse({'message': '該手機號碼已被使用。'}, status=400)
+            return JsonResponse({'message': '新手機號已被使用，請更換手機號。'}, status=400)
         
         # 生成隨機6位數驗證碼
         verification_code = random.randint(100000, 999999)
@@ -923,14 +1041,18 @@ def phone_change(request):
         # 保存驗證信息
         MemberVerify.objects.create(
             user=member,
-            user_email=member.user_email,
+            verification_type='phone_change',
+            change_value=new_phone,
             verification_token=verification_token,
             verification_code=verification_code,  # 保存驗證碼
-            expires_at=timezone.now() + timezone.timedelta(hours=24),
-            token_used=False
+            created_at=now(),
+            expires_at=now() + timedelta(hours=24),
+            token_used=False,
+            code_used=False
         )
         
         # 構建驗證 URL
+        # verification_url = f"{settings.FRONTEND_URL}phone-verify/{verification_token}"
         verification_url = request.build_absolute_uri(
             reverse('users_api:phone_change_confirm', args=[verification_token])
         )
@@ -941,6 +1063,11 @@ def phone_change(request):
         send_mail(subject, message, 'forworkjayjay@gmail.com', [member.user_email])
         
         return JsonResponse({'message': '驗證信已發送到您的郵箱，請查收。'}, status=200)
+        # return JsonResponse({
+        #         'status': 'success',
+        #         'message': '驗證信已發送到您的郵箱，請查收。',
+        #         'redirect_url': f"{settings.FRONTEND_URL}phone-verify/{verification_token}"
+        #     })
     
     return JsonResponse({'message': '不支援的請求方法'}, status=405)
 
@@ -948,7 +1075,7 @@ def phone_change(request):
 def phone_change_confirm(request, token):
     try:
         verification = MemberVerify.objects.get(verification_token=token, token_used=False)
-        if timezone.now() > verification.expires_at:
+        if now() > verification.expires_at:
             return render(request, 'users/phone_change_confirm.html', {'error': '驗證連結已過期，請重新申請修改手機號碼。'})
         
         if request.method == 'POST':
@@ -956,18 +1083,26 @@ def phone_change_confirm(request, token):
             verification_code = data.get('verification_code')  # 接收用戶輸入的驗證碼
             
             # 檢查驗證碼是否正確
+            if not verification_code:
+                return JsonResponse({'status': 'error', 'message': '驗證碼為必填項。'})
+            
+            # 檢查驗證碼是否正確
             if verification_code != verification.verification_code:
                 return JsonResponse({'status': 'error', 'message': '驗證碼錯誤。'})
-
             
+            # 驗證碼正確，標記驗證成功並返回修改手機頁面的 URL
+            verification.token_used = True
+            verification.save()
+
             # 驗證碼正確，返回修改手機的頁面 URL
             return JsonResponse({
                 'status': 'success',
                 'message': '驗證碼正確，請進入修改手機頁面。',
                 'redirect_url': reverse('users_api:phone_change_form', args=[verification.verification_code])  # 返回修改手機的 URL
+                # 'redirect_url': f"{settings.FRONTEND_URL}phone-reset"
             })
-        
         return render(request, 'users/phone_change_confirm.html', {'token': token})
+    
     except MemberVerify.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': '無效的驗證連結。'})
 
@@ -975,19 +1110,22 @@ def phone_change_confirm(request, token):
 def phone_change_form(request, code):
     try:
         verification = MemberVerify.objects.get(verification_code=code, code_used=False)
-        if timezone.now() > verification.expires_at:
+        if now() > verification.expires_at:
             return render(request, 'users/phone_change_form.html', {'error': '驗證連結已過期，請重新申請修改手機號碼。'})
         
         if request.method == 'POST':
             data = json.loads(request.body)
             new_phone = data.get('phone')
             password = data.get('password')
-            email = data.get('email')
             verification_code = data.get('verification_code')  # 接收用戶輸入的驗證碼
             
             # 檢查驗證碼是否正確
             if verification_code != verification.verification_code:
                 return JsonResponse({'status': 'error', 'message': '驗證碼錯誤。'})
+            
+            # 檢查新手機是否正確
+            if new_phone != verification.change_value:
+                return JsonResponse({'status': 'error', 'message': '新手機與輸入不相符，請再次確認。'})
             
             try:
                 user = verification.user
@@ -996,14 +1134,23 @@ def phone_change_form(request, code):
                 
                 # 更新用戶手機號碼
                 user.user_phone = new_phone
+                user.updated_at = now()
                 user.save()
                 
                 # 設置驗證碼為已使用
                 verification.code_used = True
-                verification.user_email = email
+                verification.token_used = True
                 verification.save()  # 確保保存到資料庫
-                
+
                 return JsonResponse({'status': 'success', 'message': '手機號碼修改成功。'})
+
+
+            #     return JsonResponse({
+            #     'status': 'success',
+            #     'message': '手機號碼修改成功。',
+            #     'redirect_url': f"{settings.FRONTEND_URL}login"
+            # })
+
             except MemberBasic.DoesNotExist:
                 return JsonResponse({'status': 'error', 'message': '用戶不存在。'})
         

@@ -75,7 +75,7 @@
 						</form>
 						
 						
-						<div class="auth-option text-center pt-5"><a class="app-link" href="{{ frontend_url }}login" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{{ frontend_url }}signup" >Sign up／註冊</a></div>
+						<div class="auth-option text-center pt-5"><a class="app-link" href="{% url 'users:login' %}"  >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{% url 'users:signup' %}" >Sign up／註冊</a></div>
 					</div><!--//auth-form-container-->
 
 
@@ -118,7 +118,7 @@
 			const responseMessage = document.querySelector("#response-message");
 
 			try {
-				const response = await fetch('/admin/users_api/email_change/', {
+				const response = await fetch('/users_api/email_change/', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',

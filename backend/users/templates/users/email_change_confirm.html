@@ -28,7 +28,7 @@
 	    <div class="col-12 col-md-7 col-lg-6 auth-main-col text-center p-5">
 		    <div class="d-flex flex-column align-content-end">
 			    <div class="app-auth-body mx-auto">	
-				    <div class="app-auth-branding mb-4"><a class="app-logo" href="{% url 'users:reset' %}"><img class="logo-icon me-2" src="{% static 'users\images\app-logo.svg' %}" alt="logo"></a></div>
+				    <div class="app-auth-branding mb-4"><a class="app-logo" href="{% url 'users:email_change' %}"><img class="logo-icon me-2" src="{% static 'users\images\app-logo.svg' %}" alt="logo"></a></div>
 					
 					<h2 class="auth-heading text-center mb-4">Email Reset／郵箱重設</h2>
 
@@ -50,7 +50,7 @@
 
 						<div id="message" class="alert" style="display: none;"></div>
 
-						<div class="auth-option text-center pt-5"><a class="app-link" href="{% url 'users:login' %}" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{% url 'users:signup' %}" >Sign up／註冊</a></div>
+						<div class="auth-option text-center pt-5"><a class="app-link" href="{{ frontend_url }}login" >Log in／登入</a> <span class="px-2">|</span> <a class="app-link" href="{{ frontend_url }}signup" >Sign up／註冊</a></div>
 					</div><!--//auth-form-container-->
 
 
@@ -112,7 +112,9 @@
 
 				if (data.status === 'success') {
 					// 跳轉到修改信箱頁面
-					window.location.href = data.redirect_url;  // 使用返回的 URL 進行跳轉
+					setTimeout(() => {
+							window.location.href = data.redirect_url;
+						}, 3000);
 				}
 			} catch (error) {
 				console.error('Error:', error);
