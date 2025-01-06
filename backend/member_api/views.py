@@ -33,7 +33,7 @@ class MemberViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk=None):
         try:
             # 根據主鍵 ID 查找會員資料
-            user = MemberBasic.objects.get(pk=pk)
+            user = MemberBasic.objects.get(user_id=pk)
             
             # 使用序列化器將會員資料轉換為 JSON 格式
             serializer = self.get_serializer(user)
@@ -77,10 +77,9 @@ class AuthViewSet(viewsets.GenericViewSet):
     queryset = MemberBasic.objects.all()
     permission_classes = [AllowAny]
 
-    # 登入!!!
     @action(detail=False, methods=['POST'], serializer_class=LoginSerializer)
     def login(self, request):
-        print("Received data:", request.data)    #  打印請求資料，確認請求參數是否正確
+        print("Received data:", request.data)  # 打印請求資料，確認請求參數是否正確
         email = request.data.get("user_email")
         password = request.data.get("user_password")
         remember_me = request.data.get("remember_me", False)
@@ -96,9 +95,8 @@ class AuthViewSet(viewsets.GenericViewSet):
             else:
                 # 密碼未哈希，直接比較
                 password_valid = (password == member.user_password)
-            
+
             if password_valid:
-                # 登入成功
                 try:
                     # 生成 JWT Token
                     refresh = RefreshToken.for_user(member)
@@ -116,21 +114,18 @@ class AuthViewSet(viewsets.GenericViewSet):
                     response_data = {
                         'message': '登入成功',
                         'user': MemberSerializer(member).data,
-                        # 'tokens': tokens
+                        'tokens': tokens  # 添加 tokens 到返回數據中
                     }
 
                     # 如果選擇記住我
-                    if remember_me :
-                        # 設置長期 cookie
-                        response = Response(response_data, status=status.HTTP_200_OK)
+                    response = Response(response_data, status=status.HTTP_200_OK)
+                    if remember_me:
                         max_age = 30 * 24 * 60 * 60  # 30天
                         response.set_cookie('user_session', session_key, max_age=max_age)
-                        return response
                     else:
-                        # 設置臨時 cookie
-                        response = Response(response_data, status=status.HTTP_200_OK)
                         response.set_cookie('user_session', session_key)
-                        return response
+
+                    return response
                 
                 except Exception as e:
                     return Response({
@@ -139,12 +134,12 @@ class AuthViewSet(viewsets.GenericViewSet):
                 
             else:
                 return Response({
-                'error': '帳號或密碼錯誤'
+                    'error': '帳號或密碼錯誤'
                 }, status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response({
                 'error': '該郵箱未註冊，請再次確認郵箱或註冊新帳號。'
-                }, status=status.HTTP_401_UNAUTHORIZED)
+            }, status=status.HTTP_401_UNAUTHORIZED)
                 
 
     # 註冊 1. 送出註冊
@@ -314,7 +309,7 @@ class UpdateUserInfoView(APIView):
     def put(self, request, pk):
         try:
             # 根據主鍵 ID 查找會員資料
-            user = MemberBasic.objects.get(pk=pk)
+            user = MemberBasic.objects.get(user_id=pk)
 
             # 更新用戶其他資料
             user.user_email = request.data.get("user_email", user.user_email)

@@ -84,69 +84,50 @@ const validateForm = () => {
 
 // 提交表單
 const handleSubmit = async (event) => {
-    event.preventDefault()
-    
+    event.preventDefault();
+
     if (!validateForm()) {
         return;
     }
 
     try {
         isSubmitting.value = true;
-        
-        // 這裡添加實際的 API 調用
+
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              user_email: formData.value.user_email,
-              user_password: formData.value.user_password,
-              remember_me: formData.value.remember_me
-            })
-        })
+                user_email: formData.value.user_email,
+                user_password: formData.value.user_password,
+                remember_me: formData.value.remember_me,
+            }),
+        });
 
         if (!response.ok) {
-            throw new Error('登入失敗，請檢查您的電子郵箱和密碼')
+            const errorData = await response.json(); // 獲取後端詳細錯誤
+            throw new Error(errorData.error || '登入失敗，請檢查您的電子郵箱和密碼');
         }
-        
+
         const memberData = await response.json();
-        const userId = memberData.user?.user_id; // 確保獲取正確的 user_id
-        localStorage.setItem('memberData', JSON.stringify(memberData.user)); // 確保這裡存的是 user 對象
-        // localStorage.setItem('memberData', JSON.stringify({ user_id: memberData.user_id }));
 
-        console.log('Stored member data:', memberData.user); // 調試輸出
-        // console.log('Stored member tokens:', {
-        //     access_token: memberData.tokens.access,
-        //     refresh_token: memberData.tokens.refresh
-        // }); 
-        // console.log("Fetched memberData:", memberData);
-        console.log('Access token:', memberData.tokens?.access);
+        // 儲存 Token 和用戶信息
+        localStorage.setItem('memberData', JSON.stringify(memberData.user));
+        localStorage.setItem('access_token', memberData.tokens.access);
+        localStorage.setItem('refresh_token', memberData.tokens.refresh);
 
-        // 假設 API 回應包含 tokens 資料，正確存取它
-        // localStorage.setItem('access_token', memberData.tokens?.access); // 保存 Token
-        // localStorage.setItem('refresh_token', memberData.tokens?.refresh); // 保存 Token
-
-        // 登入成功，跳轉到首頁或其他頁面
-        router.push({ name: 'center', params: { user_id: userId } });
-        
+        // 登入成功，跳轉
+        router.push({ name: 'center', params: { user_id: memberData.user.user_id } });
     } catch (error) {
-      // 清除用户信息
-        localStorage.removeItem('memberData');
-        localStorage.removeItem('user_avatar');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-
-        // 清除输入的资料
-        formData.value.user_email = '';
-        formData.value.user_password = '';
-        formData.value.remember_me = false;
-
-        errors.value.general = error.message || '登入過程中發生錯誤，請稍後再重試'
+        // 顯示錯誤消息
+        errors.value.general = error.message || '登入過程中發生錯誤，請稍後再試';
+        console.error('登入失敗:', error);
     } finally {
-        isSubmitting.value = false
+        isSubmitting.value = false;
     }
-}
+};
+
 
 // 處理忘記密碼
 const handleResetPassword = () => {

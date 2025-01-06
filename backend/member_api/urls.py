@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import AuthViewSet, VerifyEmailView, UpdateUserInfoView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView
-
+from .views import  VerifyEmailView, UpdateUserInfoView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView
+from member_api.views import AuthViewSet
 router = DefaultRouter()
 # https://...../profile/
 router.register('profile', views.MemberViewSet)
@@ -19,13 +19,12 @@ router.register('privacy', views.PrivacyViewSet)
 # https://...../verify/
 router.register('verify', views.VerifyViewSet)
 # https://...../auth/
-router.register(r'auth', views.AuthViewSet, basename='auth')
+router.register(r'auth', AuthViewSet, basename='auth')
 
 app_name = 'member_api'
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/protected_route/', views.ProtectedRouteView.as_view(), name='protected_route'),
-    path('auth/login/', AuthViewSet.as_view({'post': 'login'}), name='login'),
     path('auth/update_info/<int:pk>/', UpdateUserInfoView.as_view(), name='update_user_info'),
     path('verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),   #註冊驗證連結
     path('reset/', SendResetLinkView.as_view(), name='send-reset-link'),                 #發送密碼重置驗證碼
