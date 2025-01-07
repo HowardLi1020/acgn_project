@@ -1,4 +1,32 @@
 <script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// 判斷是否已登入
+const isLoggedIn = ref(false);
+const memberData = ref(null);
+
+onMounted(() => {
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('memberData');
+
+    if (token && userData) {
+        isLoggedIn.value = true;
+        memberData.value = JSON.parse(userData);
+    }
+});
+
+// 導向會員中心
+const goToMemberCenter = () => {
+    if (isLoggedIn.value) {
+        router.push({ name: 'center', params: { user_id: memberData.value.user_id } });
+    } else {
+        router.push({ name: 'login' });
+    }
+};
+
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -47,9 +75,10 @@ function scrollToTop() {
                         <router-link to="/shoppingcart" class="position-relative me-4 my-auto">
                             <i class="fa fa-shopping-bag fa-2x"></i>
                         </router-link>
-                        <a href="/login" class="my-auto">
-                            <i class="fas fa-user fa-2x"></i>
-                        </a>
+                        <!-- 動態會員按鈕 -->
+                        <button class="my-auto border-0 bg-transparent" @click="goToMemberCenter">
+                            <i class="fas fa-user fa-2x" :class="{ 'text-success': isLoggedIn }"></i>
+                        </button>
                     </div>
                 </div>
             </nav>

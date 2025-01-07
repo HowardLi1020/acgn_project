@@ -111,7 +111,10 @@ const handleSubmit = async (event) => {
         }
 
         const memberData = await response.json();
-
+        // 驗證返回數據的完整性
+        if (!memberData.tokens || !memberData.tokens.access || !memberData.tokens.refresh) {
+            throw new Error('後端未返回正確的 tokens，請聯繫後端檢查問題');
+        }
         // 儲存 Token 和用戶信息
         localStorage.setItem('memberData', JSON.stringify(memberData.user));
         localStorage.setItem('access_token', memberData.tokens.access);
