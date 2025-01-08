@@ -2,9 +2,13 @@
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import Swal from 'sweetalert2'
+import { useUserStore } from '@/stores/user';
+import api from '@/utils/api'; // 你的 Axios 實例
 
 const route = useRoute(); // 獲取當前路由
 const router = useRouter()
+const userStore = useUserStore(); // Pinia 用戶狀態
+
 const BASE_URL = import.meta.env.VITE_MemberApi
 const API_URL = `${BASE_URL}auth/login/`
 
@@ -20,23 +24,6 @@ const errors = ref({
   user_email: '',
   user_password: '',
   general: ''
-})
-
-onMounted(() => {
-  // Get message and type from URL parameters
-  const message = route.query.message
-  const type = route.query.type
-
-  if (message && type) {
-    Swal.fire({
-      title: type === 'success' ? '驗證成功！' : '驗證失敗',
-      text: message,
-      icon: type, // 'success' or 'error'
-      confirmButtonText: '確定',
-      timer: 3000,
-      timerProgressBar: true
-    })
-  }
 })
 
 // 表單狀態
@@ -81,7 +68,6 @@ const validateForm = () => {
     return isValid
 }
 
-
 // 提交表單
 const handleSubmit = async (event) => {
     event.preventDefault();
@@ -110,32 +96,45 @@ const handleSubmit = async (event) => {
             throw new Error(errorData.error || '登入失敗，請檢查您的電子郵箱和密碼');
         }
 
-        const memberData = await response.json();
-        // 驗證返回數據的完整性
-        if (!memberData.tokens || !memberData.tokens.access || !memberData.tokens.refresh) {
-            throw new Error('後端未返回正確的 tokens，請聯繫後端檢查問題');
-        }
-        // 儲存 Token 和用戶信息
-        localStorage.setItem('memberData', JSON.stringify(memberData.user));
-        localStorage.setItem('access_token', memberData.tokens.access);
-        localStorage.setItem('refresh_token', memberData.tokens.refresh);
+        const data = await response.json();
+        console.log("Login Response:", data);  // 打印 API 響應
 
-        // 登入成功，跳轉
-        router.push({ name: 'center', params: { user_id: memberData.user.user_id } });
-    } catch (error) {
-        // 顯示錯誤消息
-        errors.value.general = error.message || '登入過程中發生錯誤，請稍後再試';
+        const { user, tokens } = data;
+
+        // 使用 Pinia 儲存用戶資料
+        userStore.login(user, tokens.access, tokens.refresh);
+        // localStorage 檢查
+        console.log("Access Token in LocalStorage:", localStorage.getItem('access_token'));
+        console.log("Refresh Token in LocalStorage:", localStorage.getItem('refresh_token'));
+
+        // 登入成功，跳轉到中心頁
+        router.push({ name: 'center', params: { user_id: user.user_id } });
+        } catch (error) {
+        errors.value.general =
+          error.response?.data?.error || '登入失敗，請檢查您的電子郵箱和密碼';
         console.error('登入失敗:', error);
-    } finally {
+        } finally {
         isSubmitting.value = false;
-    }
-};
+        }
+        };
 
+// 頁面載入提示信息
+onMounted(() => {
+  // Get message and type from URL parameters
+  const message = route.query.message
+  const type = route.query.type
 
-// 處理忘記密碼
-const handleResetPassword = () => {
-    router.push({ name: 'ResetPw' })
-}
+  if (message && type) {
+    Swal.fire({
+      title: type === 'success' ? '驗證成功！' : '驗證失敗',
+      text: message,
+      icon: type, // 'success' or 'error'
+      confirmButtonText: '確定',
+      timer: 3000,
+      timerProgressBar: true
+    })
+  }
+})
 </script>
 
 <template>

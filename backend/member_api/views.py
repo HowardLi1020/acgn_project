@@ -24,22 +24,57 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 # Create your views here.
+# 自訂 Token 驗證方法!!
+def verify_jwt_token(request):
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        raise AuthenticationFailed("缺少或無效的 Authorization 標頭")
+
+    token = auth_header.split(' ')[1]  # 提取 Token
+
+    try:
+        # 驗證並解析 Token
+        decoded_token = AccessToken(token)
+        return decoded_token
+    except TokenError:
+        raise AuthenticationFailed("無效的 Token")
+    
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = MemberBasic.objects.all()
     serializer_class = MemberSerializer
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, pk=None):
         try:
+            # 驗證 Token
+            decoded_token = verify_jwt_token(request)
+            print(f"Decoded Token: {decoded_token}")
+
+            # 解析 Token 中的用戶 ID
+            user_id = decoded_token.get('user_id', None)
+            if not user_id:
+                raise AuthenticationFailed("Token 中缺少用戶 ID")
+
             # 根據主鍵 ID 查找會員資料
             user = MemberBasic.objects.get(user_id=pk)
+            if user.user_id != user_id:
+                raise AuthenticationFailed("無權限查看該用戶的資料")
             
             # 使用序列化器將會員資料轉換為 JSON 格式
             serializer = self.get_serializer(user)
+            print(f"User: {serializer.data}")
+            print(f"Authorization Header: {request.headers.get('Authorization')}")
             return Response(serializer.data, status=status.HTTP_200_OK)
         except MemberBasic.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        except AuthenticationFailed as e:
+            return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 class FavoriteViewSet(viewsets.ModelViewSet):
     queryset = MemberIndextype.objects.all()
@@ -104,6 +139,7 @@ class AuthViewSet(viewsets.GenericViewSet):
                         'refresh': str(refresh),
                         'access': str(refresh.access_token)
                     }
+                    print(f"Generated Tokens: {tokens}")  # 打印 tokens
 
                     # 處理 session 和 cookie
                     session_key = f"user_session_{member.user_id}"
@@ -116,6 +152,7 @@ class AuthViewSet(viewsets.GenericViewSet):
                         'user': MemberSerializer(member).data,
                         'tokens': tokens  # 添加 tokens 到返回數據中
                     }
+                    print(f"Response Data: {response_data}")
 
                     # 如果選擇記住我
                     response = Response(response_data, status=status.HTTP_200_OK)
