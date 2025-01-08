@@ -306,6 +306,14 @@ def ViewFn_need_edit(request, view_fn_need_id):
 
     # GET 請求的處理
     view_db_need_info_id = get_object_or_404(DbNeedInfo, need_id=view_fn_need_id)
+    # view_db_need_info_id = get_object_or_404(
+    #     DbNeedInfo.objects.only(
+    #         'need_id', 'needer_id', 'need_title', 'need_category',
+    #         'need_original_from', 'need_description', 'need_price',
+    #         'publish_time', 'deadline', 'last_update', 'need_status'
+    #     ),
+    #     need_id=view_fn_need_id
+    # )
     
     # 獲取對應的 PublicCardInfo
     view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, member_basic_id=view_db_need_info_id.needer_id)
@@ -348,32 +356,6 @@ def ViewFn_publiccard_list(request):
     # 獲取排序參數
     sort_by = request.GET.get('sort', 'last_update')  # 預設按最後更新排序
     sort_direction = request.GET.get('direction', 'desc')  # 預設降序
-    
-    # 搜尋功能
-    search_term = request.GET.get('searchorders', '')
-    search_column = request.GET.get('column', 'option-1')
-    
-    if search_term:
-        if search_column == 'option-1':  # 全部
-            # 使用 CAST 將 user_id 轉換為字符串進行比對
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                Q(member_basic__user_id__contains=search_term) |  # ID部分匹配
-                Q(user_nickname__icontains=search_term) |         # 名片暱稱模糊匹配
-                Q(user_introduction__icontains=search_term)       # 簡介模糊匹配
-            )
-        elif search_column == 'title':  # 使用者ID
-            # 只進行 ID 的部分匹配
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                member_basic__user_id__contains=search_term
-            )
-        elif search_column == 'category':  # 名片暱稱
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                user_nickname__icontains=search_term
-            )
-        elif search_column == 'description':  # 簡介
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                user_introduction__icontains=search_term
-            )
 
     # 應用排序
     if sort_by == 'last_update':
@@ -388,7 +370,7 @@ def ViewFn_publiccard_list(request):
     if view_fn_status and view_fn_status != 'all':
         view_db_publiccard_info = view_db_publiccard_info.filter(card_status=view_fn_status)
 
-    # 分頁
+    # 加入分頁功能，每頁18張卡片
     paginator = Paginator(view_db_publiccard_info, 12)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
@@ -396,8 +378,6 @@ def ViewFn_publiccard_list(request):
     context = {
         'page_obj': page_obj,
         'sort_by': sort_by,
-        'sort_direction': sort_direction,
-        'search_term': search_term,
-        'search_column': search_column
+        'sort_direction': sort_direction
     }
     return render(request, 'commission/publiccard_list.html', context)

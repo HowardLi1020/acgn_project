@@ -11,9 +11,9 @@ from users.models import MemberBasic  # 確保這行在文件頂部
 
 class DbNeedInfo(models.Model):
     needer_id = models.IntegerField()
-    # needer_nickname = models.CharField(max_length=50)
-    # needer_avatar = models.CharField(max_length=255, blank=True, null=True)
-    # needer_introduction = models.CharField(max_length=300, blank=True, null=True)
+    needer_nickname = models.CharField(max_length=50)
+    needer_avatar = models.CharField(max_length=255, blank=True, null=True)
+    needer_introduction = models.CharField(max_length=300, blank=True, null=True)
     need_id = models.AutoField(primary_key=True)
     need_title = models.CharField(max_length=50, blank=True, null=True)
     need_category = models.CharField(max_length=50, blank=True, null=True)

@@ -3,6 +3,12 @@ create database shopping;
 use shopping;
 
 -- drop table member_basic;
+drop table db_need_info;
+-- drop table db_need_images;
+-- drop table db_works_info;
+-- drop table db_works_preview;
+drop table db_public_card_info;
+-- drop table db_public_card_sell;
 
 SELECT * FROM shopping.member_basic;
 SELECT * FROM shopping.db_need_info;

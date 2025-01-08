@@ -314,10 +314,9 @@ CREATE TABLE UserCoupons (
 SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE db_need_info (
     needer_id INT NOT NULL,                         -- 需求人id（關聯資料表：使用者資訊表member_basic)
-    -- 嘗試拔掉讓它直接去db_public_card_info找資料
-    -- needer_nickname VARCHAR(50),                    -- 需求人暱稱（關聯資料表：公開名片表db_public_card_info)
-    -- needer_avatar VARCHAR(255),                     -- 需求人大頭（關聯資料表：公開名片表db_public_card_info)    
-    -- needer_introduction VARCHAR(300),               -- 需求人介紹（關聯資料表：公開名片表db_public_card_info)
+    needer_nickname VARCHAR(50),                    -- 需求人暱稱（關聯資料表：公開名片表db_public_card_info)
+    needer_avatar VARCHAR(255),                     -- 需求人大頭（關聯資料表：公開名片表db_public_card_info)    
+    needer_introduction VARCHAR(300),               -- 需求人介紹（關聯資料表：公開名片表db_public_card_info)
 
     need_id INT AUTO_INCREMENT PRIMARY KEY,         -- 需求案id
     need_title VARCHAR(50),                         -- 需求標題
@@ -339,10 +338,10 @@ CREATE TABLE db_need_info (
     review_status VARCHAR(10),                      -- 評價狀態（未評價、已評價、尚未開放）
 
     FOREIGN KEY (needer_id) REFERENCES member_basic(user_id) ON DELETE RESTRICT, -- 外鍵 需求人id → member_basic使用者資訊表-使用者id
-    -- 嘗試拔掉讓它直接去db_public_card_info找資料
-    -- FOREIGN KEY (needer_nickname) REFERENCES db_public_card_info(user_nickname) ON DELETE SET NULL, -- 外鍵 需求人暱稱 → 公開名片表-使用者暱稱
-    -- FOREIGN KEY (needer_avatar) REFERENCES db_public_card_info(user_avatar) ON DELETE SET NULL, -- 外鍵 需求人大頭 → 公開名片表-使用者大頭
-    -- FOREIGN KEY (needer_introduction) REFERENCES db_public_card_info(user_introduction) ON DELETE SET NULL, -- 外鍵 需求人介紹 → 公開名片表-使用者介紹
+    嘗試拔掉讓它直接去db_public_card_info找資料
+    FOREIGN KEY (needer_nickname) REFERENCES db_public_card_info(user_nickname) ON DELETE SET NULL, -- 外鍵 需求人暱稱 → 公開名片表-使用者暱稱
+    FOREIGN KEY (needer_avatar) REFERENCES db_public_card_info(user_avatar) ON DELETE SET NULL, -- 外鍵 需求人大頭 → 公開名片表-使用者大頭
+    FOREIGN KEY (needer_introduction) REFERENCES db_public_card_info(user_introduction) ON DELETE SET NULL, -- 外鍵 需求人介紹 → 公開名片表-使用者介紹
         
     INDEX idx_need_title (need_title),
     INDEX idx_need_original_from (need_original_from),
@@ -361,11 +360,10 @@ CREATE TABLE db_need_images (
 -- 5-2 作品資訊表
 CREATE TABLE db_works_info (
     author_id INT NOT NULL,                         -- 作者id（關聯資料表：使用者資訊表member_basic）
-    -- 嘗試拔掉讓它直接去db_public_card_info找資料
-    -- author_nickname VARCHAR(50),                    -- 作者暱稱（關聯資料表：公開名片表db_public_card_info）
-    -- author_avatar VARCHAR(255),                     -- 作者大頭（關聯資料表：公開名片表db_public_card_info）
-    -- author_introduction VARCHAR(300),               -- 作者介紹（關聯資料表：公開名片表db_public_card_info）
-
+    author_nickname VARCHAR(50),                    -- 作者暱稱（關聯資料表：公開名片表db_public_card_info）
+    author_avatar VARCHAR(255),                     -- 作者大頭（關聯資料表：公開名片表db_public_card_info）
+    author_introduction VARCHAR(300),               -- 作者介紹（關聯資料表：公開名片表db_public_card_info）
+    
     work_id INT AUTO_INCREMENT PRIMARY KEY,         -- 作品id
     work_title VARCHAR(50),                         -- 作品標題
     work_original_from VARCHAR(150),                -- 作品關聯原作
@@ -391,10 +389,9 @@ CREATE TABLE db_works_info (
     review_status VARCHAR(10),                      -- 評價狀態（未評價、已評價、尚未開放）
     
     FOREIGN KEY (author_id) REFERENCES member_basic(user_id) ON DELETE RESTRICT, -- 外鍵 作者id → member_basic使用者資訊表-使用者id
-    -- 嘗試拔掉讓它直接去db_public_card_info找資料
-    -- FOREIGN KEY (author_nickname) REFERENCES db_public_card_info(user_nickname) ON DELETE SET NULL, -- 外鍵 作者暱稱 → 公開名片表-使用者暱稱
-    -- FOREIGN KEY (author_avatar) REFERENCES db_public_card_info(user_avatar) ON DELETE SET NULL, -- 外鍵 作者大頭 → 公開名片表-使用者大頭
-    -- FOREIGN KEY (author_introduction) REFERENCES db_public_card_info(user_introduction) ON DELETE SET NULL, -- 外鍵 作者介紹 → 公開名片表-使用者介紹
+    FOREIGN KEY (author_nickname) REFERENCES db_public_card_info(user_nickname) ON DELETE SET NULL, -- 外鍵 作者暱稱 → 公開名片表-使用者暱稱
+    FOREIGN KEY (author_avatar) REFERENCES db_public_card_info(user_avatar) ON DELETE SET NULL, -- 外鍵 作者大頭 → 公開名片表-使用者大頭
+    FOREIGN KEY (author_introduction) REFERENCES db_public_card_info(user_introduction) ON DELETE SET NULL, -- 外鍵 作者介紹 → 公開名片表-使用者介紹
 
     INDEX idx_work_title (work_title),
     INDEX idx_work_original_from (work_original_from),

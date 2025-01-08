@@ -44,14 +44,14 @@
     <div class="col-auto ms-auto me-1">
         <div class="d-flex align-items-center">
             <strong class="mx-2">排序：</strong>
-            <a href="?sort=last_update&direction={% if sort_by == 'last_update' and sort_direction == 'desc' %}asc{% else %}desc{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}" 
+            <a href="?sort=last_update&direction={% if sort_by == 'last_update' and sort_direction == 'desc' %}asc{% else %}desc{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
                class="text-decoration-none">
                 <strong style="color: {% if sort_by == 'last_update' %}#28a745{% else %}#6c757d{% endif %}; font-size: 0.9rem;">
                     最後更新 {% if sort_by == 'last_update' %}{% if sort_direction == 'desc' %}↓{% else %}↑{% endif %}{% endif %}
                 </strong>
             </a>
             <span class="mx-2">／</span>
-            <a href="?sort=user_id&direction={% if sort_by == 'user_id' and sort_direction == 'desc' %}asc{% else %}desc{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}"
+            <a href="?sort=user_id&direction={% if sort_by == 'user_id' and sort_direction == 'desc' %}asc{% else %}desc{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
                class="text-decoration-none">
                 <strong style="color: {% if sort_by == 'user_id' %}#28a745{% else %}#6c757d{% endif %}; font-size: 0.9rem;">
                     使用者ID {% if sort_by == 'user_id' %}{% if sort_direction == 'desc' %}↓{% else %}↑{% endif %}{% endif %}
@@ -115,17 +115,11 @@
     <div class="col-auto">
         <nav id="orders-table-tab" class="orders-table-tab app-nav-tabs nav shadow-sm flex-column flex-sm-row">
             <a class="flex-sm-fill text-sm-center nav-link {% if not request.GET.status %}active{% endif %}" 
-               href="?status=all{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}" 
-               data-status="all">所有名片</a>
-            <a class="flex-sm-fill text-sm-center nav-link" 
-               href="?status=公開{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}" 
-               data-status="公開">公開</a>
-            <a class="flex-sm-fill text-sm-center nav-link" 
-               href="?status=非公開{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}" 
-               data-status="非公開">非公開</a>
-            <a class="flex-sm-fill text-sm-center nav-link" 
-               href="?status=未啟用{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}" 
-               data-status="未啟用">未啟用</a>
+               href="?status=all" data-status="all">所有名片</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="?status=公開" data-status="公開">公開</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="?status=非公開" data-status="非公開">非公開</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="?status=未啟用" data-status="未啟用">未啟用</a>
+            
         </nav>
     </div>
 </div>
@@ -204,7 +198,7 @@
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}" aria-label="上一頁">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="上一頁">
                     上一頁
                 </a>
             </li>
@@ -217,18 +211,18 @@
         {% for num in page_obj.paginator.page_range %}
             {% if page_obj.number == num %}
                 <li class="page-item active">
-                    <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}">{{ num }}</a>
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
                 </li>
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}">{{ num }}</a>
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
                 </li>
             {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if search_term %}&searchorders={{ search_term }}{% endif %}{% if search_column %}&column={{ search_column }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if sort_direction %}&direction={{ sort_direction }}{% endif %}" aria-label="下一頁">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="下一頁">
                     下一頁
                 </a>
             </li>
@@ -259,41 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
             link.classList.remove('active');
         }
     });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    // 理搜尋欄位的選擇
-    const searchSelect = document.getElementById('searchSelect');
-    const searchForm = document.querySelector('.table-search-form');
-
-    searchSelect.addEventListener('change', function() {
-        const columnInput = document.createElement('input');
-        columnInput.type = 'hidden';
-        columnInput.name = 'column';
-        columnInput.value = this.value;
-        
-        // 移除舊的 column input（如果存在）
-        const oldColumn = searchForm.querySelector('input[name="column"]');
-        if (oldColumn) {
-            oldColumn.remove();
-        }
-        
-        searchForm.appendChild(columnInput);
-    });
-
-    // 處理清除按鈕
-    const clearButton = document.getElementById('clear-search');
-    if (clearButton) {
-        clearButton.addEventListener('click', function() {
-            // 保持狀態篩選，清除其他搜尋參數
-            const status = new URLSearchParams(window.location.search).get('status');
-            if (status) {
-                window.location.href = '?status=' + status;
-            } else {
-                window.location.href = '?';
-            }
-        });
-    }
 });
 </script>
 {% endblock %}

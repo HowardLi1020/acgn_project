@@ -298,16 +298,16 @@
       <h3 class="section-title">需求人資訊</h3>
       <!-- 需求人大頭貼 -->
       <div class="mb-2">
-        {% if ViewKey_DbPublicCardInfo.user_avatar %}
-          <img style="width: 120px" src="{{ MEDIA_URL }}commission/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}" alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像" />
+        {% if ViewKey_DbNeedInfo_need_id.needer_avatar %}
+          <img style="width: 120px" src="{{ MEDIA_URL }}commission/avatar/{{ ViewKey_DbNeedInfo_need_id.needer_avatar }}" alt="{{ ViewKey_DbNeedInfo_need_id.needer_nickname }}的頭像" />
         {% else %}
-          <!-- 無大頭貼 -->
-          <img style="width:50px" src="https://thumb.ac-illust.com/b1/b170870007dfa419295d949814474ab2_w.jpeg" alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像" />
+        <!-- 無大頭貼 -->
+        <img style="width:50px" src="https://thumb.ac-illust.com/b1/b170870007dfa419295d949814474ab2_w.jpeg" alt="{{ ViewKey_DbNeedInfo_need_id.needer_nickname }}的頭像" />
         {% endif %}
       </div>
       <div class="mb-2"><strong>需求人ID：</strong> {{ ViewKey_DbNeedInfo_need_id.needer_id }}</div>
-      <div class="mb-2"><strong>需求人暱稱：</strong> {{ ViewKey_DbPublicCardInfo.user_nickname }}</div>
-      <div class="mb-2"><strong>需求人介紹：</strong> {{ ViewKey_DbPublicCardInfo.user_introduction }}</div>
+      <div class="mb-2"><strong>需求人暱稱：</strong> {{ ViewKey_DbNeedInfo_need_id.needer_nickname }}</div>
+      <div class="mb-2"><strong>需求人介紹：</strong> {{ ViewKey_DbNeedInfo_need_id.needer_introduction }}</div>
     </div>
   </div>
 </div>
@@ -961,7 +961,7 @@ const existingImages = document.querySelectorAll('.image-preview-wrapper');
   });
 
   // 在頁面載入時檢查是否有更新過的欄位
-
+  document.addEventListener('DOMContentLoaded', function() {
     const updatedFields = JSON.parse(sessionStorage.getItem('updatedFields') || '[]');
     
     if (updatedFields.length > 0) {
@@ -995,7 +995,8 @@ const existingImages = document.querySelectorAll('.image-preview-wrapper');
           }
         }
       });
-    };
+    }
+  });
 </script>
 
 {% endblock %}
