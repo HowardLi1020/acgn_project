@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { storeAPI } from '../../utils/api'
+import { storeAPI, getCurrentUserId } from '../../utils/api'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
 
@@ -134,9 +134,9 @@ const isMember = ref(false)
 
 // 檢查 localStorage 中是否有 memberData
 const checkMemberData = () => {
-  const memberData = localStorage.getItem('memberData')
-  isMember.value = memberData !== null // 如果有 memberData，則設置為 true
-}
+    const userId = getCurrentUserId();
+    isMember.value = !!userId;
+};
 
 // 導航到創建商品頁面
 const checkMemberAndNavigateToCreateProduct = () => {

@@ -17,6 +17,11 @@ import json
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.utils.decorators import method_decorator
+from django.views import View
+import jwt 
+from django.conf import settings
 
 
 # 設置日誌
@@ -47,25 +52,13 @@ def index(request):
 @api_view(['POST'])
 def create_product(request):
     try:
-        # 記錄接收到的數據，用於調試
-        logger.info(f"Received data: {request.data}")
-        logger.info(f"Received files: {request.FILES}")
-
-        # 獲取用戶ID並驗證
-        user_id = request.data.get('user_id')
-        if not user_id:
+        # 從 JWT token 中獲取用戶
+        user = request.user
+        if not user or not user.is_authenticated:
             return Response({
-                'detail': '未提供用戶ID',
-                'code': 'validation_error'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = MemberBasic.objects.get(user_id=user_id)
-        except MemberBasic.DoesNotExist:
-            return Response({
-                'detail': '找不到指定用戶',
-                'code': 'user_not_found'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'detail': '未授權訪問',
+                'code': 'unauthorized'
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
         # 驗證必要字段
         required_fields = ['product_name', 'price', 'stock']
@@ -73,7 +66,7 @@ def create_product(request):
             if not request.data.get(field):
                 return Response({
                     'detail': f'{field} 為必填項',
-                    'code': 'validation_error'
+                        'code': 'validation_error'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         # 處理價格和庫存的數據類型轉換
@@ -152,27 +145,17 @@ def create_product(request):
 @api_view(['DELETE'])
 def delete_product(request, product_id):
     try:
-        
-        
-        # 從請求中獲取用戶ID
-        user_id = request.query_params.get('user_id')
-        if not user_id:
-            return Response({
-                'detail': '未提供用戶ID'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # 獲取商品
+        # 直接從 request.user 獲取用戶
+        user = request.user
         product = Products.objects.get(product_id=product_id)
 
         # 檢查是否為商品擁有者
-        if str(product.user_id) != str(user_id):  # 轉換為字符串進行比較
+        if product.user != user:
             return Response({
                 'detail': '您沒有權限刪除此商品'
             }, status=status.HTTP_403_FORBIDDEN)
         
         ProductImages.objects.filter(product=product).delete()
-
-        # 刪除商品
         product.delete()
         
         return Response({
@@ -426,35 +409,55 @@ class ProductDetail(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-@api_view(['GET'])
-def my_products(request):
-    user_id = request.query_params.get('user_id')  # 從查詢參數中獲取 user_id
-    logger.debug(f"Received request for user_id: {user_id}")
-    
-    if not user_id:
-        return Response({'detail': '未提供用戶ID'}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        products = Products.objects.filter(user_id=user_id)  # 使用 user_id 獲取產品
-
-        products_data = []
-        for product in products:
-            # 獲取產品的主圖片
-            product_image = ProductImages.objects.filter(product=product, is_main=1).first() or \
-                        ProductImages.objects.filter(product=product).first()
+@method_decorator(csrf_exempt, name='dispatch')
+class MyProductsView(View):
+    def get(self, request):
+        try:
+            # 手動驗證 JWT token
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+            if not auth_header.startswith('Bearer '):
+                return JsonResponse({'detail': '未登入，請先登入'}, status=401)
             
-            product_data = {
-                'product_id': product.product_id,
-                'product_name': product.product_name,
-                'price': str(product.price),
-                'stock': product.stock,
-                'image_url': str(product_image.image_url) if product_image else '',
-            }
-            products_data.append(product_data)
+            token = auth_header.split(' ')[1]
             
-        return Response({'products': products_data}, status=status.HTTP_200_OK)
-    except Exception as e:
-        print(f"Error in my_products: {str(e)}")  # 添加日誌
-        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            try:
+                # 解碼 JWT token
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                user_id = payload.get('user_id')
+                
+                if not user_id:
+                    return JsonResponse({'detail': '無效的 token'}, status=401)
+                
+                # 獲取用戶的產品
+                products = Products.objects.filter(user_id=user_id).select_related('brand', 'category', 'series')
+                
+                # 構建產品數據
+                products_data = []
+                for product in products:
+                    product_image = ProductImages.objects.filter(product=product).first()
+                    
+                    product_data = {
+                        'product_id': product.product_id,
+                        'product_name': product.product_name,
+                        'price': str(product.price),
+                        'stock': product.stock,
+                        'image_url': str(product_image.image_url) if product_image else '',
+                        'brand_name': product.brand.brand_name if product.brand else '未指定',
+                        'category_name': product.category.category_name if product.category else '未指定',
+                        'series_name': product.series.series_name if product.series else '未指定'
+                    }
+                    products_data.append(product_data)
+                
+                return JsonResponse({'products': products_data}, status=200)
+                
+            except jwt.ExpiredSignatureError:
+                return JsonResponse({'detail': 'token 已過期'}, status=401)
+            except jwt.InvalidTokenError:
+                return JsonResponse({'detail': '無效的 token'}, status=401)
+                
+        except Exception as e:
+            logger.error(f"Error fetching user products: {e}")
+            return JsonResponse({'detail': str(e)}, status=500)
 
 @api_view(['POST'])
 def toggle_wishlist(request, product_id):

@@ -153,8 +153,16 @@ const handleSubmit = async (event) => {
     event.preventDefault();
     isSubmitting.value = true;
 
-    const memberData = JSON.parse(localStorage.getItem('memberData'));
-    const userId = memberData ? memberData.user_id : null;
+    const userId = getCurrentUserId();
+    if (!userId) {
+        Swal.fire({
+            title: "錯誤",
+            text: "請先登入",
+            icon: "error"
+        });
+        router.push('/login');
+        return;
+    }
 
     try {
         const formDataToSend = new FormData();
@@ -165,6 +173,7 @@ const handleSubmit = async (event) => {
         formDataToSend.append('series', formData.value.series);
         formDataToSend.append('price', formData.value.price);
         formDataToSend.append('stock', formData.value.stock);
+        formDataToSend.append("user_id", userId);
 
         images.value.forEach((image, index) => {
             formDataToSend.append('images', image);
@@ -475,6 +484,7 @@ onMounted(async () => {
     max-width: 800px;
     margin: 2rem auto;
     padding: 1rem;
+    padding-top: 150PX;
 }
 
 .create-product-form {

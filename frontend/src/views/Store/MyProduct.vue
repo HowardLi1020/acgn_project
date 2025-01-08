@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { storeAPI } from "../../utils/api"; // 確保您有這個 API 工具
+import { storeAPI,getCurrentUserId } from "../../utils/api"; // 確保您有這個 API 工具
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2"; // 引入 Sweetalert2
 
@@ -16,24 +16,24 @@ const fetchUserProducts = async () => {
         loading.value = true;
         error.value = null;
 
-        // 從 localStorage 獲取 memberData
-        const memberData = JSON.parse(localStorage.getItem("memberData"));
-        const userId = memberData?.user_id; // 獲取 user_id
-
-        if (!userId) {
-            throw new Error("未找到用戶 ID");
-        }
-
-        // 假設您有一個獲取用戶產品的 API
-        const response = await storeAPI.getUserProducts(userId); // 傳遞 userId
-        if (response && response.products) {
-            products.value = response.products;
-        } else {
-            throw new Error("無效的響應數據");
-        }
+        const response = await storeAPI.getUserProducts();
+        products.value = response.products || [];
     } catch (err) {
         console.error("獲取產品失敗:", err);
-        error.value = err.response?.data?.detail || "獲取產品失敗";
+        error.value = err.message || "獲取產品失敗";
+        
+        if (err.message.includes("未登入") || err.message.includes("登入已過期")) {
+            Swal.fire({
+                title: '請先登入',
+                text: '您需要登入才能查看您的產品',
+                icon: 'warning',
+                confirmButtonText: '前往登入'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    router.push('/login');
+                }
+            });
+        }
     } finally {
         loading.value = false;
     }
