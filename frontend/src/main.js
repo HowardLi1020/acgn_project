@@ -2,11 +2,17 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
+import { useUserStore } from './stores/user';
 
-const pinia = createPinia(); // 創建 Pinia 實例
 const app = createApp(App);
 
+const pinia = createPinia(); // 創建 Pinia 實例
 app.use(pinia); // 使用 Pinia
+
+// 在應用啟動時同步用戶狀態
+const userStore = useUserStore();
+userStore.syncWithLocalStorage(); // 同步 LocalStorage 資料到 Pinia
+
 app.use(router); // 使用路由
 app.mount('#app');
 

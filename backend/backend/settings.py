@@ -58,7 +58,9 @@ INSTALLED_APPS = [
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'USER_ID_FIELD': 'user_id',  # 使用 user_id 作為主鍵
+    'ROTATE_REFRESH_TOKENS': True,                  # 是否在每次刷新時更新 Refresh Token
+    'BLACKLIST_AFTER_ROTATION': True,               # 是否將舊的 Refresh Token 加入黑名單
+    'USER_ID_FIELD': 'user_id',                      # 使用 user_id 作為主鍵
 }
 
 MIDDLEWARE = [
