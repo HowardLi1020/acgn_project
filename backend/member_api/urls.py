@@ -25,7 +25,6 @@ app_name = 'member_api'
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/protected_route/', views.ProtectedRouteView.as_view(), name='protected_route'),
-    path('auth/login/', AuthViewSet.as_view({'post': 'login'}), name='login'),
     path('auth/update_info/<int:pk>/', UpdateUserInfoView.as_view(), name='update_user_info'),
     path('verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),   #註冊驗證連結
     path('reset/', SendResetLinkView.as_view(), name='send-reset-link'),                 #發送密碼重置驗證碼

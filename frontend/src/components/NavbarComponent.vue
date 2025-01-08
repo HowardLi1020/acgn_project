@@ -1,7 +1,23 @@
 <script setup>
+import { computed } from 'vue';
+import { useUserStore } from '@/stores/user';
+
+const userStore = useUserStore(); // Pinia 用戶狀態
+
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// 動態計算路由
+const computedRoute = computed(() => {
+      if (userStore.user) {
+        // 已登入，跳轉到會員專區
+        return { name: 'center', params: { user_id: userStore.user.user_id } };
+      } else {
+        // 未登入，跳轉到登入頁面
+        return { name: 'login' };
+      }
+    });
 </script>
 
 <template>
@@ -32,12 +48,14 @@ function scrollToTop() {
                         <router-link to="/" class="nav-item nav-link" @click="scrollToTop">討論區</router-link>
                         <router-link to="/store" class="nav-item nav-link" @click="scrollToTop">周邊商店</router-link>
                         <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link>
+                        <router-link :to="computedRoute" class="nav-item nav-link" @click="scrollToTop">會員專區</router-link>
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">列表</a>
                             <div class="dropdown-menu m-0 bg-secondary rounded-0">
                                 <router-link to="/Fruitables" class="nav-item nav-link active" @click="scrollToTop">首頁</router-link>
                                 <router-link to="/store" class="nav-item nav-link" @click="scrollToTop">商店</router-link>
-                                <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link> 
+                                <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link>
+                                
                             </div>
                         </div>
                         
@@ -47,9 +65,9 @@ function scrollToTop() {
                         <router-link to="/shoppingcart" class="position-relative me-4 my-auto">
                             <i class="fa fa-shopping-bag fa-2x"></i>
                         </router-link>
-                        <a href="/login" class="my-auto">
+                        <router-link :to="computedRoute" class="my-auto">
                             <i class="fas fa-user fa-2x"></i>
-                        </a>
+                        </router-link>
                     </div>
                 </div>
             </nav>
