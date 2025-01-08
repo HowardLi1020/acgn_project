@@ -18,7 +18,7 @@ if (accessToken) {
 } else {
     console.log('會員未登入');
     // 跳轉到登入頁面
-    window.location.href = '/login';
+    // window.location.href = '/login';
 }
 
 // 加上這段可以讓死去的輪播功能稍微活一半

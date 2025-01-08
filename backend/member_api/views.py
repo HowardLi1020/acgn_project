@@ -75,7 +75,7 @@ class ProtectedRouteView(APIView):
 # 會員登入 與 註冊
 class AuthViewSet(viewsets.GenericViewSet):
     queryset = MemberBasic.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['POST'], serializer_class=LoginSerializer)
     def login(self, request):
