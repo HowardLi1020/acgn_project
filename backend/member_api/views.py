@@ -24,57 +24,22 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.exceptions import TokenError
 
 # Create your views here.
-# 自訂 Token 驗證方法!!
-def verify_jwt_token(request):
-    auth_header = request.headers.get('Authorization', None)
-    if not auth_header or not auth_header.startswith('Bearer '):
-        raise AuthenticationFailed("缺少或無效的 Authorization 標頭")
-
-    token = auth_header.split(' ')[1]  # 提取 Token
-
-    try:
-        # 驗證並解析 Token
-        decoded_token = AccessToken(token)
-        return decoded_token
-    except TokenError:
-        raise AuthenticationFailed("無效的 Token")
-    
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = MemberBasic.objects.all()
     serializer_class = MemberSerializer
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, pk=None):
         try:
-            # 驗證 Token
-            decoded_token = verify_jwt_token(request)
-            print(f"Decoded Token: {decoded_token}")
-
-            # 解析 Token 中的用戶 ID
-            user_id = decoded_token.get('user_id', None)
-            if not user_id:
-                raise AuthenticationFailed("Token 中缺少用戶 ID")
-
             # 根據主鍵 ID 查找會員資料
             user = MemberBasic.objects.get(user_id=pk)
-            if user.user_id != user_id:
-                raise AuthenticationFailed("無權限查看該用戶的資料")
             
             # 使用序列化器將會員資料轉換為 JSON 格式
             serializer = self.get_serializer(user)
-            print(f"User: {serializer.data}")
-            print(f"Authorization Header: {request.headers.get('Authorization')}")
             return Response(serializer.data, status=status.HTTP_200_OK)
         except MemberBasic.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        except AuthenticationFailed as e:
-            return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 class FavoriteViewSet(viewsets.ModelViewSet):
     queryset = MemberIndextype.objects.all()
@@ -112,10 +77,9 @@ class AuthViewSet(viewsets.GenericViewSet):
     queryset = MemberBasic.objects.all()
     permission_classes = [AllowAny]
 
-    # 登入!!!
     @action(detail=False, methods=['POST'], serializer_class=LoginSerializer)
     def login(self, request):
-        print("Received data:", request.data)    #  打印請求資料，確認請求參數是否正確
+        print("Received data:", request.data)  # 打印請求資料，確認請求參數是否正確
         email = request.data.get("user_email")
         password = request.data.get("user_password")
         remember_me = request.data.get("remember_me", False)
@@ -131,9 +95,8 @@ class AuthViewSet(viewsets.GenericViewSet):
             else:
                 # 密碼未哈希，直接比較
                 password_valid = (password == member.user_password)
-            
+
             if password_valid:
-                # 登入成功
                 try:
                     # 生成 JWT Token
                     refresh = RefreshToken.for_user(member)
@@ -141,7 +104,6 @@ class AuthViewSet(viewsets.GenericViewSet):
                         'refresh': str(refresh),
                         'access': str(refresh.access_token)
                     }
-                    print(f"Generated Tokens: {tokens}")  # 打印 tokens
 
                     # 處理 session 和 cookie
                     session_key = f"user_session_{member.user_id}"
@@ -152,22 +114,18 @@ class AuthViewSet(viewsets.GenericViewSet):
                     response_data = {
                         'message': '登入成功',
                         'user': MemberSerializer(member).data,
-                        'tokens': tokens
+                        'tokens': tokens  # 添加 tokens 到返回數據中
                     }
-                    print(f"Response Data: {response_data}")
 
                     # 如果選擇記住我
-                    if remember_me :
-                        # 設置長期 cookie
-                        response = Response(response_data, status=status.HTTP_200_OK)
+                    response = Response(response_data, status=status.HTTP_200_OK)
+                    if remember_me:
                         max_age = 30 * 24 * 60 * 60  # 30天
                         response.set_cookie('user_session', session_key, max_age=max_age)
-                        return response
                     else:
-                        # 設置臨時 cookie
-                        response = Response(response_data, status=status.HTTP_200_OK)
                         response.set_cookie('user_session', session_key)
-                        return response
+
+                    return response
                 
                 except Exception as e:
                     return Response({
@@ -176,12 +134,12 @@ class AuthViewSet(viewsets.GenericViewSet):
                 
             else:
                 return Response({
-                'error': '帳號或密碼錯誤'
+                    'error': '帳號或密碼錯誤'
                 }, status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response({
                 'error': '該郵箱未註冊，請再次確認郵箱或註冊新帳號。'
-                }, status=status.HTTP_401_UNAUTHORIZED)
+            }, status=status.HTTP_401_UNAUTHORIZED)
                 
 
     # 註冊 1. 送出註冊
@@ -351,7 +309,7 @@ class UpdateUserInfoView(APIView):
     def put(self, request, pk):
         try:
             # 根據主鍵 ID 查找會員資料
-            user = MemberBasic.objects.get(pk=pk)
+            user = MemberBasic.objects.get(user_id=pk)
 
             # 更新用戶其他資料
             user.user_email = request.data.get("user_email", user.user_email)
