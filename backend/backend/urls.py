@@ -32,8 +32,14 @@ urlpatterns = [
 
     #http://127.0.0.1:8000/cart_api/ 
     path('cart_api/', include('cart_api.urls')),
-        # http://127.0.0.1:8000/commission/ 
-    path('commission/', include('commission.urls'))
+    
+    # http://127.0.0.1:8000/commission/ 
+    path('commission/', include('commission.urls')),
+    
+    path('Movies/', include('Movies.urls')),
+    path('Games/', include('Games.urls')),
+    path('Animations/', include('Animations.urls')),
+    path('Discussion_board/', include('Discussion_board.urls'))
 ]
 
 if settings.DEBUG:

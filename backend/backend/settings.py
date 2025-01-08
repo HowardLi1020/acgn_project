@@ -52,6 +52,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'Games',
+    'Movies',
+    'Animations',
+    'Discussion_board',
 ]
 
 # JWT 配置
@@ -192,8 +196,8 @@ SITE_URL = 'http://127.0.0.1:8000'  # 開發環境
 FRONTEND_URL = "http://localhost:5173/"
 
 CORS_ALLOWED_ORIGINS = [
-       "http://localhost:5173",
-   ]
+    "http://localhost:5173",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 

@@ -1,0 +1,149 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+動畫資料庫
+{% endblock %}
+
+{% block app_content %}
+
+<!-- 搜尋表單 -->
+<form id="search-form" class="form-inline my-2 my-lg-0" role="search" method="get" action=".">
+    <div class="input-group">
+        <input type="text" class="form-control" id="search-query" name="keyword" placeholder="輸入關鍵字查詢" value="{{ query }}">
+        <span class="input-group-btn">
+            <button type="submit" class="btn btn-secondary">搜索</button>
+        </span>
+    </div>
+</form>
+<p> </p>
+<p> </p>
+<!-- 新增動畫按鈕 -->
+<a href="{% url 'Animations:add_animations' %}" class="btn btn-success mb-3">新增動畫</a>
+<!-- 用來包住動畫列表和分頁按鈕，方便進行局部更新 -->
+
+<div style="text-align:center" id="animations-list">
+    <!-- 動畫列表 -->
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>動畫海報</th>
+                <th>動畫名稱</th>
+                <th>遊戲描述</th>
+                <th>放送日期</th>
+                <th>動畫類型</th>
+                <th>配音</th>
+                <th>製作工作室</th>
+                <th>編輯</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for animation in page_obj %}
+            <tr>
+                <td>
+                    {% if animation.poster|slice:"0:4" == "http" %}
+                        <img src="{{ animation.poster }}" alt="{{ animation.animation_title }}" width="100"/>
+                    {% else %}
+                        <img src="{{ MEDIA_URL }}{{ animation.poster }}" alt="{{ animation.animation_title }}" width="100"/>
+                    {% endif %}
+                </td>
+                <td>{{ animation.animation_title }}</td>
+                <td>{{ animation.animation_description }}</td>
+                <td>{{ animation.release_date }}</td>
+                <td>{{ animation.animation_genre }}</td>
+                <td>{{ animation.voice_actors }}</td>
+                <td>{{ animation.animation_studio }}</td>
+                <td>
+                    <a href="{% url 'Animations:edit' animation.animation_id %}" class="btn btn-primary">修改</a>
+                    <a href="{% url 'Animations:delete' animation.animation_id %}" class="btn btn-danger">刪除</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">沒有找到符合條件的動畫。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分頁按鈕 -->
+    <nav aria-label="Page navigation example">
+      <ul class="pagination">
+        <!-- 回首頁按鈕 -->
+        <li class="page-item">
+          <a class="page-link page-ajax" href="/Animations/" aria-label="首頁">首頁</a>
+        </li>
+
+        <!-- 上一頁 -->
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="上一頁">上一頁</a>
+        </li>
+        {% endif %}
+
+        <!-- 頁碼按鈕 -->
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+          <a class="page-link page-ajax" href="?page={{ num }}{% if query %}&keyword={{ query }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endfor %}
+
+        <!-- 下一頁 -->
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="下一頁">下一頁</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+</div>
+
+{% endblock %}
+
+{% block app_script %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- 使用 AJAX 來實現無刷新分頁和搜尋 -->
+<script>
+    $(document).ready(function() {
+        // 綁定分頁按鈕的點擊事件
+        $('body').on('click', '.page-ajax', function(e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+
+            // 使用 AJAX 獲取新頁面內容
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    // 使用返回的 HTML 內容更新 animations-list 區域
+                    $('#animations-list').html($(response).find('#animations-list').html());
+                },
+                error: function() {
+                    alert('頁面載入失敗');
+                }
+            });
+        });
+
+        // 綁定搜尋表單的提交事件
+        $('#search-form').on('submit', function(e) {
+            e.preventDefault();
+            var query = $('#search-query').val();
+            var url = '?keyword=' + encodeURIComponent(query);
+
+            // 使用 AJAX 來執行搜尋請求
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    // 更新 animations-list 區域，顯示搜尋結果
+                    $('#animations-list').html($(response).find('#animations-list').html());
+                },
+                error: function() {
+                    alert('搜尋失敗');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

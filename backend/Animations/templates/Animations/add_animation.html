@@ -1,0 +1,56 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+<h3>新增動畫資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="animation_title" class="form-label">動畫名稱</label>
+        <input type="text" class="form-control" name="animation_title" id="animation_title" placeholder="請輸入動畫名稱">
+    </div>
+
+    <div class="mb-3">
+        <label for="release_date" class="form-label">放送日期</label>
+        <input type="date" class="form-control" name="release_date" id="release_date">
+    </div>
+
+    <div class="mb-3">
+        <label for="animation_genre" class="form-label">動畫類型</label>
+        <input type="text" class="form-control" name="animation_genre" id="animation_genre" placeholder="請輸入動畫類型">
+    </div>
+
+    <div class="mb-3">
+        <label for="animation_studio" class="form-label">製作工作室</label>
+        <input type="text" class="form-control" name="animation_studio" id="animation_studio" placeholder="請輸入製作工作室名稱">
+    </div>
+
+    <div class="mb-3">
+        <label for="episodes" class="form-label">集數</label>
+        <input type="number" class="form-control" name="episodes" id="episodes" placeholder="請輸入集數">
+    </div>
+
+    <!-- 新增的動畫描述欄位 -->
+    <div class="mb-3">
+        <label for="animation_description" class="form-label">動畫描述</label>
+        <textarea class="form-control" name="animation_description" id="animation_description" rows="4" placeholder="請輸入動畫描述"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="poster" class="form-label">動畫海報</label>
+        <input type="file" class="form-control" name="poster" id="poster"/>
+    </div>
+
+    <!-- 新增的配音欄位 -->
+    <div class="mb-3">
+        <label for="voice_actors" class="form-label">配音</label>
+        <textarea class="form-control" name="voice_actors" id="voice_actors" rows="4" placeholder="請輸入配音員列表"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">新增動畫資料</button>
+</form>
+{% endblock %}
