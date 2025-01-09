@@ -1,13 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-<<<<<<< HEAD
-from .views import AuthViewSet, VerifyEmailView, UpdateUserInfoView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView
-
-=======
 from .views import  VerifyEmailView, UpdateUserInfoView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView
 from member_api.views import AuthViewSet
->>>>>>> main
 router = DefaultRouter()
 # https://...../profile/
 router.register('profile', views.MemberViewSet)
@@ -24,11 +19,7 @@ router.register('privacy', views.PrivacyViewSet)
 # https://...../verify/
 router.register('verify', views.VerifyViewSet)
 # https://...../auth/
-<<<<<<< HEAD
-router.register(r'auth', views.AuthViewSet, basename='auth')
-=======
 router.register(r'auth', AuthViewSet, basename='auth')
->>>>>>> main
 
 app_name = 'member_api'
 urlpatterns = [

@@ -104,7 +104,6 @@ def ViewFn_need_list(request):
     view_db_need_info = list(view_db_need_info)
     for need in view_db_need_info:
         need.public_card = public_cards.get(need.needer_id)
-        print(f"Need ID: {need.need_id}, Needer ID: {need.needer_id}, Public Card: {need.public_card}")
 
     paginator = Paginator(view_db_need_info, 7)  # 每頁顯示7條記錄
     page_number = request.GET.get('page')
