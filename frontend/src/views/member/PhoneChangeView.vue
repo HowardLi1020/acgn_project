@@ -1,12 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user'; // 引入用於處理認證的 Store
 
-const route = useRoute(); // 獲取當前路由
-const router = useRouter(); // 用於路由跳轉
+const authStore = useUserStore(); // 用於獲取登入狀態和用戶信息
 
 const BASE_URL = import.meta.env.VITE_MemberApi;
-const code = route.params.code; // 提取 URL 中的令牌
 const API_URL = `${BASE_URL}phone-change/`;
 
 // 表單數據
@@ -26,58 +24,53 @@ const errors = ref({
 
 // 表單狀態
 const isSubmitting = ref(false)
-
 const isSuccess = ref(false) // 控制成功樣式
 
-// 驗證電子郵箱格式
-const validateEmail = (user_email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(user_email)
-}
+// 用戶是否已登入
+const isLoggedIn = ref(authStore.isAuthenticated); // 判斷用戶是否登入
 
-// 驗證手機號碼格式
-const validatePhones = () => {
-  const phoneRegex = /^09\d{8}$/
-  return {
-    isValidUserPhone: phoneRegex.test(formData.value.user_phone),
-    isValidNewPhone: phoneRegex.test(formData.value.new_phone)
-  }
-}
+// 在已登入情況下初始化電子郵箱
+onMounted(() => {
+    if (isLoggedIn.value) {
+        const userEmail = authStore.user?.user_email; // 獲取用戶的郵箱（儲在 authStore.user）
+        const userPhone = authStore.user?.user_phone; // 獲取用戶的郵箱（儲在 authStore.user）
+        if (userEmail && userPhone) {
+            formData.value.user_email = userEmail;
+            formData.value.user_phone = userPhone;
+        }
+    }
+});
 
 // 驗證表單
 const validateForm = () => {
     let isValid = true
-    const { isValidUserPhone, isValidNewPhone } = validatePhones()
     
     // 重置錯誤信息
     Object.keys(errors.value).forEach(key => errors.value[key] = '')
 
     // 驗證電子郵箱
-    if (!formData.value.user_email) {
-        errors.value.user_email = '請輸入電子郵箱'
-        isValid = false
-        isSuccess.value = false
-    } else if (!validateEmail(formData.value.user_email)) {
-        errors.value.user_email = '請輸入有效的電子郵箱格式'
-        isValid = false
+    const emailError = authStore.validateEmail(formData.value.user_email);
+    if (emailError) {
+      errors.value.user_email = emailError;
+      isValid = false;
     }
+
+    // 驗證舊手機號碼
+    const phoneError = authStore.validatePhone(formData.value.user_phone);
+    if (phoneError) {
+      errors.value.user_phone = phoneError;
+      isValid = false;
+    }
+    
+    // 驗證新手機號碼
+    const newphoneError = authStore.validatePhone(formData.value.new_phone);
+    if (newphoneError) {
+      errors.value.new_phone = newphoneError;
+      isValid = false;
+    }
+    
     return isValid
-
-    // 驗證手機號碼
-    if (!isValidUserPhone) {
-      errors.value.user_phone = '請輸入有效的原始手機號碼格式'
-      isValid = false
-    }
-    
-    if (!isValidNewPhone) {
-      errors.value.new_phone = '請輸入有效的新手機號碼格式'
-      isValid = false
-    }
-    
-    return isValidUserPhone && isValidNewPhone
   }
-
-
 
 // 提交表單
 const handleSubmit = async (event) => {
@@ -89,13 +82,18 @@ const handleSubmit = async (event) => {
 
     try {
         isSubmitting.value = true
+
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        if (isLoggedIn.value) {
+            headers.Authorization = `Bearer ${authStore.accessToken}`;
+      }
         
         // 這裡添加實際的 API 調用
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify({
               user_email: formData.value.user_email,
               user_phone: formData.value.user_phone,
@@ -104,11 +102,13 @@ const handleSubmit = async (event) => {
         })
 
         if (!response.ok) {
-            throw new Error('修改手機請求失敗')
+            // 解析錯誤訊息
+            const errorData = await response.json();
+            throw new Error(errorData.message || '修改手機請求失敗');
         }
 
         // 顯示成功信息
-        errors.value.general = '如果電子郵箱存在，我們會發送修改連結~!'
+        errors.value.general = '如果電子郵箱存在，您將會收到修改手機號連結~!'
         isSuccess.value = true
     } catch (error) {
         errors.value.general = error.message || '發送"修改手機"驗證連結時發生錯誤，請稍後重試'

@@ -10,11 +10,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import MemberBasic,  MemberIndextype, MemberLogin, MemberPhotos, MemberPrivacy, MemberVerify
 from promotions.models import Coupons
 from cart.models import Orders
-from .serializers import MemberSerializer, FavoriteSerializer, LoginSerializer, CouponSerializer, LoginSerializer, OrderdetailsSerializer, RegisterSerializer, PrivacySerializer, VerifySerializer, ThirdLoginSerializer
+from .serializers import MemberSerializer, FavoriteSerializer, LoginSerializer, CouponSerializer, LoginSerializer, OrderdetailsSerializer, PhotoSerializer, RegisterSerializer, PrivacySerializer, VerifySerializer, ThirdLoginSerializer
 from django.http import HttpResponseRedirect
 import os
 import random
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.utils.timezone import now, timedelta
 from django.utils.crypto import get_random_string
 from django.urls import reverse
@@ -26,14 +27,10 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
-from django.db import transaction
 
 # Create your views here.
 # 自訂 Token 驗證方法!!
 def verify_jwt_token(request):
-    """
-    驗證 JWT Token 的有效性，包括檢查過期時間。
-    """
     auth_header = request.headers.get('Authorization', None)
     if not auth_header or not auth_header.startswith('Bearer '):
         raise AuthenticationFailed("缺少或無效的 Authorization 標頭")
@@ -44,11 +41,8 @@ def verify_jwt_token(request):
         # 驗證並解析 Token
         decoded_token = AccessToken(token)
         return decoded_token
-    except TokenError as e:
-        # 檢查是否為 Token 過期錯誤或其他錯誤
-        if 'token_not_valid' in str(e):
-            raise AuthenticationFailed("Token 已過期，請重新登入")
-        raise AuthenticationFailed(f"無效的 Token: {str(e)}")
+    except TokenError:
+        raise AuthenticationFailed("無效的 Token")
     
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = MemberBasic.objects.all()
@@ -107,21 +101,10 @@ class OrderdetailsViewSet(viewsets.ModelViewSet):
     serializer_class = OrderdetailsSerializer
 
 class ProtectedRouteView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        token = request.data.get('token')  # 或者 headers.get 或 GET.get
-        print(f"Received token: {token}")
-        if not token:
-            return Response({"detail": "Token not provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            # 驗證 Token
-            decoded_token = verify_jwt_token(request)
-            print(f"User ID from Token: {decoded_token['user_id']}")
-            return Response({"message": "您已成功驗證 Token！"}, status=status.HTTP_200_OK)
-        
-        except AuthenticationFailed as e:
-            return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"message": "Token 是有效的！"})
 
 
 # 會員登入 與 註冊
@@ -203,53 +186,49 @@ class AuthViewSet(viewsets.GenericViewSet):
         
         try:
             serializer.is_valid(raise_exception=True)  # 驗證數據
+            user = serializer.save()
 
-            with transaction.atomic():  # 開啟數據庫事務
+            # 自動生成 Token
+            refresh = RefreshToken.for_user(user)
 
-                user = serializer.save()
+            # 創建 MemberPrivacy 記錄
+            MemberPrivacy.objects.create(
+                user=user,
+                created_at=now(),
+                account_verify=False  # 預設帳號未驗證
+            )
 
-                # 自動生成 Token
-                refresh = RefreshToken.for_user(user)
-
-                # 創建 MemberPrivacy 記錄
-                MemberPrivacy.objects.create(
+            # 生成驗證碼並創建 MemberVerify
+            verification_token = get_random_string(16)  # 生成隨機驗證碼
+            try:
+                MemberVerify.objects.create(
                     user=user,
+                    change_value=None,  # 如果不需要修改，可以設為 None
+                    verification_token=verification_token,
+                    verification_type='registration',
                     created_at=now(),
-                    account_verify=False,  # 預設帳號未驗證
-                    email_verified=False  # 預設郵箱未驗證
+                    expires_at=now() + timedelta(days=1),  # 設置驗證碼過期時間
+                    token_used=False  # 初始設定為未使用
                 )
 
-                # 生成驗證碼並創建 MemberVerify
-                verification_token = get_random_string(16)  # 生成隨機驗證碼
-                try:
-                    MemberVerify.objects.create(
-                        user=user,
-                        change_value=user.user_email,  # 記錄用戶註冊時使用的郵箱
-                        verification_token=verification_token,
-                        verification_type='registration',
-                        created_at=now(),
-                        expires_at=now() + timedelta(days=1),  # 設置驗證碼過期時間
-                        token_used=False  # 初始設定為未使用
-                    )
+                # 構建驗證連結
+                verification_url = request.build_absolute_uri(
+                    reverse('member_api:verify_email', args=[verification_token])
+                )
 
-                    # 構建驗證連結
-                    verification_url = request.build_absolute_uri(
-                        reverse('member_api:verify_email', args=[verification_token])
-                    )
+                # 發送驗證郵件
+                send_mail(
+                    subject='驗證您的帳號',
+                    message=f'請點擊以下連結驗證您的帳號：{verification_url}',
+                    from_email='forworkjayjay@gmail.com',
+                    recipient_list=[user.user_email],
+                    fail_silently=False,
+                )
 
-                    # 發送驗證郵件
-                    send_mail(
-                        subject='驗證您的帳號',
-                        message=f'請點擊以下連結驗證您的帳號：{verification_url}',
-                        from_email='forworkjayjay@gmail.com',
-                        recipient_list=[user.user_email],
-                        fail_silently=False,
-                    )
-
-                except Exception as e:
-                    return Response({
-                        'error': f'創建驗證記錄或發送郵件失敗: {str(e)}'
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception as e:
+                return Response({
+                    'error': f'創建驗證記錄或發送郵件失敗: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             return Response({
                 'message': '註冊成功，系統將發送驗證信以啟動帳號。請您留意查收',
@@ -346,8 +325,6 @@ class VerifyEmailView(APIView):
                 return HttpResponseRedirect(f"{settings.FRONTEND_URL}verify-email/{token}?status=error")
             
             member_privacy.account_verify = True
-            member_privacy.email_verified = True
-            member_privacy.updated_at = now()
             member_privacy.save()
 
             verification.token_used = True
@@ -368,18 +345,6 @@ class UpdateUserInfoView(APIView):
 
     def put(self, request, pk):
         try:
-            # 驗證 JWT Token
-            decoded_token = verify_jwt_token(request)
-            print(f"Decoded Token: {decoded_token}")
-
-            # 從 Token 中獲取用戶 ID 並檢查是否與請求的用戶一致
-            token_user_id = decoded_token.get("user_id", None)
-            if not token_user_id or str(token_user_id) != str(pk):
-                return Response(
-                    {"error": "無權限操作其他用戶的數據"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
             # 根據主鍵 ID 查找會員資料
             user = MemberBasic.objects.get(user_id=pk)
 
@@ -448,9 +413,6 @@ class UpdateUserInfoView(APIView):
             )
         except MemberBasic.DoesNotExist:
             return Response({"error": "用户不存在"}, status=status.HTTP_404_NOT_FOUND)
-        
-        except AuthenticationFailed as e:  # 處理驗證失敗的異常
-            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -464,82 +426,56 @@ class SendResetLinkView(APIView):
         )
     
     def post(self, request):
-        try:
-            # 驗證 JWT Token，檢查用戶是否已登入
-            try:
-                decoded_token = verify_jwt_token(request)
-                print(f"Decoded Token: {decoded_token}")
-                # 如果登入，用戶 ID 直接從 Token 提取
-                user_id = decoded_token.get("user_id")
-                user = MemberBasic.objects.filter(user_id=user_id).first()
-                if not user:
-                    return Response(
-                        {"message": "無效的用戶，請重新登入"},
-                        status=status.HTTP_401_UNAUTHORIZED,
-                    )
-                # 直接使用用戶的電子郵件
-                email = user.user_email
-                print(f"User is logged in, using email: {email}")
+        email = request.data.get("user_email")
+        if not email:
+            return Response({"message": "請提供有效的電子郵箱"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = MemberBasic.objects.filter(user_email=email).first()
 
-            except AuthenticationFailed:
-                # 未登入，檢查請求中是否提供了電子郵箱
-                email = request.data.get("user_email")
-                if not email:
-                    return Response(
-                        {"message": "請提供有效的電子郵箱"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                user = MemberBasic.objects.filter(user_email=email).first()
-                print(f"User is not logged in, email provided: {email}")
+        # 檢查是否存在未使用的相同請求
+        existing_request = MemberVerify.objects.filter(
+            user=user,
+            verification_type='phone_change',
+            change_value=email,
+            code_used=False,
+            expires_at__gte=now()
+        ).first()
 
-            # 檢查是否存在未使用的相同請求
-            existing_request = MemberVerify.objects.filter(
+        if existing_request:
+            return Response({'message': '已存在待驗證的修改手機號請求，請勿重複提交'}, status=400)
+        
+        if user:
+             # 生成6位數驗證碼並創建新的驗證記錄
+            code = random.randint(100000, 999999)
+            MemberVerify.objects.create(
                 user=user,
-                verification_type='phone_change',
-                change_value=email,
+                verification_type='password_change',
+                verification_code=code,
+                change_value=email,  # 記錄用戶請求重置密碼時使用的郵箱
                 code_used=False,
-                expires_at__gte=now()
-            ).first()
-
-            if existing_request:
-                return Response({'message': '已存在待處理的密碼重置請求，請勿重複提交'}, status=400)
-        
-            if user:
-                # 生成6位數驗證碼並創建新的驗證記錄
-                code = random.randint(100000, 999999)
-                MemberVerify.objects.create(
-                    user=user,
-                    verification_type='password_change',
-                    verification_code=code,
-                    change_value=email,  # 記錄用戶請求重置密碼時使用的郵箱
-                    code_used=False,
-                    created_at=now(),
-                    expires_at=now() + timedelta(days=1),   # 設置驗證碼過期時間
-                )
-
-                # 構建驗證連結
-                reset_link = request.build_absolute_uri(
-                    reverse('member_api:reset_password', args=[code])
-                )
-                print(f"Generated reset link: {reset_link}")
-
-                # 發送驗證郵件
-                send_mail(
-                    subject='密碼重置請求',
-                    message=f'請您點擊以下連結進行密碼重置：{reset_link}',
-                    from_email='forworkjayjay@gmail.com',
-                    recipient_list=[user.user_email],
-                    fail_silently=False,
-                )
-
-            return Response(
-                {"message": "如果電子郵箱存在，我們會發送重置連結~!"},
-                status=status.HTTP_200_OK
+                created_at=now(),
+                expires_at=now() + timedelta(days=1),   # 設置驗證碼過期時間
             )
-        
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 構建驗證連結
+            reset_link = request.build_absolute_uri(
+                reverse('member_api:reset_password', args=[code])
+            )
+            print(f"Generated reset link: {reset_link}")
+
+            # 發送驗證郵件
+            send_mail(
+                subject='密碼重置請求',
+                message=f'請您點擊以下連結進行密碼重置：{reset_link}',
+                from_email='forworkjayjay@gmail.com',
+                recipient_list=[user.user_email],
+                fail_silently=False,
+            )
+
+        return Response(
+            {"message": "如果電子郵箱存在，我們會發送重置連結~!"},
+            status=status.HTTP_200_OK
+        )
     
 # 會員忘記密碼 2. 按下驗證連結後跳轉重置密碼
 class ResetPasswordView(APIView):
@@ -591,45 +527,24 @@ class SendPhoneLinkView(APIView):
             {"message": "不支持的請求方法，請使用 POST"},
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
+    
     def post(self, request):
-        # 驗證 JWT Token
-        decoded_token = verify_jwt_token(request)  # 解碼 JWT Token
-        print(f"手機驗證Token: {decoded_token}")
+        email = request.data.get("user_email")
+        oldphone = request.data.get("user_phone")
+        newphone = request.data.get("new_phone")
 
-        if decoded_token:  # 如果用戶已登入
-            user_id = decoded_token.get('user_id')
-            user = MemberBasic.objects.filter(user_id=user_id).first()
-            if not user:
-                return Response({"message": "無效的用戶，請重新登入。"}, status=status.HTTP_401_UNAUTHORIZED)
-            
-            # 從用戶資料中獲取 email 和 oldphone
-            email = user.user_email
-            oldphone = user.user_phone
-
-            # 僅需要用戶提供新手機號
-            newphone = request.data.get("new_phone")
-            if not newphone:
-                return Response({"message": "請提供新手機號。"}, status=status.HTTP_400_BAD_REQUEST)
-            
-
-            
-        else:  # 如果用戶未登入
-            email = request.data.get("user_email")
-            oldphone = request.data.get("user_phone")
-            newphone = request.data.get("new_phone")
-
-            if not oldphone or not newphone or not email:
-                return Response({"message": "請輸入有效的手機號和郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not MemberBasic.objects.filter(user_phone=oldphone, user_email=email).exists():
-                return Response({'message': '輸入的手機號和郵箱不匹配或不存在。'}, status=400)
-
-            user = MemberBasic.objects.get(user_phone=oldphone, user_email=email)
-
-        # 檢查新手機號是否已被使用
+        if not oldphone or not newphone or not email:
+            return Response({"message": "請輸入有效的手機號和郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not MemberBasic.objects.filter(user_phone=oldphone, user_email=email).exists():
+            return Response({'message': '輸入的手機號和郵箱不匹配或不存在。'}, status=400)
+        
+        # 獲取對應用戶
+        user = MemberBasic.objects.get(user_phone=oldphone, user_email=email)
+        
         if MemberBasic.objects.filter(user_phone=newphone).exists():
             return Response({'message': '新手機號已被使用，請更換手機號。'}, status=400)
-            
+
 
         # 檢查是否存在未使用的相同請求
         existing_request = MemberVerify.objects.filter(
@@ -729,39 +644,17 @@ class SendEmailLinkView(APIView):
         )
     
     def post(self, request):
-        # 驗證 JWT Token
-        decoded_token = verify_jwt_token(request)  # 解碼 JWT Token
-        print(f"郵箱驗證Token: {decoded_token}")
+        email = request.data.get("user_email")
+        newemail = request.data.get("new_email")
 
-        if decoded_token:  # 如果用戶已登入
-            user_id = decoded_token.get('user_id')
-            user = MemberBasic.objects.filter(user_id=user_id).first()
-            if not user:
-                return Response({"message": "無效的用戶，請重新登入。"}, status=status.HTTP_401_UNAUTHORIZED)
-            
-            # 從用戶資料中獲取 email 和 oldphone
-            email = user.user_email
-
-            # 僅需要用戶提供新手機號
-            newemail = request.data.get("new_email")
-            if not newemail:
-                return Response({"message": "請提供新郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
-            
-
-            
-        else:  # 如果用戶未登入
-            email = request.data.get("user_email")
-            newemail = request.data.get("new_email")
-
-            if not email or not newemail :
-                return Response({"message": "請提供有效的電子郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if MemberBasic.objects.filter(user_email=newemail).exists():
-                return Response({'message': '該電子郵箱地址已被使用。'}, status=400)
-
-            # 獲取對應用戶
-            user = MemberBasic.objects.filter(user_email=email).first()
-    
+        if not email or not newemail or not email:
+            return Response({"message": "請提供有效的電子郵箱。"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if MemberBasic.objects.filter(user_email=newemail).exists():
+            return Response({'message': '該電子郵箱地址已被使用。'}, status=400)
+        
+        # 獲取對應用戶
+        user = MemberBasic.objects.filter(user_email=email).first()
 
         # 檢查是否存在未使用的相同請求
         existing_request = MemberVerify.objects.filter(
@@ -772,8 +665,8 @@ class SendEmailLinkView(APIView):
             expires_at__gte=now()
         ).first()
 
-        if existing_request:
-            return Response({'message': '已存在待驗證的修改郵箱請求，請勿重複提交'}, status=400)
+        # if existing_request:
+        #     return Response({'message': '已存在待驗證的修改郵箱請求，請勿重複提交'}, status=400)
         
         if user:
              # 生成6位數驗證碼並創建新的驗證記錄

@@ -29,17 +29,6 @@ const errors = ref({
 // 表單狀態
 const isSubmitting = ref(false)
 
-// 驗證電子郵箱格式
-const validateEmail = (user_email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(user_email)
-}
-
-// 驗證密碼強度
-const validatePassword = (user_password) => {
-  return user_password.length >= 8
-}
-
 // 驗證表單
 const validateForm = () => {
     let isValid = true
@@ -48,21 +37,17 @@ const validateForm = () => {
     Object.keys(errors.value).forEach(key => errors.value[key] = '')
 
     // 驗證電子郵箱
-    if (!formData.value.user_email) {
-        errors.value.user_email = '請輸入電子郵箱'
-        isValid = false
-    } else if (!validateEmail(formData.value.user_email)) {
-        errors.value.user_email = '請輸入有效的郵箱格式'
-        isValid = false
+    const emailError = userStore.validateEmail(formData.value.user_email);
+    if (emailError) {
+      errors.value.user_email = emailError;
+      isValid = false;
     }
 
     // 驗證密碼
-    if (!formData.value.user_password) {
-        errors.value.user_password = '請輸入密碼'
-        isValid = false
-    } else if (!validatePassword(formData.value.user_password)) {
-	  errors.value.user_password = '密碼長度至少需要8個字符'
-	  isValid = false
+    const passwordError = userStore.validatePassword(formData.value.user_password);
+    if (passwordError) {
+      errors.value.user_password = passwordError;
+      isValid = false;
     }
 
     return isValid
