@@ -1,0 +1,3 @@
+# 忽略 Python 編譯的字節碼文件
+*.pyc
+__pycache__/

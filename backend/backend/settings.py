@@ -52,13 +52,19 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'Games',
+    'Movies',
+    'Animations',
+    'Discussion_board',
 ]
 
 # JWT 配置
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'USER_ID_FIELD': 'user_id',  # 使用 user_id 作為主鍵
+    'ROTATE_REFRESH_TOKENS': True,                  # 是否在每次刷新時更新 Refresh Token
+    'BLACKLIST_AFTER_ROTATION': True,               # 是否將舊的 Refresh Token 加入黑名單
+    'USER_ID_FIELD': 'user_id',                      # 使用 user_id 作為主鍵
 }
 
 MIDDLEWARE = [
@@ -190,8 +196,8 @@ SITE_URL = 'http://127.0.0.1:8000'  # 開發環境
 FRONTEND_URL = "http://localhost:5173/"
 
 CORS_ALLOWED_ORIGINS = [
-       "http://localhost:5173",
-   ]
+    "http://localhost:5173",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 

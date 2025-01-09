@@ -1,0 +1,87 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+<h3>新增電影資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="movie_title" class="form-label">電影名稱</label>
+        <input type="text" class="form-control" name="movie_title" id="movie_title" placeholder="請輸入電影名稱">
+    </div>
+    <div class="mb-3">
+        <label for="release_date" class="form-label">上映日期</label>
+        <input type="date" class="form-control" name="release_date" id="release_date">
+    </div>
+    <div class="mb-3">
+        <label for="movie_genre" class="form-label">電影類型</label>
+        <input type="text" class="form-control" name="movie_genre" id="movie_genre" placeholder="請輸入電影類型">
+    </div>
+    <div class="mb-3">
+        <label for="director" class="form-label">導演</label>
+        <input type="text" class="form-control" name="director" id="director" placeholder="請輸入導演姓名">
+    </div>
+    <div class="mb-3">
+        <label for="movie_description" class="form-label">電影描述</label>
+        <textarea class="form-control" name="movie_description" id="movie_description" placeholder="請輸入電影描述"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="cast" class="form-label">主要演員</label>
+        <textarea class="form-control" name="cast" id="cast" placeholder="請輸入主要演員，使用逗號分隔"></textarea>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">電影海報</label>
+        <!-- 切換選項 -->
+        <div>
+            <input type="radio" id="upload-poster" name="poster-option" value="upload" checked>
+            <label for="upload-poster">上傳圖片</label>
+            
+            <input type="radio" id="url-poster" name="poster-option" value="url">
+            <label for="url-poster">輸入圖片網址</label>
+        </div>
+
+        <!-- 上傳圖片的輸入框 -->
+        <div id="upload-poster-group" class="poster-input">
+            <input type="file" class="form-control" name="poster_file" id="poster_file">
+        </div>
+
+        <!-- 輸入圖片網址的輸入框 -->
+        <div id="url-poster-group" class="poster-input" style="display: none;">
+            <input type="url" class="form-control" name="poster_url" id="poster_url" placeholder="輸入圖片網址">
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">新增電影資料</button>
+</form>
+{% endblock %}
+
+{% block app_script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const uploadRadio = document.getElementById('upload-poster');
+        const urlRadio = document.getElementById('url-poster');
+        const uploadGroup = document.getElementById('upload-poster-group');
+        const urlGroup = document.getElementById('url-poster-group');
+
+        // 切換輸入框顯示
+        function togglePosterInput() {
+            if (uploadRadio.checked) {
+                uploadGroup.style.display = 'block';
+                urlGroup.style.display = 'none';
+            } else {
+                uploadGroup.style.display = 'none';
+                urlGroup.style.display = 'block';
+            }
+        }
+
+        // 綁定事件
+        uploadRadio.addEventListener('change', togglePosterInput);
+        urlRadio.addEventListener('change', togglePosterInput);
+    });
+</script>
+{% endblock %}

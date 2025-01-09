@@ -1,0 +1,54 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+<h3>修改遊戲資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+        <input type="hidden" name="game_id" value="{{ game.game_id }}" />
+        <label for="game_title" class="form-label">遊戲名稱</label>
+        <input type="text" class="form-control" name="game_title" id="game_title" placeholder="請輸入遊戲名稱" value="{{ game.game_title }}">
+    </div>
+    <div class="mb-3">
+        <label for="release_date" class="form-label">發售日期</label>
+        <input type="date" class="form-control" name="release_date" id="release_date" value="{{ game.release_date|date:'Y-m-d' }}">
+    </div>
+    <div class="mb-3">
+        <label for="game_genre" class="form-label">遊戲類型</label>
+        <input type="text" class="form-control" name="game_genre" id="game_genre" placeholder="請輸入遊戲類型" value="{{ game.game_genre }}">
+    </div>
+    <div class="mb-3">
+        <label for="game_platform" class="form-label">遊戲平台</label>
+        <input type="text" class="form-control" name="game_platform" id="game_platform" placeholder="請輸入遊戲平台" value="{{ game.game_platform }}">
+    </div>
+    <div class="mb-3">
+        <label for="developer" class="form-label">開發商</label>
+        <input type="text" class="form-control" name="developer" id="developer" placeholder="請輸入開發商名稱" value="{{ game.developer }}">
+    </div>
+    <div class="mb-3">
+        <label for="game_description" class="form-label">遊戲描述</label>
+        <textarea class="form-control" name="game_description" id="game_description" rows="5" placeholder="請輸入遊戲描述">{{ game.game_description }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="poster" class="form-label">遊戲海報（上傳檔案）</label>
+        <input type="file" class="form-control" name="poster" id="poster"/>
+        <label for="poster_url" class="form-label mt-3">遊戲海報（圖片網址）</label>
+        <input type="url" class="form-control" name="poster_url" id="poster_url" placeholder="請輸入圖片網址" value="{% if game.poster|slice:'0:4' == 'http' %}{{ game.poster }}{% endif %}">
+        {% if game.poster %}
+            <p class="mt-2">當前海報：
+                {% if game.poster|slice:"0:4" == "http" %}
+                    <a href="{{ game.poster }}" target="_blank">{{ game.poster }}</a>
+                {% else %}
+                    <img src="{{ MEDIA_URL }}{{ game.poster }}" alt="{{ game.game_title }}" width="100">
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">保存修改</button>
+</form>
+{% endblock %}

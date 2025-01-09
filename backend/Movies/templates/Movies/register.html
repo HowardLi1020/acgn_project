@@ -1,0 +1,43 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+<h3>新增電影資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<!--
+    檔案上傳表單的必要設定
+    1. form 標籤 enctype="multipart/form-data"
+    2. <input type="file" name="userimage" />
+    -->
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="username" class="form-label">姓名</label>
+            <input type="text" class="form-control" name="username" id="username" placeholder="請輸入姓名">
+        </div>
+        <div class="mb-3">
+            <label for="useremail" class="form-label">電子郵件</label>
+            <input type="email"class="form-control" name="useremail"  id="useremail" placeholder="請輸入電子郵件">
+        </div>
+        <div class="mb-3">
+            <label for="userpassword" class="form-label">密碼</label>
+            <input type="password" class="form-control" name="userpassword" id="userpassword">
+        </div>
+        <div class="mb-3">
+            <label for="userpassword1" class="form-label">密碼確認</label>
+            <input type="password" class="form-control" name="userpassword1" id="userpassword1">
+        </div>
+        <div class="mb-3">
+            <label for="userbirth" class="form-label">生日</label>
+            <input type="date" class="form-control" name="userbirth"  id="userbirth">
+        </div>        
+        <div class="mb-3">
+            <label for="userphote" class="form-label">頭像</label>
+            <input type="file" class="form-control" name="userphote" id="userphote"/>
+        </div>
+        <button type="submit" class="btn btn-primary">註冊</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+<h3>修改遊戲資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+        <input type="hidden" name="game_id" value="{{ game.game_id }}" />
+        <label for="game_title" class="form-label">遊戲名稱</label>
+        <input type="text" class="form-control" name="game_title" id="game_title" placeholder="請輸入遊戲名稱" value="{{ game.game_title }}">
+    </div>
+    <div class="mb-3">
+        <label for="release_date" class="form-label">發售日期</label>
+        <input type="date" class="form-control" name="release_date" id="release_date" value="{{ game.release_date|date:'Y-m-d' }}">
+    </div>
+    <div class="mb-3">
+        <label for="game_genre" class="form-label">遊戲類型</label>
+        <input type="text" class="form-control" name="game_genre" id="game_genre" placeholder="請輸入遊戲類型" value="{{ game.game_genre }}">
+    </div>
+    <div class="mb-3">
+        <label for="game_platform" class="form-label">遊戲平台</label>
+        <input type="text" class="form-control" name="game_platform" id="game_platform" placeholder="請輸入遊戲平台" value="{{ game.game_platform }}">
+    </div>
+    <div class="mb-3">
+        <label for="developer" class="form-label">開發商</label>
+        <input type="text" class="form-control" name="developer" id="developer" placeholder="請輸入開發商名稱" value="{{ game.developer }}">
+    </div>
+    <div class="mb-3">
+        <label for="poster" class="form-label">遊戲海報</label>
+        <input type="file" class="form-control" name="poster" id="poster"/>
+        {% if game.poster %}
+            <p class="mt-2">當前海報：{{ game.poster }}</p>
+        {% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">保存修改</button>
+</form>
+{% endblock %}

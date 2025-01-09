@@ -1,0 +1,83 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+<h3>修改動畫資料</h3>
+{% endblock %}
+
+{% block app_content %}
+<!-- 返回動畫列表按鈕 -->
+<a href="{% url 'Animations:index' %}" class="btn btn-secondary mb-3">返回動畫列表</a>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <input type="hidden" name="animation_id" value="{{ animation.animation_id }}" />
+
+    <div class="mb-3">
+        <label for="animation_title" class="form-label">動畫名稱</label>
+        <input type="text" class="form-control" name="animation_title" id="animation_title" placeholder="請輸入動畫名稱" value="{{ animation.animation_title }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="release_date" class="form-label">發佈日期</label>
+        <input type="date" class="form-control" name="release_date" id="release_date" value="{{ animation.release_date|date:'Y-m-d' }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="animation_genre" class="form-label">動畫類型</label>
+        <input type="text" class="form-control" name="animation_genre" id="animation_genre" placeholder="請輸入動畫類型" value="{{ animation.animation_genre }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="episodes" class="form-label">集數</label>
+        <input type="number" class="form-control" name="episodes" id="episodes" placeholder="請輸入集數" value="{{ animation.episodes }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="animation_studio" class="form-label">動畫工作室</label>
+        <input type="text" class="form-control" name="animation_studio" id="animation_studio" placeholder="請輸入動畫工作室名稱" value="{{ animation.animation_studio }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="animation_description" class="form-label">動畫描述</label>
+        <textarea class="form-control" name="animation_description" id="animation_description" rows="4" placeholder="請輸入動畫描述">{{ animation.animation_description }}</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="poster" class="form-label">本地動畫海報</label>
+        <input type="file" class="form-control" name="poster" id="poster" />
+        {% if animation.poster %}
+            <p class="mt-2">當前海報：
+                {% if animation.poster|slice:"0:4" == "http" %}
+                    <img src="{{ animation.poster }}" alt="{{ animation.animation_title }}" width="100"/>
+                {% else %}
+                    <img src="{{ MEDIA_URL }}{{ animation.poster }}" alt="{{ animation.animation_title }}" width="100"/>
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="poster_url" class="form-label">網路動畫海報</label>
+        <input type="url" class="form-control" name="poster_url" id="poster_url" placeholder="請輸入網路圖片 URL" value="{% if animation.poster|slice:"0:4" == "http" %}{{ animation.poster }}{% endif %}">
+    </div>
+
+    <!-- 新增的配音欄位 -->
+    <div class="mb-3">
+        <label for="voice_actors" class="form-label">配音</label>
+        <textarea class="form-control" name="voice_actors" id="voice_actors" rows="4" placeholder="請輸入配音員列表">{{ animation.voice_actors }}</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">保存修改</button>
+</form>
+{% endblock %}
+
+{% block app_script %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // 可以在這裡添加任何需要的 JavaScript 功能
+    });
+</script>
+{% endblock %}

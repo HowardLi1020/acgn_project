@@ -47,6 +47,30 @@ api.interceptors.response.use(
     }
 )
 
+const parseJwt = (token) => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error('Error parsing JWT:', e);
+        return null;
+    }
+};
+
+// 獲取當前用戶ID的函數
+export const getCurrentUserId = () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return null;
+    
+    const decodedToken = parseJwt(token);
+    return decodedToken ? decodedToken.user_id : null;
+};
+
 // 基礎 GET 請求函數，不需要認證
 const getPublic = async (endpoint) => {
     const response = await fetch(`${apiUrl}${endpoint}`);
@@ -56,9 +80,11 @@ const getPublic = async (endpoint) => {
     return response.json();
 };
 
+
+
 // 需要認證的 GET 請求
 const getWithAuth = async (endpoint) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     const response = await fetch(`${apiUrl}${endpoint}`, {
         headers: {
             'Authorization': `Bearer ${token}`
@@ -72,16 +98,22 @@ const getWithAuth = async (endpoint) => {
 
 // 需要認證的 POST 請求
 const postWithAuth = async (endpoint, data) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');  // 改為 access_token
+    if (!token) {
+        throw new Error('未登入，請先登入');
+    }
+    
     const response = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': data instanceof FormData ? undefined : 'application/json',
+            ...(!(data instanceof FormData) && {
+                'Content-Type': 'application/json'
+            })
         },
         body: data instanceof FormData ? data : JSON.stringify(data),
-        credentials: 'include'
     });
+
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || errorData.error || '請求失敗');
@@ -102,7 +134,21 @@ export const storeAPI = {
     getProductDetail: (productId) => getPublic(`/store/products/${productId}/`),
     
     // 需要認證的 API
-    createProduct: (formData) => postWithAuth('/store/create_product/', formData),
+    createProduct: async (formData) => {
+        try {
+            const response = await api.post('/store/create_product/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('登入已過期，請重新登入');
+            }
+            throw new Error(error.response?.data?.detail || '創建商品失敗');
+        }
+    },
 
     checkWishlist: (productId) => getWithAuth(`/store/wishlist/check/${productId}/`),
 
@@ -121,33 +167,43 @@ export const storeAPI = {
         }
     },
 
-    getUserProducts: async (userId) => {
+    getUserProducts: async () => {
         try {
-            const response = await api.get('/store/my-products/', {
-                params: { user_id: userId }
-            });
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                throw new Error("未登入，請先登入");
+            }
+
+            const response = await api.get('/store/my-products/');
+            
+            // 確保返回的數據結構正確
+            if (!response.data || !response.data.products) {
+                throw new Error("無效的響應數據");
+            }
+            
             return response.data;
         } catch (error) {
-            console.error('獲取用戶產品失敗:', error);
-            throw error;
+            console.error('獲取產品列表錯誤:', error);
+            if (error.response?.status === 401) {
+                throw new Error("未登入或登入已過期，請重新登入");
+            }
+            throw new Error(error.response?.data?.detail || "獲取產品列表失敗");
         }
     },
 
     // 刪除商品
     deleteProduct: async (productId) => {
         try {
-            const memberData = JSON.parse(localStorage.getItem("memberData"));
-            const userId = memberData?.user_id;
-
-            if (!userId) {
-                throw new Error("未找到用戶 ID");
-            }
-            const params = new URLSearchParams({ user_id: userId });
-            const response = await api.delete(`/store/delete_product/${productId}/?${params}`);
+            // 使用配置好的 api 實例而不是 axios
+            const response = await api.delete(`/store/delete_product/${productId}/`);
             return response.data;
         } catch (error) {
-            console.error('刪除商品失敗:', error);
-            throw error;
+            if (error.response?.status === 401) {
+                throw new Error('登入已過期，請重新登入');
+            } else if (error.response?.status === 403) {
+                throw new Error('您沒有權限刪除此商品');
+            }
+            throw new Error(error.response?.data?.detail || '刪除商品失敗');
         }
     },
 

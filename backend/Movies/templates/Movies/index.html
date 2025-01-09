@@ -1,0 +1,143 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_title %}
+電影資料庫
+{% endblock %}
+
+{% block app_content %}
+
+<!-- 搜尋表單 -->
+<form id="search-form" class="form-inline my-2 my-lg-0" role="search" method="get" action=".">
+    <div class="input-group">
+        <input type="text" class="form-control" id="search-query" name="keyword" placeholder="輸入關鍵字查詢" value="{{ query }}">
+        <span class="input-group-btn">
+            <button type="submit" class="btn btn-secondary">搜索</button>
+        </span>
+    </div>
+</form>
+
+<p> </p>
+<p> </p>
+
+<!-- 新增電影按鈕 -->
+<a href="{% url 'Movies:add_movie' %}" class="btn btn-success mb-3">新增電影</a>
+
+<!-- 電影列表 -->
+<div style="text-align:center" id="movies-list">
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>電影海報</th>
+                <th>電影名稱</th>
+                <th>上映日期</th>
+                <th>電影類型</th>
+                <th>導演</th>
+                <th>演員</th>
+                <th>電影描述</th> <!-- 新增的電影描述欄位 -->
+                <th>編輯</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in page_obj %}
+            <tr>
+                <td>
+                    <img src="{{ movie.poster }}" alt="{{ movie.movie_title }}" width="100"/>
+                </td>
+                <td>{{ movie.movie_title }}</td>
+                <td>{{ movie.release_date }}</td>
+                <td>{{ movie.movie_genre }}</td>
+                <td>{{ movie.director }}</td>
+                <td>{{ movie.cast }}</td>
+                <td>{{ movie.movie_description }}</td> <!-- 顯示電影描述 -->
+                <td>
+                    <a href="{% url 'Movies:edit' movie.movie_id %}" class="btn btn-primary">修改</a>
+                    <a href="{% url 'Movies:delete' movie.movie_id %}" class="btn btn-danger">刪除</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">沒有找到符合條件的電影。</td> <!-- 修改 colspan -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分頁按鈕 -->
+    <nav aria-label="Page navigation example">
+        <ul class="pagination">
+            <!-- 回首頁按鈕 -->
+            <li class="page-item">
+                <a class="page-link page-ajax" href="/Movies/" aria-label="首頁">首頁</a>
+            </li>
+
+            <!-- 上一頁 -->
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="上一頁">上一頁</a>
+            </li>
+            {% endif %}
+
+            <!-- 頁碼按鈕 -->
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link page-ajax" href="?page={{ num }}{% if query %}&keyword={{ query }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            <!-- 下一頁 -->
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="下一頁">下一頁</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+{% endblock %}
+
+{% block app_script %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // 綁定分頁按鈕的點擊事件
+        $('body').on('click', '.page-ajax', function(e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+
+            // 使用 AJAX 獲取新頁面內容
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    $('#movies-list').html($(response).find('#movies-list').html());
+                },
+                error: function() {
+                    alert('頁面載入失敗');
+                }
+            });
+        });
+
+        // 綁定搜尋表單的提交事件
+        $('#search-form').on('submit', function(e) {
+            e.preventDefault();
+            var query = $('#search-query').val();
+            var url = '?keyword=' + encodeURIComponent(query);
+
+            // 使用 AJAX 來執行搜尋請求
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    $('#movies-list').html($(response).find('#movies-list').html());
+                },
+                error: function() {
+                    alert('搜尋失敗');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

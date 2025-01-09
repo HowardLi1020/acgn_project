@@ -7,12 +7,19 @@ import NotFound from "./views/404View.vue";
 // Member
 import LoginView from "./views/member/LoginView.vue";
 import SignupView from "./views/member/SignupView.vue";
-import ResetView from "./views/member/ResetView.vue";
-import ResetPasswordView from "./views/member/ResetPasswordView.vue";
-import ResetVerifyView from "./views/member/ResetVerifyView.vue";
+import VerifyEmailView from "./views/member/VerifyEmailView.vue";
 import CenterView from "./views/member/CenterView.vue";
 import CenterPlusView from "./views/member/CenterPlusView.vue";
-import VerifyEmailView from "./views/member/VerifyEmailView.vue";
+import ResetView from "./views/member/ResetView.vue";
+import ResetVerifyView from "./views/member/ResetVerifyView.vue";
+import ResetPasswordView from "./views/member/ResetPasswordView.vue";
+import PhoneChangeView from "./views/member/PhoneChangeView.vue";
+import PhoneVerifyView from "./views/member/PhoneVerifyView.vue";
+import PhoneResetView from "./views/member/PhoneResetView.vue";
+import EmailChangeView from "./views/member/EmailChangeView.vue";
+import EmailVerifyView from "./views/member/EmailVerifyView.vue";
+import EmailResetView from "./views/member/EmailResetView.vue";
+
 
 // Store
 import StoreView from "./views/Store/StoreView.vue";
@@ -114,6 +121,7 @@ const routes =[
     name: 'center',
     component: CenterView,
     props: true,
+    meta: { requiresAuth: true }    // 需要驗證
 },
 {
     //http://localhost:5173/center-plus  => 載入 CenterPlusView 進階設定
@@ -121,6 +129,43 @@ const routes =[
     name: 'center_plus',
     component: CenterPlusView,
     props: true,
+    meta: { requiresAuth: true }    // 需要驗證
+},
+{
+    //http://localhost:5173/phone-change  => 載入 PhoneChangeView 發起 修改手機
+    path: '/phone-change',
+    name: 'PhoneChange',
+    component: PhoneChangeView,
+},
+{
+    //http://localhost:5173/phone-verify/:code  => 載入 PhoneVerifyView 提示修改手機驗證
+    path: '/phone-verify/:code',
+    name: 'PhoneVerify',
+    component: PhoneVerifyView,
+},
+{
+    //http://localhost:5173/phone-reset  => 載入 PhoneResetView 進行 修改手機
+    path: '/phone-reset',
+    name: 'PhoneReset',
+    component: PhoneResetView,
+},
+{
+    //http://localhost:5173/email-change  => 載入 EmailChangeView 發起 修改電子郵件
+    path: '/email-change',
+    name: 'EmailChange',
+    component: EmailChangeView,
+},
+{
+    //http://localhost:5173/email-verify/:code  => 載入 EmailVerifyView 提示修改電子郵件驗證
+    path: '/email-verify/:code',
+    name: 'EmailVerify',
+    component: EmailVerifyView,
+},
+{
+    //http://localhost:5173/reset  => 載入 EmailResetView 進行 修改電子郵件
+    path: '/email-reset',
+    name: 'EmailReset',
+    component: EmailResetView,
 },
 
 // Store

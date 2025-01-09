@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { storeAPI } from '@/utils/api';
 import Swal from "sweetalert2";
 
 const apiUrl = import.meta.env.VITE_APIURL;
-const CREATE_PRODUCT_URL = `${apiUrl}/store/create_product/`; // 商品創建的 API URL
 const router = useRouter();
+
 
 const formData = ref({
     product_name: "",
@@ -26,7 +27,6 @@ const brands = ref([]);
 const series = ref([]);
 const imagePreviews = ref([]);
 const images = ref([]);
-const errors = ref({});
 const isSubmitting = ref(false);
 
 
@@ -153,10 +153,12 @@ const handleSubmit = async (event) => {
     event.preventDefault();
     isSubmitting.value = true;
 
-    const memberData = JSON.parse(localStorage.getItem('memberData'));
-    const userId = memberData ? memberData.user_id : null;
-
     try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            throw new Error('請先登入');
+        }
+
         const formDataToSend = new FormData();
         formDataToSend.append('product_name', formData.value.product_name);
         formDataToSend.append('description_text', formData.value.description_text);
@@ -166,31 +168,20 @@ const handleSubmit = async (event) => {
         formDataToSend.append('price', formData.value.price);
         formDataToSend.append('stock', formData.value.stock);
 
-        images.value.forEach((image, index) => {
+        images.value.forEach((image) => {
             formDataToSend.append('images', image);
         });
 
-        formDataToSend.append("user_id", userId);
-
-        const response = await fetch(CREATE_PRODUCT_URL, {
-            method: "POST",
-            body: formDataToSend,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || '創建商品失敗');
-        }
-
-        const responseData = await response.json();
-        console.log('商品創建成功:', responseData);
-
+        // 使用 storeAPI 創建商品
+        const response = await storeAPI.createProduct(formDataToSend);
+        
         await Swal.fire({
             title: "成功",
             text: "商品已成功創建",
             icon: "success",
         });
-        // 清空表單或重定向
+
+        // 清空表單
         formData.value = {
             product_name: '',
             description_text: '',
@@ -201,10 +192,22 @@ const handleSubmit = async (event) => {
             stock: '',
             images: [],
         };
+        images.value = [];
+        imagePreviews.value = [];
 
         router.push("/store");
     } catch (error) {
         console.error("Error:", error);
+        if (error.message.includes('請先登入') || error.message.includes('登入已過期')) {
+            await Swal.fire({
+                title: "錯誤",
+                text: error.message,
+                icon: "error",
+                confirmButtonText: "前往登入"
+            });
+            router.push('/login');
+            return;
+        }
         Swal.fire({
             title: "錯誤",
             text: error.message,
@@ -475,6 +478,7 @@ onMounted(async () => {
     max-width: 800px;
     margin: 2rem auto;
     padding: 1rem;
+    padding-top: 150PX;
 }
 
 .create-product-form {
