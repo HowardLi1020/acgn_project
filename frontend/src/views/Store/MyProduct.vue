@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { storeAPI,getCurrentUserId } from "../../utils/api"; // 確保您有這個 API 工具
+import { storeAPI } from "../../utils/api"; // 確保您有這個 API 工具
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2"; // 引入 Sweetalert2
 
@@ -50,7 +50,6 @@ const handleEdit = (productId) => {
 // 刪除商品
 const handleDelete = async (productId) => {
     try {
-        // 使用 Sweetalert2 的確認對話框
         const result = await Swal.fire({
             title: "確定要刪除此商品嗎？",
             text: "此操作不可恢復！",
@@ -63,12 +62,9 @@ const handleDelete = async (productId) => {
         });
 
         if (result.isConfirmed) {
-            // 用戶確認後，調用刪除 API
             await storeAPI.deleteProduct(productId);
-            // 重新獲取商品列表
             await fetchUserProducts();
 
-            // 顯示成功消息
             await Swal.fire({
                 title: "已刪除！",
                 text: "商品已成功刪除。",
@@ -78,10 +74,21 @@ const handleDelete = async (productId) => {
         }
     } catch (err) {
         console.error("刪除商品失敗:", err);
-        // 顯示錯誤消息
+        
+        if (err.message.includes('登入已過期')) {
+            await Swal.fire({
+                title: "錯誤",
+                text: err.message,
+                icon: "error",
+                confirmButtonText: "前往登入"
+            });
+            router.push('/login');
+            return;
+        }
+
         await Swal.fire({
             title: "錯誤",
-            text: "刪除商品失敗，請稍後再試",
+            text: err.message || "刪除商品失敗，請稍後再試",
             icon: "error",
         });
     }
@@ -120,7 +127,7 @@ onMounted(() => {
                 <!-- 商品信息 -->
                 <div class="product-info">
                     <h3>{{ product.product_name }}</h3>
-                    <p class="price">NT$ {{ product.price }}</p>
+                    <p class="price">NT$ {{ Math.floor(product.price) }}</p>
                 </div>
 
                 <!-- 操作按鈕 -->

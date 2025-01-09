@@ -22,9 +22,13 @@ const apiUrl = import.meta.env.VITE_APIURL;
 // 檢查是否已收藏
 const checkWishlistStatus = async () => {
   try {
-    const response = await fetch(`${apiUrl}/store/wishlist/check/${props.productId}/`, {
-      credentials: 'include'
-    });
+    const token = localStorage.getItem('access_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const response = await fetch(`${apiUrl}/store/wishlist/check/${props.productId}/`, {
+            credentials: 'include',
+            headers
+        });
 
     if (!response.ok) throw new Error('檢查收藏狀態失敗');
 
@@ -39,9 +43,9 @@ const checkWishlistStatus = async () => {
 const toggleWishlist = async () => {
     try {
         isLoading.value = true;
-        const memberData = JSON.parse(localStorage.getItem('memberData')); // 確保解析 JSON
+        const token = localStorage.getItem('access_token');
 
-        if (!memberData || !memberData.user_id) {
+        if (!token) {
             Swal.fire({
                 title: '請先登入',
                 icon: 'warning',
@@ -56,11 +60,12 @@ const toggleWishlist = async () => {
             return;
         }
 
-        const response = await fetch(`${apiUrl}/store/wishlist/toggle/${props.productId}/?user_id=${memberData.user_id}`, {
+        const response = await fetch(`${apiUrl}/store/wishlist/toggle/${props.productId}/`, {
             method: 'POST',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 

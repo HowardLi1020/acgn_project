@@ -52,82 +52,71 @@ def index(request):
 @api_view(['POST'])
 def create_product(request):
     try:
-        # 從 JWT token 中獲取用戶
-        user = request.user
-        if not user or not user.is_authenticated:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
             return Response({
-                'detail': '未授權訪問',
-                'code': 'unauthorized'
+                'detail': '未授權訪問'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        token = auth_header.split(' ')[1]
+        
+        try:
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return Response({
+                    'detail': '無效的用戶信息'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # 驗證用戶是否存在
+            user = MemberBasic.objects.filter(user_id=user_id).first()
+            if not user:
+                return Response({
+                    'detail': '用戶不存在'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+                
+        except jwt.ExpiredSignatureError:
+            return Response({
+                'detail': 'token已過期'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({
+                'detail': '無效的token'
             }, status=status.HTTP_401_UNAUTHORIZED)
 
-        # 驗證必要字段
-        required_fields = ['product_name', 'price', 'stock']
-        for field in required_fields:
-            if not request.data.get(field):
-                return Response({
-                    'detail': f'{field} 為必填項',
-                        'code': 'validation_error'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        # 處理價格和庫存的數據類型轉換
-        try:
-            price = float(request.data['price'])
-            stock = int(request.data['stock'])
-        except (ValueError, TypeError):
-            return Response({
-                'detail': '價格或庫存格式不正確',
-                'code': 'validation_error'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # 創建產品實例
+        # 創建產品
         product = Products(
-            user=user,
             product_name=request.data['product_name'],
             description_text=request.data.get('description_text', ''),
-            price=price,
-            stock=stock
+            price=request.data['price'],
+            stock=request.data['stock'],
+            user_id=user_id,  # 直接使用從 token 中獲取的 user_id
+            created_at=datetime.now(),
+            updated_at=datetime.now()
         )
 
         # 處理外鍵關係
         if request.data.get('category'):
-            try:
-                product.category_id = int(request.data['category'])
-            except (ValueError, TypeError):
-                return Response({
-                    'detail': '分類ID格式不正確',
-                    'code': 'validation_error'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
+            product.category_id = request.data['category']
         if request.data.get('brand'):
-            try:
-                product.brand_id = int(request.data['brand'])
-            except (ValueError, TypeError):
-                return Response({
-                    'detail': '品牌ID格式不正確',
-                    'code': 'validation_error'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
+            product.brand_id = request.data['brand']
         if request.data.get('series'):
-            try:
-                product.series_id = int(request.data['series'])
-            except (ValueError, TypeError):
-                return Response({
-                    'detail': '系列ID格式不正確',
-                    'code': 'validation_error'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            product.series_id = request.data['series']
 
-        # 保存產品
         product.save()
 
         # 處理圖片
         images = request.FILES.getlist('images')
         if images:
             for index, image in enumerate(images):
-                # 創建數據庫記錄，第一張圖片 is_main=True，其餘為 False
                 ProductImages.objects.create(
                     product=product,
                     image_url=image,
-                    is_main=1 if index == 0 else 0  # 第一張圖片設為主圖
+                    is_main=1 if index == 0 else 0,
+                    created_at=datetime.now()
                 )
 
         return Response({
@@ -136,32 +125,67 @@ def create_product(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
-        logger.error(f"Error creating product: {str(e)}")
+        logger.error(f"創建商品時發生錯誤: {str(e)}")
         return Response({
-            'detail': f'創建商品時發生錯誤: {str(e)}',
-            'code': 'server_error'
+            'detail': f'創建商品時發生錯誤: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['DELETE'])
 def delete_product(request, product_id):
     try:
-        # 直接從 request.user 獲取用戶
-        user = request.user
-        product = Products.objects.get(product_id=product_id)
-
-        # 檢查是否為商品擁有者
-        if product.user != user:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
             return Response({
-                'detail': '您沒有權限刪除此商品'
-            }, status=status.HTTP_403_FORBIDDEN)
+                'detail': '未授權訪問'
+            }, status=status.HTTP_401_UNAUTHORIZED)
         
-        ProductImages.objects.filter(product=product).delete()
-        product.delete()
+        token = auth_header.split(' ')[1]
         
-        return Response({
-            'detail': '商品已成功刪除'
-        }, status=status.HTTP_200_OK)
-        
+        try:
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return Response({
+                    'detail': '無效的用戶信息'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # 驗證用戶是否存在
+            user = MemberBasic.objects.filter(user_id=user_id).first()
+            if not user:
+                return Response({
+                    'detail': '用戶不存在'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+
+            # 獲取商品
+            product = Products.objects.get(product_id=product_id)
+
+            # 檢查是否為商品擁有者
+            if product.user_id != user_id:
+                return Response({
+                    'detail': '您沒有權限刪除此商品'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # 刪除相關圖片
+            ProductImages.objects.filter(product=product).delete()
+            # 刪除商品
+            product.delete()
+            
+            return Response({
+                'detail': '商品已成功刪除'
+            }, status=status.HTTP_200_OK)
+            
+        except jwt.ExpiredSignatureError:
+            return Response({
+                'detail': 'token已過期'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({
+                'detail': '無效的token'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+            
     except Products.DoesNotExist:
         return Response({
             'detail': '商品不存在'
@@ -311,8 +335,19 @@ def create_brand(request):
         try:
             data = json.loads(request.body)
             brand_name = data.get('name')
+            # 添加輸入驗證
+            if not brand_name:
+                return JsonResponse({'message': '類別名稱不能為空'}, status=400)
+
+            # 檢查是否已存在相同名稱的系列
+            if ProductSeries.objects.filter(brand_name=brand_name).exists():
+                return JsonResponse({'message': '該類別名稱已存在'}, status=400)
+            
             brand = ProductBrands.objects.create(brand_name=brand_name)
-            return JsonResponse({'message': 'Brand created successfully', 'id': brand.brand_id}, status=201)
+            return JsonResponse({'message': '類別創建成功', 'category' : {
+                'brand_id': brand.brand_id,
+                'brand_name': brand.brand_name
+            }}, status=201)
         except Exception as e:
             return JsonResponse({'message': str(e)}, status=400)
     return JsonResponse({'message': 'Invalid method'}, status=405)
@@ -323,6 +358,14 @@ def create_category(request):
         try:
             data = json.loads(request.body)
             category_name = data.get('name')
+            # 添加輸入驗證
+            if not category_name:
+                return JsonResponse({'message': '分類名稱不能為空'}, status=400)
+
+            # 檢查是否已存在相同名稱的系列
+            if ProductSeries.objects.filter(category_name=category_name).exists():
+                return JsonResponse({'message': '該分類名稱已存在'}, status=400)
+
             category = ProductCategories.objects.create(category_name=category_name)
             return JsonResponse({'message': '分類創建成功', 'category': {
                 'category_id': category.category_id,
@@ -462,57 +505,81 @@ class MyProductsView(View):
 @api_view(['POST'])
 def toggle_wishlist(request, product_id):
     try:
-        # 獲取用戶和商品
-        user_id = request.query_params.get('user_id')
-        if not user_id:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
             return Response({'detail': '請先登入'}, status=status.HTTP_401_UNAUTHORIZED)
-
+        
+        token = auth_header.split(' ')[1]
+        
         try:
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return Response({'detail': '無效的用戶信息'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # 驗證用戶是否存在
             user = MemberBasic.objects.get(user_id=user_id)
             product = Products.objects.get(product_id=product_id)
+
+            # 檢查是否已經收藏
+            wishlist_item = ProductWishlist.objects.filter(user=user, product=product).first()
+
+            if wishlist_item:
+                wishlist_item.delete()
+                is_in_wishlist = False
+            else:
+                ProductWishlist.objects.create(user=user, product=product)
+                is_in_wishlist = True
+
+            return Response({
+                'is_in_wishlist': is_in_wishlist,
+                'message': '已更新收藏狀態'
+            })
+
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
         except (MemberBasic.DoesNotExist, Products.DoesNotExist):
             return Response({'detail': '用戶或商品不存在'}, status=status.HTTP_404_NOT_FOUND)
-
-        # 檢查是否已經收藏
-        wishlist_item = ProductWishlist.objects.filter(user=user, product=product).first()
-
-        if wishlist_item:
-            # 如果已收藏，則取消收藏
-            wishlist_item.delete()
-            is_in_wishlist = False
-        else:
-            # 如果未收藏，則添加收藏
-            ProductWishlist.objects.create(user=user, product=product)
-            is_in_wishlist = True
-
-        return Response({
-            'is_in_wishlist': is_in_wishlist,
-            'message': '已更新收藏狀態'
-        })
 
     except Exception as e:
         logger.error(f"Toggle wishlist error: {str(e)}")
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
 @api_view(['GET'])
 def check_wishlist(request, product_id):
     try:
-        user_id = request.query_params.get('user_id')
-        if not user_id:
-            return Response({'is_in_wishlist': False})
-
-        try:
-            user = MemberBasic.objects.get(user_id=user_id)
-            product = Products.objects.get(product_id=product_id)
-        except (MemberBasic.DoesNotExist, Products.DoesNotExist):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
             return Response({'is_in_wishlist': False})
         
-        is_in_wishlist = ProductWishlist.objects.filter(
-            user=user, 
-            product=product
-        ).exists()
+        token = auth_header.split(' ')[1]
+        
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return Response({'is_in_wishlist': False})
+            
+            user = MemberBasic.objects.get(user_id=user_id)
+            product = Products.objects.get(product_id=product_id)
+            
+            is_in_wishlist = ProductWishlist.objects.filter(
+                user=user, 
+                product=product
+            ).exists()
 
-        return Response({'is_in_wishlist': is_in_wishlist})
+            return Response({'is_in_wishlist': is_in_wishlist})
+
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            return Response({'is_in_wishlist': False})
+        except (MemberBasic.DoesNotExist, Products.DoesNotExist):
+            return Response({'is_in_wishlist': False})
 
     except Exception as e:
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

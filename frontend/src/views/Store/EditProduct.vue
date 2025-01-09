@@ -5,7 +5,6 @@ import { storeAPI } from "../../utils/api";
 import Swal from "sweetalert2";
 
 const apiUrl = import.meta.env.VITE_APIURL;
-const CREATE_PRODUCT_URL = `${apiUrl}/store/create_product/`; // 商品創建的 API URL
 const router = useRouter();
 const route = useRoute();
 const productId = route.params.productId;
@@ -29,7 +28,6 @@ const brands = ref([]);
 const series = ref([]);
 const imagePreviews = ref([]);
 const images = ref([]);
-const errors = ref({});
 const isSubmitting = ref(false);
 const deletedImages = ref([]);
 
