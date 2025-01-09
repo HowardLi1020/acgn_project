@@ -2,9 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import { useUserStore } from '@/stores/user'; // 引入用於處理認證的 Store
 
 const route = useRoute(); // 獲取當前路由
 const router = useRouter(); // 用於路由跳轉
+const authStore = useUserStore();  // Pinia 用戶狀態
 
 const BASE_URL = import.meta.env.VITE_MemberApi;
 const code = route.params.code || localStorage.getItem('resetCode'); // 優先從 URL 提取，否則從 localStorage 獲取
@@ -17,72 +19,54 @@ const API_URL = `${BASE_URL}phone-change/${code}/`;
 // 表單數據
 const formData = ref({
     new_phone: '',
-    password: ''
+    user_password: ''
 })
 
 // 錯誤信息
 const errors = ref({
   new_phone: '',
-  password: '',
+  user_password: '',
   general: ''
 })
-
-const message = ref('');
 
 // 表單狀態
 const isSubmitting = ref(false)
 
-// 驗證密碼強度
-const validatePassword = (password) => {
-    // 檢查密碼長度
-    if (password.length < 8) {
-        return false;
-    }
-    // 檢查是否包含至少一個字母和一個數字
-    const hasLetter = /[a-zA-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    return hasLetter && hasNumber;
-}
+// 驗證表單
+const validateForm = () => {
+    let isValid = true
+    
+    // 重置錯誤信息
+    Object.keys(errors.value).forEach(key => errors.value[key] = '')
 
-// 驗證手機號碼格式
-const validatePhone = (new_phone) => {
-  const phoneRegex = /^09\d{8}$/
-  return phoneRegex.test(new_phone)
+    // 驗證密碼
+    const passwordError = authStore.validatePassword(formData.value.user_password);
+    if (passwordError) {
+      errors.value.user_password = passwordError;
+      isValid = false;
+    }
+
+    // 驗證新手機號碼
+    const newphoneError = authStore.validatePhone(formData.value.new_phone);
+    if (newphoneError) {
+      errors.value.new_phone = newphoneError;
+      isValid = false;
+    }
+
+    return isValid
 }
 
 // 提交表單
 const handleResetPhone = async (event) => {
       event.preventDefault();
-      let isValid = true
 
-      if (!formData.value.new_phone) {
-        errors.value.new_phone = '請輸入新手機';
-        isValid = false;
-      }
-
-      // 驗證手機號碼格式
-      if (!validatePhone(formData.value.new_phone)) {
-          errors.value.new_phone = '請輸入有效的手機號碼格式（09開頭的10位數字）';
-          isValid = false;
-      } else {
-          errors.value.new_phone = ''; // 清空錯誤信息
-      }
-
-      if (!formData.value.password) {
-        errors.value.password = '請確認密碼';
-        isValid = false;
-      } else if (!validatePassword(formData.value.password)) {
-        errors.value.password = '密碼長度至少需要8個字符，英文(不分大小寫)+數字'
-        isValid = false
-      } else {
-        errors.value.password = ''; // 清空錯誤信息
-      }
-
-      // 如果表單驗證失敗，停止提交
-      if (!isValid) return;
+      if (!validateForm()) {
+        return
+    }
 
       try {
         isSubmitting.value = true;
+        
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -91,6 +75,10 @@ const handleResetPhone = async (event) => {
 
 
         if (response.ok) {
+          // 手機修改成功，清空 localStorage 並登出
+          authStore.logout(); // 登出並清空 localStorage
+          localStorage.clear(); // 清空 localStorage
+
           Swal.fire('成功', '手機修改成功，請重新登入確認', 'success').then(() => {
             router.push({ name: 'login' });
           });
@@ -153,15 +141,15 @@ const handleResetPhone = async (event) => {
               <label class="sr-only" for="password">註冊密碼</label>
               <input 
                 id="password" 
-                v-model="formData.password"
+                v-model="formData.user_password"
                 type="password" 
                 class="form-control login-email" 
-                :class="{ 'is-invalid': errors.password }"
+                :class="{ 'is-invalid': errors.user_password }"
                 placeholder="註冊密碼" 
                 required
               >
-              <div v-if="errors.password" class="invalid-feedback">
-                {{ errors.password }}
+              <div v-if="errors.user_password" class="invalid-feedback">
+                {{ errors.user_password }}
               </div>
             </div>
 

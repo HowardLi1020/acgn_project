@@ -2,9 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import { useUserStore } from '@/stores/user'; // 引入用於處理認證的 Store
 
 const route = useRoute(); // 獲取當前路由
 const router = useRouter(); // 用於路由跳轉
+const authStore = useUserStore(); // Pinia 用戶狀態
 
 const BASE_URL = import.meta.env.VITE_MemberApi;
 const code = route.params.code || localStorage.getItem('resetCode'); // 優先從 URL 提取，否則從 localStorage 獲取
@@ -27,41 +29,24 @@ const errors = ref({
     general: ''
 })
 
-const message = ref('');
-
 // 表單狀態
 const isSubmitting = ref(false)
-
-// 驗證密碼強度
-const validatePassword = (new_password) => {
-    // 檢查密碼長度
-    if (new_password.length < 8) {
-        return false;
-    }
-    // 檢查是否包含至少一個字母和一個數字
-    const hasLetter = /[a-zA-Z]/.test(new_password);
-    const hasNumber = /\d/.test(new_password);
-    return hasLetter && hasNumber;
-}
 
 // 提交表單
 const handleResetPassword = async (event) => {
       event.preventDefault();
       let isValid = true
 
-      if (!formData.value.new_password) {
-        errors.value.new_password = '請輸入密碼';
+      // 驗證新密碼
+      const passwordError = authStore.validatePassword(formData.value.new_password);
+      if (passwordError) {
+        errors.value.new_password = passwordError;
         isValid = false;
-      }
-
-      // 驗證密碼強度
-      if (!validatePassword(formData.value.new_password)) {
-          errors.value.new_password = '密碼必須至少包含8個字符，並且至少包含一個字母和一個數字';
-          isValid = false;
       } else {
-          errors.value.new_password = ''; // 清空錯誤信息
+        errors.value.new_password = ''; // 清空錯誤信息
       }
 
+      // 驗證確認密碼
       if (!formData.value.confirm_password) {
         errors.value.confirm_password = '請確認密碼';
         isValid = false;
@@ -83,8 +68,11 @@ const handleResetPassword = async (event) => {
           body: JSON.stringify(formData.value),
         });
 
-
         if (response.ok) {
+          // 密碼重置成功，清空 localStorage 並登出
+          authStore.logout(); // 登出並清空 localStorage
+          localStorage.clear(); // 清空 localStorage
+
           Swal.fire('成功', '密碼重置成功，請重新登入', 'success').then(() => {
             router.push({ name: 'login' });
           });

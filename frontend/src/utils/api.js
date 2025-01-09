@@ -26,17 +26,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     response => response,
     async error => {
-        if (error.response.status === 401) {
+        if (error.response && error.response.status === 401) {
             const refreshToken = localStorage.getItem('refresh_token')
             if (refreshToken) {
                 try {
-                    const response = await axios.post('/api/token/refresh/', {
-                        refresh: refreshToken
-                    })
+                    const response = await axios.post('/member_api/auth/refresh_token/', {
+                        refresh: refreshToken});
                     localStorage.setItem('access_token', response.data.access)
                     error.config.headers.Authorization = `Bearer ${response.data.access}`
                     return axios(error.config)
-                } catch (e) {
+                } catch (refreshError) {
+                    console.error('刷新 Token 失敗:', refreshError);
                     localStorage.removeItem('access_token')
                     localStorage.removeItem('refresh_token')
                     window.location.href = '/login'
