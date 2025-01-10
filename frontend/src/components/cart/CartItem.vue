@@ -31,10 +31,12 @@
                 type: Object,
                 required: true,
                 validator(value) {
-                    return value.product_name && value.product_price !== undefined && value.quantity !== undefined;
+                // 放寬驗證，只檢查必要字段
+                    return value.cart_item_id !== undefined && value.product_name && value.quantity !==     undefined;
                 },
             },
         },
+
         data() {
             return {
                 isLoading: false,

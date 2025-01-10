@@ -52,47 +52,46 @@ const checkQuantity = () => {
     quantity.value = Math.floor(quantity.value);
 };
 
-// 加入購物車
 const addToCart = async () => {
     try {
-        console.log('Product ID:', product.value.product_id);
-        console.log('Quantity:', quantity.value);
-
         const payload = {
             product_id: product.value.product_id,
             quantity: quantity.value,
         };
-        console.log('Payload:', payload); // 打印傳遞的數據
+        console.log("Payload:", payload);
 
-        // 調用 cartAPI.addCartItem 添加商品到購物車
-        await cartAPI.addCartItem(payload);
-        alert('商品已成功加入購物車！');
+        // 調用 API 添加商品到購物車
+        const response = await cartAPI.addCartItem(payload);
+        console.log("Response from API:", response);
+
+        // 成功提示
+        alert("商品已成功加入購物車！");
+        
     } catch (error) {
-        console.error('加入購物車失敗:', error.response?.data || error.message);
-        alert('加入購物車失敗，請稍後再試！');
+        console.error("加入購物車失敗:", error.message);
+        alert("加入購物車失敗，請稍後再試！");
     }
 };
 
 
-
-// 立即購買
 const buyNow = async () => {
     try {
         const payload = {
             product_id: product.value.product_id,
             quantity: quantity.value,
         };
+        // 調用 API 添加商品到購物車
+        const response = await cartAPI.addCartItem(payload);
+        console.log("Response from API:", response);
 
-        // 調用 cartAPI.addCartItem 添加商品到購物車
-        await cartAPI.addCartItem(payload);
-
-        // 跳轉到購物車頁面
-        router.push('/shoppingcart');
+        router.push('/shoppingcart'); // 跳轉到購物車頁面
+        
     } catch (error) {
         console.error('立即購買失敗:', error.response?.data || error.message);
         alert('立即購買失敗，請稍後再試！');
     }
 };
+
 
 // 获取当前主图 URL 的函数
 const getMainImageUrl = () => {

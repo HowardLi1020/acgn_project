@@ -1,28 +1,43 @@
 from rest_framework import serializers
 from cart.models import Orders, OrderItems, ShoppingCartItems
 
-# 購物車項目序列化器
+from rest_framework import serializers
+from cart.models import ShoppingCartItems
+from products.models import Products
+
+
 class ShoppingCartItemsSerializer(serializers.ModelSerializer):
+    product_id = serializers.IntegerField(write_only=True)  # 接收 product_id 作為輸入
     product_name = serializers.CharField(source='product.product_name', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = ShoppingCartItems
-        fields = ['cart_item_id', 'member', 'product', 'product_name', 'product_price', 'quantity', 'added_at']
+        fields = ['cart_item_id', 'product_id', 'product_name', 'product_price', 'quantity', 'added_at']
         read_only_fields = ['cart_item_id', 'added_at']
 
     def validate(self, data):
-        # 檢查是否已存在於購物車
-        member = data['member']
-        product = data['product']
-        if ShoppingCartItems.objects.filter(member=member, product=product).exists():
-            raise serializers.ValidationError("此商品已存在於購物車中，請更新數量而非重複添加。")
+        # 確保 product_id 對應的商品存在
+        product_id = data.get('product_id')
+        if not Products.objects.filter(pk=product_id).exists():
+            raise serializers.ValidationError({"product": "該商品不存在"})
 
-        # 檢查庫存
+        # 確保數量合法
+        product = Products.objects.get(pk=product_id)
         if data['quantity'] > product.stock:
-            raise serializers.ValidationError(f"商品庫存不足，當前庫存為 {product.stock}")
+            raise serializers.ValidationError({"quantity": f"商品庫存不足，當前庫存為 {product.stock}"})
 
         return data
+
+    def create(self, validated_data):
+        # 將 product_id 替換為 product 實例
+        product_id = validated_data.pop('product_id')
+        validated_data['product'] = Products.objects.get(pk=product_id)
+        # member 由視圖中傳入，因此直接使用
+        return ShoppingCartItems.objects.create(**validated_data)
+        # 繼續創建購物車項目
+        return super().create(validated_data)
+
 
 # 訂單細項序列化器
 class OrderItemsSerializer(serializers.ModelSerializer):

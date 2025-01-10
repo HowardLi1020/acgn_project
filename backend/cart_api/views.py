@@ -1,26 +1,22 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from cart.models import Orders, OrderItems, ShoppingCartItems
 from .serializers import (
     OrdersSerializer,
     OrderItemsSerializer,
     ShoppingCartItemsSerializer,
 )
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from cart.models import ShoppingCartItems
-from .serializers import ShoppingCartItemsSerializer
-from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAuthenticatedWithCustomToken  # 自定義權限類
 
 
 class ShoppingCartListView(APIView):
     """
     查看用戶購物車
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
     def get(self, request):
         user = request.user
         cart_items = ShoppingCartItems.objects.filter(member=user)
@@ -32,23 +28,33 @@ class ShoppingCartAddView(APIView):
     """
     添加商品到購物車
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
     def post(self, request):
+        # 確認接收到的數據
+        print("Received Payload:", request.data)
+
+        # 將當前用戶綁定到序列化器
         serializer = ShoppingCartItemsSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(member=request.user)  # 綁定當前用戶到 member 字段
             return Response({"message": "商品已成功加入購物車"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print("Serializer Errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class ShoppingCartUpdateView(APIView):
     """
     更新購物車中的商品數量
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
     def put(self, request, cart_item_id):
         try:
-            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id)
+            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id, member=request.user)
             serializer = ShoppingCartItemsSerializer(cart_item, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
@@ -62,10 +68,11 @@ class ShoppingCartDeleteView(APIView):
     """
     從購物車中移除商品
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
     def delete(self, request, cart_item_id):
         try:
-            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id)
+            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id, member=request.user)
             cart_item.delete()
             return Response({"message": "商品已從購物車中移除"}, status=status.HTTP_204_NO_CONTENT)
         except ShoppingCartItems.DoesNotExist:
@@ -76,12 +83,13 @@ class OrderCreateView(APIView):
     """
     用戶提交訂單
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
     def post(self, request):
         serializer = OrdersSerializer(data=request.data)
         if serializer.is_valid():
             # 創建訂單
-            order = serializer.save()
+            order = serializer.save(member=request.user)  # 綁定用戶
 
             # 從購物車生成 OrderItems
             cart_items = ShoppingCartItems.objects.filter(member=request.user)
@@ -108,18 +116,20 @@ class UserOrdersView(APIView):
     """
     用戶查看自己的所有訂單
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
     def get(self, request):
         user = request.user
         orders = Orders.objects.filter(member=user)
         serializer = OrdersSerializer(orders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class OrderDetailView(APIView):
     """
     查看單個訂單詳細信息（包含購物細項）
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
 
     def get(self, request, order_id):
         try:

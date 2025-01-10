@@ -1,7 +1,7 @@
 import axios from 'axios'
 const apiUrl = import.meta.env.VITE_APIURL;
 
-const api = axios.create({
+export const api = axios.create({
     baseURL: import.meta.env.VITE_APIURL,
     withCredentials: true,
     headers: {
@@ -220,14 +220,58 @@ export const storeAPI = {
 // Cart API
 export const cartAPI = {
     // 獲取購物車內容
-    getCartItems: () => api.get('/cart/'),
+    getCartItems: async () => {
+        try {
+            const response = await api.get('/cart_api/');
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('登入已過期，請重新登入');
+            }
+            throw new Error(error.response?.data?.detail || '無法獲取購物車內容');
+        }
+    },
+
     // 添加商品到購物車
-    addCartItem: (data) => api.post('/cart/', data),
+    addCartItem: async (data) => {
+        try {
+            const response = await api.post('/cart_api/add/', data);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('登入已過期，請重新登入');
+            }
+            throw new Error(error.response?.data?.detail || '無法添加商品到購物車');
+        }
+    },
+
     // 更新購物車內商品數量
-    updateCartItem: (cartItemId, data) => api.put(`/cart/${cartItemId}/`, data),
+    updateCartItem: async (cartItemId, data) => {
+        try {
+            const response = await api.put(`/cart_api/update/${cartItemId}/`, data);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('登入已過期，請重新登入');
+            }
+            throw new Error(error.response?.data?.detail || '無法更新購物車內容');
+        }
+    },
+
     // 刪除購物車中的商品
-    deleteCartItem: (cartItemId) => api.delete(`/cart/${cartItemId}/`),
+    deleteCartItem: async (cartItemId) => {
+        try {
+            const response = await api.delete(`/cart_api/delete/${cartItemId}/`);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('登入已過期，請重新登入');
+            }
+            throw new Error(error.response?.data?.detail || '無法刪除購物車中的商品');
+        }
+    },
 };
+
 
 // 文件上傳 API
 export const uploadAPI = {
