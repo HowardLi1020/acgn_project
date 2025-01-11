@@ -11,5 +11,6 @@ urlpatterns = [
     path('need/edit/<int:view_fn_need_id>/', views.ViewFn_need_edit, name='Urls_need_edit'),
     path('need/delete/<int:view_fn_need_id>/', views.ViewFn_need_delete, name='Urls_need_delete'),
     path('publiccard_list/', views.ViewFn_publiccard_list, name='Urls_publiccard_list'),
+    path('publiccard/edit/<int:view_fn_publiccard_id>/', views.ViewFn_publiccard_edit, name='Urls_publiccard_edit'),
     # path('usercard/edit/<int:view_fn_usercard_id>/', views.ViewFn_usercard_edit, name='Urls_usercard_edit'),
 ]

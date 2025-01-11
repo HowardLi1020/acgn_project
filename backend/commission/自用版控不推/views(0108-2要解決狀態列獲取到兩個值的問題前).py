@@ -40,7 +40,7 @@ def ViewFn_need_list(request):
         'title': 'need_title',
         'category': 'need_category',
         'description': 'need_description',
-        'needer': 'needer_id', 
+        'needer': 'needer_id',  # 修改這裡
         'originalFrom': 'need_original_from',
         'price': 'need_price',
         'publishTime': 'publish_time',
@@ -104,6 +104,7 @@ def ViewFn_need_list(request):
     view_db_need_info = list(view_db_need_info)
     for need in view_db_need_info:
         need.public_card = public_cards.get(need.needer_id)
+        print(f"Need ID: {need.need_id}, Needer ID: {need.needer_id}, Public Card: {need.public_card}")
 
     paginator = Paginator(view_db_need_info, 7)  # 每頁顯示7條記錄
     page_number = request.GET.get('page')
@@ -193,13 +194,14 @@ def ViewFn_need_edit(request, view_fn_need_id):
                 if 'deadline' in request.POST:
                     view_db_need_info_id.deadline = request.POST['deadline']
                 # 調試輸出
-                # print("POST data:", request.POST)
-                # print("Original status:", view_db_need_info_id.need_status)
+                print("POST data:", request.POST)
+                print("Original status:", view_db_need_info_id.need_status)
                 
                 if 'need_status' in request.POST:
-                    # 獲取 need_status 的第一個值（因為 radio 按鈕應該只有一個值），不知道什麼原因 'need_status'會接收到多個值
-                    view_db_need_info_id.need_status = request.POST.getlist('need_status')[0].strip()
-                    # view_db_need_info_id.need_status = request.POST['need_status']                    
+                    # 獲取 need_status 的第一個值（因為 radio 按鈕應該只有一個值）
+                    new_status = request.POST.getlist('need_status')[0].strip()
+                    print("New status value:", new_status)  # 調試輸出
+                    view_db_need_info_id.need_status = new_status
 
                 # 處理圖片上傳
                 if 'need_ex_image' in request.FILES:
@@ -305,6 +307,14 @@ def ViewFn_need_edit(request, view_fn_need_id):
 
     # GET 請求的處理
     view_db_need_info_id = get_object_or_404(DbNeedInfo, need_id=view_fn_need_id)
+    # view_db_need_info_id = get_object_or_404(
+    #     DbNeedInfo.objects.only(
+    #         'need_id', 'needer_id', 'need_title', 'need_category',
+    #         'need_original_from', 'need_description', 'need_price',
+    #         'publish_time', 'deadline', 'last_update', 'need_status'
+    #     ),
+    #     need_id=view_fn_need_id
+    # )
     
     # 獲取對應的 PublicCardInfo
     view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, member_basic_id=view_db_need_info_id.needer_id)
@@ -342,68 +352,18 @@ def ViewFn_need_delete(request, view_fn_need_id):
     return HttpResponseRedirect(referer_url)
 
 def ViewFn_publiccard_list(request):
-    view_db_publiccard_info = DbPublicCardInfo.objects.all()
-    
-    # 獲取排序參數
-    sort_by = request.GET.get('sort', 'last_update')  # 預設按最後更新排序
-    sort_direction = request.GET.get('direction', 'desc')  # 預設降序
-    
-    # 搜尋功能
-    search_term = request.GET.get('searchorders', '')
-    search_column = request.GET.get('column', 'option-1')
-    
-    if search_term:
-        if search_column == 'option-1':  # 全部
-            # 使用 CAST 將 user_id 轉換為字符串進行比對
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                Q(member_basic__user_id__contains=search_term) |  # ID部分匹配
-                Q(user_nickname__icontains=search_term) |         # 名片暱稱模糊匹配
-                Q(user_introduction__icontains=search_term)       # 簡介模糊匹配
-            )
-        elif search_column == 'title':  # 使用者ID
-            # 只進行 ID 的部分匹配
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                member_basic__user_id__contains=search_term
-            )
-        elif search_column == 'category':  # 名片暱稱
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                user_nickname__icontains=search_term
-            )
-        elif search_column == 'description':  # 簡介
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                user_introduction__icontains=search_term
-            )
+    # [正式階段用]獲取所有公開名片資料，並關聯到 MemberBasic
+    # view_db_publiccard_info = DbPublicCardInfo.objects.select_related('member_basic').all()
 
-    # 應用排序
-    if sort_by == 'last_update':
-        order_field = '-last_update' if sort_direction == 'desc' else 'last_update'
-    else:  # user_id
-        order_field = '-member_basic_id' if sort_direction == 'desc' else 'member_basic_id'
-    
-    view_db_publiccard_info = view_db_publiccard_info.order_by(order_field)
+    # [測試階段用]獲取所有公開名片資料，使用 select_related 但允許 member_basic 為空
+    view_db_publiccard_info = DbPublicCardInfo.objects.all()
     
     # 根據狀態篩選
     view_fn_status = request.GET.get('status')
     if view_fn_status and view_fn_status != 'all':
         view_db_publiccard_info = view_db_publiccard_info.filter(card_status=view_fn_status)
 
-    # 分頁
-    paginator = Paginator(view_db_publiccard_info, 12)
-    page_number = request.GET.get('page', 1)
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-        'sort_by': sort_by,
-        'sort_direction': sort_direction,
-        'search_term': search_term,
-        'search_column': search_column
-    }
-    return render(request, 'commission/publiccard_list.html', context)
-
-def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
-    view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, pk=view_fn_publiccard_id)
     context = {
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
     }
-    return render(request, 'commission/publiccard_edit.html', context)
+    return render(request, 'commission/publiccard_list.html', context)

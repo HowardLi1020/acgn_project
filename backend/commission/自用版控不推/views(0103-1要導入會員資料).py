@@ -22,13 +22,12 @@ from django.conf import settings
 
 def ViewFn_need_list(request):
     # 資料提取與顯示
-    view_db_need_info = DbNeedInfo.objects.all()  # 保持為 QuerySet
+    view_db_need_info = DbNeedInfo.objects.all()
     
-    # 獲取所有需要的 public card 資訊
-    public_cards = {
-        card.member_basic_id: card 
-        for card in DbPublicCardInfo.objects.all()
-    }
+    # 搜尋功能
+    search_term = request.GET.get('search', '')
+    search_column = request.GET.get('column', 'option-1')
+    status_filter = request.GET.get('status', 'all')
     
     # 排序功能
     sort_column = request.GET.get('sort', 'id')  # 預設為 ID
@@ -40,7 +39,7 @@ def ViewFn_need_list(request):
         'title': 'need_title',
         'category': 'need_category',
         'description': 'need_description',
-        'needer': 'needer_id', 
+        'needer': 'needer_nickname',
         'originalFrom': 'need_original_from',
         'price': 'need_price',
         'publishTime': 'publish_time',
@@ -50,48 +49,30 @@ def ViewFn_need_list(request):
     }
     
     # 應用排序
-    sort_field = column_map.get(sort_column, 'need_id')
+    sort_field = column_map.get(sort_column, 'need_id')  # 使用 need_id 作為默認
     if sort_order == 'asc':
         view_db_need_info = view_db_need_info.order_by(sort_field)
     else:
         view_db_need_info = view_db_need_info.order_by(f'-{sort_field}')
     
-    # 搜尋功能
-    search_term = request.GET.get('search', '')
-    search_column = request.GET.get('column', 'option-1')
-    status_filter = request.GET.get('status', 'all')
-    
     # 搜尋邏輯
     if search_term:
         if search_column == 'option-1':
-            # 先找出符合用戶暱稱的 needer_ids
-            matching_needer_ids = [
-                card.member_basic_id 
-                for card in public_cards.values() 
-                if search_term.lower() in card.user_nickname.lower()
-            ]
-            
-            # 修改搜尋條件，加入對 needer_id 的檢查
+            # 搜尋所有欄位
             view_db_need_info = view_db_need_info.filter(
                 Q(need_title__icontains=search_term) |
                 Q(need_category__icontains=search_term) |
                 Q(need_description__icontains=search_term) |
+                Q(needer_nickname__icontains=search_term) |
                 Q(need_original_from__icontains=search_term) |
                 Q(need_price__icontains=search_term) |
                 Q(publish_time__icontains=search_term) |
                 Q(deadline__icontains=search_term) |
                 Q(need_status__icontains=search_term) |
-                Q(last_update__icontains=search_term) |
-                Q(needer_id__in=matching_needer_ids)  # 加入這行
+                Q(last_update__icontains=search_term)
             )
-        elif search_column == 'needer':  # 如果特別選擇搜尋委託人
-            matching_needer_ids = [
-                card.member_basic_id 
-                for card in public_cards.values() 
-                if search_term.lower() in card.user_nickname.lower()
-            ]
-            view_db_need_info = view_db_need_info.filter(needer_id__in=matching_needer_ids)
         else:
+            # 搜尋特定欄位
             column = column_map.get(search_column.replace('option-', ''))
             if column:
                 view_db_need_info = view_db_need_info.filter(**{f"{column}__icontains": search_term})
@@ -99,11 +80,6 @@ def ViewFn_need_list(request):
     # 篩選功能
     if status_filter != 'all':
         view_db_need_info = view_db_need_info.filter(need_status=status_filter)
-
-    # 在這裡轉換為列表並添加 public_card
-    view_db_need_info = list(view_db_need_info)
-    for need in view_db_need_info:
-        need.public_card = public_cards.get(need.needer_id)
 
     paginator = Paginator(view_db_need_info, 7)  # 每頁顯示7條記錄
     page_number = request.GET.get('page')
@@ -192,14 +168,8 @@ def ViewFn_need_edit(request, view_fn_need_id):
                     view_db_need_info_id.need_price = request.POST['need_price']
                 if 'deadline' in request.POST:
                     view_db_need_info_id.deadline = request.POST['deadline']
-                # 調試輸出
-                # print("POST data:", request.POST)
-                # print("Original status:", view_db_need_info_id.need_status)
-                
                 if 'need_status' in request.POST:
-                    # 獲取 need_status 的第一個值（因為 radio 按鈕應該只有一個值），不知道什麼原因 'need_status'會接收到多個值
-                    view_db_need_info_id.need_status = request.POST.getlist('need_status')[0].strip()
-                    # view_db_need_info_id.need_status = request.POST['need_status']                    
+                    view_db_need_info_id.need_status = request.POST['need_status']
 
                 # 處理圖片上傳
                 if 'need_ex_image' in request.FILES:
@@ -281,20 +251,15 @@ def ViewFn_need_edit(request, view_fn_need_id):
                         # 更新資料庫記錄
                         image_record.image_url = new_filename
                         image_record.save()
-                    print("New status:", request.POST['need_status'])
+
                 # 更新 last_update
                 view_db_need_info_id.last_update = timezone.now()
                 view_db_need_info_id.save()
                 
-                # 驗證保存後的狀態
-                updated_need = DbNeedInfo.objects.get(need_id=view_fn_need_id)
-                print("Saved status:", updated_need.need_status)
-                
                 return JsonResponse({
                     'status': 'success',
                     'message': '更新成功',
-                    'last_update': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'need_status': updated_need.need_status  # 在回應中也包含更新後的狀態
+                    'last_update': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
                 })
             
         except Exception as e:
@@ -303,11 +268,8 @@ def ViewFn_need_edit(request, view_fn_need_id):
                 'message': str(e)
             }, status=400)
 
-    # GET 請求的處理
+    # GET 請求的處理保持不變
     view_db_need_info_id = get_object_or_404(DbNeedInfo, need_id=view_fn_need_id)
-    
-    # 獲取對應的 PublicCardInfo
-    view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, member_basic_id=view_db_need_info_id.needer_id)
     
     # 將截止時間轉換為當前時區
     if view_db_need_info_id.deadline:
@@ -320,7 +282,6 @@ def ViewFn_need_edit(request, view_fn_need_id):
 
     context = {
         'ViewKey_DbNeedInfo_need_id': view_db_need_info_id,
-        'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
         'ViewKey_DbNeedEdit_sketches': view_db_need_sketches,
         'remaining_placeholders': range(remaining_placeholders),
     }
@@ -342,68 +303,20 @@ def ViewFn_need_delete(request, view_fn_need_id):
     return HttpResponseRedirect(referer_url)
 
 def ViewFn_publiccard_list(request):
+        # 資料提取與顯示
+    # view_db_need_info = DbNeedInfo.objects.all()
     view_db_publiccard_info = DbPublicCardInfo.objects.all()
-    
-    # 獲取排序參數
-    sort_by = request.GET.get('sort', 'last_update')  # 預設按最後更新排序
-    sort_direction = request.GET.get('direction', 'desc')  # 預設降序
-    
-    # 搜尋功能
-    search_term = request.GET.get('searchorders', '')
-    search_column = request.GET.get('column', 'option-1')
-    
-    if search_term:
-        if search_column == 'option-1':  # 全部
-            # 使用 CAST 將 user_id 轉換為字符串進行比對
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                Q(member_basic__user_id__contains=search_term) |  # ID部分匹配
-                Q(user_nickname__icontains=search_term) |         # 名片暱稱模糊匹配
-                Q(user_introduction__icontains=search_term)       # 簡介模糊匹配
-            )
-        elif search_column == 'title':  # 使用者ID
-            # 只進行 ID 的部分匹配
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                member_basic__user_id__contains=search_term
-            )
-        elif search_column == 'category':  # 名片暱稱
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                user_nickname__icontains=search_term
-            )
-        elif search_column == 'description':  # 簡介
-            view_db_publiccard_info = view_db_publiccard_info.filter(
-                user_introduction__icontains=search_term
-            )
-
-    # 應用排序
-    if sort_by == 'last_update':
-        order_field = '-last_update' if sort_direction == 'desc' else 'last_update'
-    else:  # user_id
-        order_field = '-member_basic_id' if sort_direction == 'desc' else 'member_basic_id'
-    
-    view_db_publiccard_info = view_db_publiccard_info.order_by(order_field)
-    
-    # 根據狀態篩選
-    view_fn_status = request.GET.get('status')
-    if view_fn_status and view_fn_status != 'all':
-        view_db_publiccard_info = view_db_publiccard_info.filter(card_status=view_fn_status)
-
-    # 分頁
-    paginator = Paginator(view_db_publiccard_info, 12)
-    page_number = request.GET.get('page', 1)
-    page_obj = paginator.get_page(page_number)
-
+    view_db_memberbasic = MemberBasic.objects.all()
+    # view_db_memberbasic_user_nickname = MemberBasic.objects.all()
+    # view_db_publiccard_info_user_nickname = DbPublicCardInfo.objects.all()
     context = {
-        'page_obj': page_obj,
-        'sort_by': sort_by,
-        'sort_direction': sort_direction,
-        'search_term': search_term,
-        'search_column': search_column
+        # 'ViewKey_DbPublicCardInfo': DbPublicCardInfo.objects.all()
+        # 'ViewKey_MemberBasic_user_id': view_db_memberbasic_user_id,
+        # 'ViewKey_MemberBasic_user_nickname': view_db_memberbasic_user_nickname,
+        # 'ViewKey_DbPublicCardInfo_user_nickname': view_db_publiccard_info_user_nickname,
+
+        # 'ViewKey_DbPublicCardInfo_need_id': view_db_need_info_id,
+
+        # 'ViewKey_DbNeedEdit_sketches': view_db_need_sketches,
     }
     return render(request, 'commission/publiccard_list.html', context)
-
-def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
-    view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, pk=view_fn_publiccard_id)
-    context = {
-        'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
-    }
-    return render(request, 'commission/publiccard_edit.html', context)
