@@ -86,8 +86,8 @@
                         </ul>
                     </div>
                 </li><!--//nav-item-->
-                        <!-- 周邊商店 submenu-2 -->
-                        <li class="nav-item has-submenu">
+                <!-- 周邊商店 submenu-2 -->
+                <li class="nav-item has-submenu">
                             <!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
                             <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-2" aria-expanded="false" aria-controls="submenu-2">
                                 <span class="nav-icon">
@@ -98,7 +98,7 @@
                                 </svg>
                                 <!-- ↑要換圖示取代這邊的<svg></svg>處↑-->
                                 </span>
-                            <span class="nav-link-text">活動</span>
+                            <span class="nav-link-text">周邊商店</span>
                             <span class="submenu-arrow">
                                 <!-- 這邊的<svg>是下拉式選單的箭頭的icon，不要取代錯喔 -->
                                 <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -113,8 +113,8 @@
                                 <li class="submenu-item"><a class="submenu-link" href="#">3</a></li>
                             </ul>
                         </div>
-                    </li><!--//nav-item-->
-                    <!-- 委託專區 submenu-4 -->
+                </li><!--//nav-item-->
+                <!-- 委託專區 submenu-4 -->
                     <li class="nav-item has-submenu">
                         <!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
                         <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-4" aria-expanded="false" aria-controls="submenu-4">
@@ -143,7 +143,7 @@
                             </ul>
                         </div>
                     </li><!--//nav-item-->
-                    <!-- 用戶系統 submenu-5 -->
+                <!-- 用戶系統 submenu-5 -->
                     <li class="nav-item has-submenu">
                     <!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
                     <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-5" aria-expanded="false" aria-controls="submenu-5">
@@ -179,7 +179,7 @@
                         </ul>
                     </div>
                     </li><!--//nav-item-->
-                    <!-- 行銷系統 submenu-6 -->
+                <!-- 訂單管理與優惠券管理 submenu-6 -->
                     <li class="nav-item has-submenu">
                         <!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
                         <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-6" aria-expanded="false" aria-controls="submenu-6">
@@ -203,7 +203,7 @@
                         <div id="submenu-6" class="collapse submenu submenu-6" data-bs-parent="#menu-accordion">
                             <ul class="submenu-list list-unstyled">
                                 <li class="submenu-item"><a class="submenu-link" href="#">訂單管理</a></li>
-                                <li class="submenu-item"><a class="submenu-link" href="#">優惠券管理</a></li>
+                                <li class="submenu-item"><a class="submenu-link" href="{% url 'promotions:coupon_list' %}">優惠券管理</a></li>
                             </ul>
                         </div>
                     </li><!--//nav-item-->

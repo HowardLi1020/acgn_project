@@ -1,0 +1,59 @@
+{% extends "[BASE]ALL.html"%}
+{% load static %}
+{% block app_title %}<h1 class="mb-3">優惠券管理</h1>{% endblock %}
+{% block app_content %}
+<div class="container mt-4">
+    <div class="coupon-list">
+        {% if coupons %}
+        <!-- 如果有優惠券，顯示表格 -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>優惠券代碼</th>
+                    <th>折扣類型</th>
+                    <th>折扣值</th>
+                    <th>最小消費</th>
+                    <th>最大折扣</th>
+                    <th>開始日期</th>
+                    <th>結束日期</th>
+                    <th>剩餘可用次數</th>
+                    <th>是否啟用</th>
+                    <th>創建日期</th>
+                    <th>更新日期</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for coupon in coupons %}
+                <tr>
+                    <td>{{ coupon.coupon_code }}</td>
+                    <td>{{ coupon.discount_type }}</td>
+                    <td>{{ coupon.discount_value }}</td>
+                    <td>{{ coupon.min_purchase|default:"-" }}</td>
+                    <td>{{ coupon.max_discount|default:"-" }}</td>
+                    <td>{{ coupon.start_date }}</td>
+                    <td>{{ coupon.end_date }}</td>
+                    <td>{{ coupon.usage_limit|default:"1" }}</td>
+                    <td>{{ coupon.is_active|yesno:"是,否" }}</td>
+                    <td>{{ coupon.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ coupon.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'promotions:edit_coupon' coupon.coupon_id %}" class="btn btn-sm btn-primary">編輯</a>
+                        <a href="{% url 'promotions:delete_coupon' coupon.coupon_id %}" class="btn btn-sm btn-danger">刪除</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <!-- 如果沒有優惠券，顯示提示信息 -->
+        <p class="text-center">目前尚無優惠券，請新增一個優惠券。</p>
+        {% endif %}
+        
+        <!-- 新增優惠券按鈕 -->
+        <div class="text-center mt-4">
+            <a href="{% url 'promotions:add_coupon' %}" class="btn btn-success">新增優惠券</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

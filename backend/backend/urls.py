@@ -33,6 +33,9 @@ urlpatterns = [
     #http://127.0.0.1:8000/cart_api/ 
     path('cart_api/', include('cart_api.urls')),
     
+    #http://127.0.0.1:8000/promotions/
+    path('promotions/', include('promotions.urls')),
+
     # http://127.0.0.1:8000/commission/ 
     path('commission/', include('commission.urls')),
     
