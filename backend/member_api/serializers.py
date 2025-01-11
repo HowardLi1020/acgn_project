@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from users.models import MemberBasic, MemberIndextype, MemberLogin,  MemberPhotos, MemberPrivacy, MemberVerify
-from promotions.models import Coupons
+from member_api.models import Usercoupons
 from cart.models import Orders
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.timezone import now
@@ -147,12 +147,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class PrivacySerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberPrivacy
-        fields = '__all__'
-
-# 尚未使用 Coupon
-class CouponSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Coupons
         fields = '__all__'
 
 # 尚未使用 第三方登入

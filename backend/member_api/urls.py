@@ -8,8 +8,6 @@ router = DefaultRouter()
 router.register('profile', views.MemberViewSet)
 # https://...../favorite/
 router.register('favorite', views.FavoriteViewSet)
-# https://...../coupon/
-router.register('coupon', views.CouponViewSet)
 # https://...../thirdparty/
 router.register('thirdparty', views.ThirdLoginViewSet)
 # https://...../orderdetails/

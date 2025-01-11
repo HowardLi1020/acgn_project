@@ -8,9 +8,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import MemberBasic,  MemberIndextype, MemberLogin, MemberPhotos, MemberPrivacy, MemberVerify
-from promotions.models import Coupons
 from cart.models import Orders
-from .serializers import MemberSerializer, FavoriteSerializer, LoginSerializer, CouponSerializer, LoginSerializer, OrderdetailsSerializer, RegisterSerializer, PrivacySerializer, VerifySerializer, ThirdLoginSerializer
+from member_api.models import Usercoupons
+from .serializers import MemberSerializer, FavoriteSerializer, LoginSerializer, LoginSerializer, OrderdetailsSerializer, RegisterSerializer, PrivacySerializer, VerifySerializer, ThirdLoginSerializer
 from django.http import HttpResponseRedirect
 import os
 import random
@@ -93,10 +93,6 @@ class PrivacyViewSet(viewsets.ModelViewSet):
 class VerifyViewSet(viewsets.ModelViewSet):
     queryset = MemberVerify.objects.all()
     serializer_class = VerifySerializer
-
-class CouponViewSet(viewsets.ModelViewSet):
-    queryset = Coupons.objects.all()
-    serializer_class = CouponSerializer
 
 class ThirdLoginViewSet(viewsets.ModelViewSet):
     queryset = MemberLogin.objects.all()
