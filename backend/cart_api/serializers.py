@@ -1,20 +1,28 @@
 from rest_framework import serializers
 from cart.models import Orders, OrderItems, ShoppingCartItems
-
 from rest_framework import serializers
 from cart.models import ShoppingCartItems
-from products.models import Products
+from products.models import Products, ProductImages
 
 
 class ShoppingCartItemsSerializer(serializers.ModelSerializer):
     product_id = serializers.IntegerField(write_only=True)  # 接收 product_id 作為輸入
     product_name = serializers.CharField(source='product.product_name', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_image = serializers.SerializerMethodField()
 
     class Meta:
         model = ShoppingCartItems
-        fields = ['cart_item_id', 'product_id', 'product_name', 'product_price', 'quantity', 'added_at']
+        fields = ['cart_item_id', 'product_id', 'product_name', 'product_price', 'product_image', 'quantity', 'added_at']
         read_only_fields = ['cart_item_id', 'added_at']
+
+    def get_product_image(self, obj):
+        # 獲取商品主圖片（is_main = 1）或第一張圖片
+        main_image = obj.product.productimages_set.filter(is_main=1).first()
+        if main_image:
+            return main_image.image_url.url
+        first_image = obj.product.productimages_set.first()
+        return first_image.image_url.url if first_image else None
 
     def validate(self, data):
         # 確保 product_id 對應的商品存在

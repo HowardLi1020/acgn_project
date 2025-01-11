@@ -31,17 +31,34 @@ class ShoppingCartAddView(APIView):
     permission_classes = [IsAuthenticatedWithCustomToken]
 
     def post(self, request):
-        # 確認接收到的數據
         print("Received Payload:", request.data)
 
-        # 將當前用戶綁定到序列化器
-        serializer = ShoppingCartItemsSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(member=request.user)  # 綁定當前用戶到 member 字段
-            return Response({"message": "商品已成功加入購物車"}, status=status.HTTP_201_CREATED)
+        product_id = request.data.get('product_id')
+        quantity = request.data.get('quantity', 1)
+
+        if not product_id or not isinstance(quantity, int) or quantity <= 0:
+            return Response({"error": "商品ID或數量無效"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 嘗試從數據庫獲取現有的購物車項目
+        cart_item = ShoppingCartItems.objects.filter(member=request.user, product_id=product_id).first()
+
+        if cart_item:
+            # 如果該商品已存在購物車，則更新數量
+            cart_item.quantity += quantity
+            cart_item.save()
+            return Response(
+                {"message": "商品數量已更新", "cart_item_id": cart_item.cart_item_id, "new_quantity": cart_item.quantity},
+                status=status.HTTP_200_OK,
+            )
         else:
-            print("Serializer Errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # 如果該商品不存在購物車，則新增條目
+            serializer = ShoppingCartItemsSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(member=request.user)  # 綁定當前用戶到 member 字段
+                return Response({"message": "商品已成功加入購物車"}, status=status.HTTP_201_CREATED)
+            else:
+                print("Serializer Errors:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -54,14 +71,29 @@ class ShoppingCartUpdateView(APIView):
 
     def put(self, request, cart_item_id):
         try:
-            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id, member=request.user)
-            serializer = ShoppingCartItemsSerializer(cart_item, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "購物車更新成功"}, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # 確認當前用戶是否有效
+            member = request.user
+            if not member:
+                return Response({"error": "用戶未授權"}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # 獲取購物車項目
+            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id, member=member)
+            
+            # 檢查請求數據是否包含 quantity
+            new_quantity = request.data.get("quantity")
+            if not new_quantity or int(new_quantity) <= 0:
+                return Response({"error": "無效的數量值"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 更新購物車項目數量
+            cart_item.quantity = new_quantity
+            cart_item.save()
+
+            return Response({"message": "購物車更新成功"}, status=status.HTTP_200_OK)
         except ShoppingCartItems.DoesNotExist:
             return Response({"error": "購物車項目不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"發生錯誤：{str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class ShoppingCartDeleteView(APIView):
@@ -72,11 +104,21 @@ class ShoppingCartDeleteView(APIView):
 
     def delete(self, request, cart_item_id):
         try:
-            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id, member=request.user)
+            # 確認當前用戶是否有效
+            member = request.user
+            if not member:
+                return Response({"error": "用戶未授權"}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # 確認購物車項目是否屬於當前用戶
+            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id, member=member)
             cart_item.delete()
-            return Response({"message": "商品已從購物車中移除"}, status=status.HTTP_204_NO_CONTENT)
+
+            return Response({"message": "商品已從購物車中移除"}, status=status.HTTP_200_OK)
         except ShoppingCartItems.DoesNotExist:
             return Response({"error": "購物車項目不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"發生錯誤：{str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class OrderCreateView(APIView):
