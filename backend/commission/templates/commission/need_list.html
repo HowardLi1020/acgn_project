@@ -404,7 +404,7 @@
                   {{HTML_need.need_description|truncatechars:35}}
                 </td>
                 <td class="cell" data-column="needer">
-                  {{HTML_need.needer_nickname}}
+                  {{HTML_need.public_card.user_nickname}}
                 </td>
                 <td class="cell" data-column="originalFrom">
                   {{HTML_need.need_original_from}}
@@ -641,7 +641,7 @@ function updateStatusTabs(status) {
           resetColumnOrder();
       }
 
-      // 為每個複選框設置初始狀態和��監聽器
+      // 為每個複選框設置初始狀態和監聽器
       checkboxes.forEach((checkbox) => {
           loadCheckboxState(checkbox);
           toggleColumnVisibility(checkbox);
