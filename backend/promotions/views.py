@@ -41,6 +41,8 @@ def edit_coupon(request, coupon_id):
             updated_coupon.updated_at = timezone.now()     # 更新編輯日期
             updated_coupon.save()
             return redirect('promotions:coupon_list')
+        else:
+            print("Form Errors:", form.errors)  # 排查表單錯誤
     else:
         form = CouponForm(instance=coupon)
 

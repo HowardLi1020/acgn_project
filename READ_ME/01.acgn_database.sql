@@ -299,15 +299,17 @@ CREATE TABLE UserCoupons (
     user_coupon_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,                            -- 使用者ID
     coupon_id INT NOT NULL,                          -- 關聯優惠券ID
-    is_used BOOLEAN DEFAULT FALSE,                   -- 是否已使用
-    used_in_order_id INT DEFAULT NULL,               -- 使用的訂單ID
-    used_at TIMESTAMP NULL,                          -- 使用日期
+    is_used BOOLEAN DEFAULT FALSE,                  -- 是否已使用
+    usage_count INT DEFAULT 0 COMMENT '會員已使用次數', -- 使用次數
+    used_in_order_id INT DEFAULT NULL,              -- 使用的訂單ID
+    used_at TIMESTAMP NULL,                         -- 使用日期
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE CASCADE,
     FOREIGN KEY (coupon_id) REFERENCES Coupons(coupon_id) ON DELETE CASCADE,
     FOREIGN KEY (used_in_order_id) REFERENCES orders(order_id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
 
 -- 五、委託
 -- 5-1 需求資訊表

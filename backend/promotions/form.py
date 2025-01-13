@@ -29,7 +29,7 @@ class CouponForm(forms.ModelForm):
 
     class Meta:
         model = Coupons
-        fields = '__all__'
+        exclude = ['created_at']  # 排除 created_at 字段，避免被覆蓋
         labels = {
             'coupon_code': '優惠券代碼',
             'discount_value': '折扣值',
@@ -49,3 +49,4 @@ class CouponForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'usage_limit': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '請輸入使用次數限制'}),
         }
+
