@@ -3,6 +3,15 @@
 {% block app_title %}<h1 class="mb-3">優惠券管理</h1>{% endblock %}
 {% block app_content %}
 <div class="container mt-4">
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+        <div class="alert alert-success" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     <div class="coupon-list">
         {% if coupons %}
         <!-- 如果有優惠券，顯示表格 -->
@@ -38,8 +47,9 @@
                     <td>{{ coupon.created_at|date:"Y-m-d H:i" }}</td>
                     <td>{{ coupon.updated_at|date:"Y-m-d H:i" }}</td>
                     <td>
-                        <a href="{% url 'promotions:edit_coupon' coupon.coupon_id %}" class="btn btn-sm btn-primary">編輯</a>
+                        <a href="{% url 'promotions:edit_coupon' coupon.coupon_id %}" class="btn btn-warning">編輯</a>
                         <a href="{% url 'promotions:delete_coupon' coupon.coupon_id %}" class="btn btn-sm btn-danger">刪除</a>
+                        <a href="{% url 'promotions:assign_coupon' coupon_id=coupon.coupon_id %}" class="btn btn-primary">分派</a>
                     </td>
                 </tr>
                 {% endfor %}

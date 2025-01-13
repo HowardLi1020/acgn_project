@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Coupons
 from django.utils import timezone
 from .form import CouponForm
-
+from users.models import MemberBasic
+from member_api.models import Usercoupons
+from django.contrib import messages
 
 def coupon_list(request):
     """顯示所有優惠券"""
@@ -50,7 +52,42 @@ def edit_coupon(request, coupon_id):
 
 
 def delete_coupon(request, coupon_id):
-    """刪除優惠券"""
+    """刪除優惠券，並刪除相關的會員優惠券記錄"""
     coupon = get_object_or_404(Coupons, pk=coupon_id)
+
+    # 刪除關聯的會員優惠券記錄
+    user_coupon_count = Usercoupons.objects.filter(coupon=coupon).delete()[0]  # 刪除並獲取刪除的記錄數
+
+    # 刪除優惠券本身
     coupon.delete()
+
+    # 添加提示訊息
+    messages.success(request, f"優惠券 '{coupon.coupon_code}' 已成功刪除，並移除了 {user_coupon_count} 條會員優惠券記錄！")
+
     return redirect('promotions:coupon_list')
+
+def assign_coupon(request, coupon_id):
+    """分派優惠券"""
+    coupon = get_object_or_404(Coupons, pk=coupon_id)
+
+    if request.method == 'POST':
+        member_ids = request.POST.getlist('member_ids')  # 獲取選中的會員 ID 列表
+        members = MemberBasic.objects.filter(pk__in=member_ids)
+
+        for member in members:
+            # 確保不會重複分派
+            if not Usercoupons.objects.filter(user=member, coupon=coupon).exists():
+                Usercoupons.objects.create(user=member, coupon=coupon)
+
+        # 添加提示訊息
+        messages.success(request, f"優惠券 '{coupon.coupon_code}' 已成功分派給選中的會員！")
+
+        # 重定向到優惠券列表頁
+        return redirect('promotions:coupon_list')
+
+    # GET 請求返回會員列表
+    members = MemberBasic.objects.all()
+    return render(request, 'promotions/assign_coupon.html', {
+        'coupon': coupon,
+        'members': members,
+    })

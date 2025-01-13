@@ -1,0 +1,39 @@
+{% extends "[BASE]ALL.html" %}
+{% block app_title %}分派優惠券{% endblock %}
+{% block app_content %}
+<div class="container mt-5">
+    <h1>分派優惠券：{{ coupon.coupon_code }}</h1>
+    <form method="post" action="{% url 'promotions:assign_coupon' coupon_id=coupon.coupon_id %}">
+        {% csrf_token %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>選擇</th>
+                    <th>會員姓名</th>
+                    <th>會員 Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="member_ids" value="{{ member.user_id }}">
+                    </td>
+                    <td>{{ member.user_name }}</td>
+                    <td>{{ member.user_email }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">目前沒有會員</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-success">確定分派</button>
+            <a href="{% url 'promotions:coupon_list' %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
