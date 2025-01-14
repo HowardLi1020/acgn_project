@@ -135,8 +135,6 @@ class VerifySerializer(serializers.ModelSerializer):
 class UploadAvatarSerializer(serializers.Serializer):
     avatar = serializers.ImageField(required=True)
 
-
-
 # 尚未使用 MemberIndextype
 class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
