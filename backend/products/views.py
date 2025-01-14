@@ -265,7 +265,7 @@ def view_all_products(request):
 def edit_product(request, product_id):
     try:
         product = Products.objects.get(product_id=product_id)
-        
+
         if request.method == 'GET':
             # 返回商品詳情
             product_data = {
@@ -286,17 +286,17 @@ def edit_product(request, product_id):
                 ]
             }
             return Response(product_data)
-            
-        elif request.method == 'PUT':
-            # 處理要刪除的圖片
+
+        if request.method == 'PUT':
+            # 處理刪除圖片請求
             deleted_images = json.loads(request.data.get('deleted_images', '[]'))
+            
+            # 獲取當前商品的所有圖片
+            current_images = ProductImages.objects.filter(product=product)
+            
+            # 處理要刪除的圖片
             for image_url in deleted_images:
-                # 從 URL 中提取圖片路徑
-                image_path = image_url.split('/media/')[-1]
-                ProductImages.objects.filter(
-                    product=product,
-                    image_url=image_path
-                ).delete()
+                current_images.filter(image_url__endswith=image_url.split('/')[-1]).delete()
 
             # 更新商品信息
             product.product_name = request.data.get('product_name', product.product_name)
@@ -304,109 +304,173 @@ def edit_product(request, product_id):
             product.price = request.data.get('price', product.price)
             product.stock = request.data.get('stock', product.stock)
             
-            if 'category' in request.data:
+            # 更新分類、品牌和系列
+            if request.data.get('category'):
                 product.category_id = request.data['category']
-            if 'brand' in request.data:
+            if request.data.get('brand'):
                 product.brand_id = request.data['brand']
-            if 'series' in request.data:
+            if request.data.get('series'):
                 product.series_id = request.data['series']
                 
             product.save()
-            
+
             # 處理新上傳的圖片
-            if 'images' in request.FILES:
-                for image in request.FILES.getlist('images'):
+            if 'image_url' in request.FILES:  # 注意這裡改成 image_url
+                for image in request.FILES.getlist('image_url'):  # 這裡也改成 image_url
                     ProductImages.objects.create(
                         product=product,
                         image_url=image,
-                        is_main=0
+                        is_main=False,
+                        created_at=datetime.now()
                     )
-            
+
+            # 確保有一張圖片被標註為主圖
+            if not ProductImages.objects.filter(product=product, is_main=True).exists():
+                first_image = ProductImages.objects.filter(product=product).first()
+                if first_image:
+                    first_image.is_main = True
+                    first_image.save()
+
             return Response({'detail': '商品更新成功'})
-            
+
     except Products.DoesNotExist:
         return Response({'detail': '商品不存在'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
+        logger.error(f"更新商品時發生錯誤: {str(e)}")  # 添加日誌
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@csrf_exempt
+@api_view(['POST'])
 def create_brand(request):
-    if request.method == 'POST':
+    try:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'detail': '未授權訪問'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_header.split(' ')[1]
+
         try:
-            data = json.loads(request.body)
-            brand_name = data.get('name')
-            # 添加輸入驗證
-            if not brand_name:
-                return JsonResponse({'message': '類別名稱不能為空'}, status=400)
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
 
-            # 檢查是否已存在相同名稱的系列
-            if ProductSeries.objects.filter(brand_name=brand_name).exists():
-                return JsonResponse({'message': '該類別名稱已存在'}, status=400)
-            
-            brand = ProductBrands.objects.create(brand_name=brand_name)
-            return JsonResponse({'message': '類別創建成功', 'category' : {
-                'brand_id': brand.brand_id,
-                'brand_name': brand.brand_name
-            }}, status=201)
-        except Exception as e:
-            return JsonResponse({'message': str(e)}, status=400)
-    return JsonResponse({'message': 'Invalid method'}, status=405)
+            if not user_id:
+                return Response({'detail': '無效的用戶信息'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@csrf_exempt
+            # 驗證用戶是否存在
+            user = MemberBasic.objects.filter(user_id=user_id).first()
+            if not user:
+                return Response({'detail': '用戶不存在'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 創建品牌
+        brand_name = request.data.get('name')
+        if not brand_name:
+            return Response({'detail': '品牌名稱不能為空'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 檢查是否已存在相同名稱的品牌
+        if ProductBrands.objects.filter(brand_name=brand_name).exists():
+            return Response({'detail': '該品牌名稱已存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        brand = ProductBrands.objects.create(brand_name=brand_name)
+        return Response({'detail': '品牌創建成功', 'brand_id': brand.brand_id}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f"創建品牌時發生錯誤: {str(e)}")
+        return Response({'detail': f'創建品牌時發生錯誤: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 def create_category(request):
-    if request.method == 'POST':
+    try:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'detail': '未授權訪問'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_header.split(' ')[1]
+
         try:
-            data = json.loads(request.body)
-            category_name = data.get('name')
-            # 添加輸入驗證
-            if not category_name:
-                return JsonResponse({'message': '分類名稱不能為空'}, status=400)
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
 
-            # 檢查是否已存在相同名稱的系列
-            if ProductSeries.objects.filter(category_name=category_name).exists():
-                return JsonResponse({'message': '該分類名稱已存在'}, status=400)
+            if not user_id:
+                return Response({'detail': '無效的用戶信息'}, status=status.HTTP_401_UNAUTHORIZED)
 
-            category = ProductCategories.objects.create(category_name=category_name)
-            return JsonResponse({'message': '分類創建成功', 'category': {
-                'category_id': category.category_id,
-                'category_name': category.category_name
-            }}, status=201)
-        except json.JSONDecodeError:
-            return JsonResponse({'message': '無效的 JSON 數據'}, status=400)
-        except Exception as e:
-            return JsonResponse({'message': str(e)}, status=500)
-    return JsonResponse({'message': 'Invalid method'}, status=405)
+            # 驗證用戶是否存在
+            user = MemberBasic.objects.filter(user_id=user_id).first()
+            if not user:
+                return Response({'detail': '用戶不存在'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@csrf_exempt
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 創建分類
+        category_name = request.data.get('name')
+        if not category_name:
+            return Response({'detail': '分類名稱不能為空'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 檢查是否已存在相同名稱的分類
+        if ProductCategories.objects.filter(category_name=category_name).exists():
+            return Response({'detail': '該分類名稱已存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        category = ProductCategories.objects.create(category_name=category_name)
+        return Response({'detail': '分類創建成功', 'category_id': category.category_id}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f"創建分類時發生錯誤: {str(e)}")
+        return Response({'detail': f'創建分類時發生錯誤: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
 def create_series(request):
-    if request.method == 'POST':
+    try:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'detail': '未授權訪問'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_header.split(' ')[1]
+
         try:
-            data = json.loads(request.body)
-            series_name = data.get('name')
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
 
-            # 添加輸入驗證
-            if not series_name:
-                return JsonResponse({'message': '系列名稱不能為空'}, status=400)
+            if not user_id:
+                return Response({'detail': '無效的用戶信息'}, status=status.HTTP_401_UNAUTHORIZED)
 
-            # 檢查是否已存在相同名稱的系列
-            if ProductSeries.objects.filter(series_name=series_name).exists():
-                return JsonResponse({'message': '該系列名稱已存在'}, status=400)
-            
-            series = ProductSeries.objects.create(series_name=series_name)
-            return JsonResponse({
-                'message': '系列創建成功',
-                'series': {
-                    'series_id': series.series_id,
-                    'series_name': series.series_name
-                }
-            }, status=201)
-            
-        except json.JSONDecodeError:
-            return JsonResponse({'message': '無效的 JSON 數據'}, status=400)
-        except Exception as e:
-            return JsonResponse({'message': f'創建系列時發生錯誤: {str(e)}'}, status=500)
-            
-    return JsonResponse({'message': '不支持的請求方法'}, status=405)
+            # 驗證用戶是否存在
+            user = MemberBasic.objects.filter(user_id=user_id).first()
+            if not user:
+                return Response({'detail': '用戶不存在'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 創建系列
+        series_name = request.data.get('name')
+        if not series_name:
+            return Response({'detail': '系列名稱不能為空'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 檢查是否已存在相同名稱的系列
+        if ProductSeries.objects.filter(series_name=series_name).exists():
+            return Response({'detail': '該系列名稱已存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        series = ProductSeries.objects.create(series_name=series_name)
+        return Response({'detail': '系列創建成功', 'series_id': series.series_id}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f"創建系列時發生錯誤: {str(e)}")
+        return Response({'detail': f'創建系列時發生錯誤: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # 替換 `render` 的部分
 class CategoryListView(generics.ListAPIView):

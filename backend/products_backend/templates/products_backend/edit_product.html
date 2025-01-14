@@ -1,0 +1,520 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_css %}
+<style>
+    .create-product-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 1rem;
+        padding-top: 150px;
+    }
+
+    .create-product-form {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .add-new-item {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .image-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .image-slot {
+        position: relative;
+        width: 100%;
+        height: 100px;
+        border: 2px dashed #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .image-slot.filled img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .add-icon {
+        font-size: 2rem;
+        color: #ccc;
+    }
+
+    .remove-button {
+        position: absolute; /* 絕對定位 */
+        top: 5px;
+        right: 5px;
+        background: red;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        cursor: pointer;
+        z-index: 10; /* 確保按鈕在最上層 */
+    }
+
+    .cover-label {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+    }
+
+    #fileInput {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block app_content %}
+<div class="create-product-container">
+    <h1>編輯商品</h1>
+    <form method="post" enctype="multipart/form-data" class="create-product-form" onsubmit="return validateForm()">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="product_name">商品名稱</label>
+            <input type="text" class="form-control" id="product_name" name="product_name" value="{{ product.product_name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description_text">商品描述</label>
+            <textarea class="form-control" id="description_text" name="description_text" rows="3" required>{{ product.description_text }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="brand">品牌</label>
+            <select class="form-select" id="brand" name="brand" required>
+                <option value="">選擇品牌</option>
+                {% for brand in brands %}
+                    <option value="{{ brand.brand_id }}" {% if product.brand and product.brand.brand_id == brand.brand_id %}selected{% endif %}>
+                        {{ brand.brand_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="add-new-item">
+                <input type="text" class="form-control" id="new_brand" placeholder="新增品牌">
+                <button type="button" class="btn btn-secondary" onclick="addNewBrand()">新增</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="category">分類</label>
+            <select class="form-select" id="category" name="category" required>
+                <option value="">選擇分類</option>
+                {% for category in categories %}
+                    <option value="{{ category.category_id }}" {% if product.category and product.category.category_id == category.category_id %}selected{% endif %}>
+                        {{ category.category_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="add-new-item">
+                <input type="text" class="form-control" id="new_category" placeholder="新增分類">
+                <button type="button" class="btn btn-secondary" onclick="addNewCategory()">新增</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="series">系列</label>
+            <select class="form-select" id="series" name="series" required>
+                <option value="">選擇系列</option>
+                {% for s in series %}
+                    <option value="{{ s.series_id }}" {% if product.series and product.series.series_id == s.series_id %}selected{% endif %}>
+                        {{ s.series_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="add-new-item">
+                <input type="text" class="form-control" id="new_series" placeholder="新增系列">
+                <button type="button" class="btn btn-secondary" onclick="addNewSeries()">新增</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="price">價格</label>
+            <input type="number" class="form-control" id="price" name="price" value="{{ product.price|floatformat:0 }}" min="0" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="stock">庫存</label>
+            <input type="number" class="form-control" id="stock" name="stock" value="{{ product.stock }}" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label>商品圖片</label>
+            <div class="image-grid">
+                {% for image in product.productimages_set.all %}
+                <div class="image-slot filled">
+                    <img src="{{ MEDIA_URL }}{{ image.image_url }}" alt="{{ product.product_name }}">
+                    {% if image.is_main %}
+                    <span class="cover-label">封面</span>
+                    {% endif %}
+                    <button type="button" class="remove-button" onclick="removeImage(event, this, '{{ image.image_url }}')">×</button>
+                    <input type="hidden" name="existing_images[]" value="{{ image.image_url }}">
+                </div>
+                {% endfor %}
+                
+                {% for i in slot_range %}
+                <div class="image-slot" onclick="document.getElementById('fileInput').click()">
+                    <span class="add-icon">+</span>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="file" id="fileInput" name="image_url" accept="image/*" multiple onchange="handleFileUpload(this)" class="hidden">
+            <input type="hidden" name="deleted_images" id="deletedImages" value="[]">
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">更新商品</button>
+        <a href="{% url 'products_backend:index' %}" class="btn btn-secondary w-100 mt-2">取消</a>
+    </form>
+</div>
+{% endblock %}
+
+{% block app_script %}
+<script>
+// 處理圖片上傳
+let uploadedFiles = new Set();
+let deletedSlotIndices = new Set(); // 新增：追蹤被刪除的槽位索引
+
+function handleFileUpload(input) {
+    if (input.files && input.files.length > 0) {
+        // 檢查文件數量限制
+        const currentImages = document.querySelectorAll('.image-slot.filled').length;
+        const maxAllowed = 5;
+        const remainingSlots = maxAllowed - currentImages;
+        
+        if (input.files.length > remainingSlots) {
+            alert(`最多只能上傳${remainingSlots}張圖片`);
+            input.value = '';
+            return;
+        }
+
+        // 驗證文件
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        const maxSize = 5 * 1024 * 1024;
+        
+        const validFiles = Array.from(input.files).filter(file => {
+            if (!allowedTypes.includes(file.type)) {
+                alert(`檔案 ${file.name} 類型不支援。只允許 JPG, PNG, GIF`);
+                return false;
+            }
+            if (file.size > maxSize) {
+                alert(`檔案 ${file.name} 太大。最大允許 5MB`);
+                return false;
+            }
+            return true;
+        });
+
+        // 找到所有空槽位（包括被刪除的槽位）
+        const emptySlots = Array.from(document.querySelectorAll('.image-slot:not(.filled)'));
+        
+        validFiles.forEach((file, index) => {
+            if (index < emptySlots.length) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const slot = emptySlots[index];
+                    const slotIndex = Array.from(document.querySelectorAll('.image-slot')).indexOf(slot);
+                    const isFirstImage = document.querySelectorAll('.image-slot.filled').length === 0;
+                    
+                    slot.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        ${isFirstImage ? '<span class="cover-label">封面</span>' : ''}
+                        <button type="button" class="remove-button" onclick="removeImage(event, this)">×</button>
+                    `;
+                    slot.classList.add('filled');
+                    slot.onclick = null;
+                    
+                    // 儲存文件和對應的槽位索引
+                    file.slotIndex = slotIndex;
+                    uploadedFiles.add(file);
+                    
+                    // 從已刪除槽位中移除此索引
+                    deletedSlotIndices.delete(slotIndex);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 更新 input 的 files
+        updateFileInput();
+    }
+}
+    
+// 移除圖片
+let deletedImages = [];
+function removeImage(event, button, imageUrl) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (confirm('確定要刪除這張圖片嗎？')) {
+        const slot = button.parentElement;
+        const remainingImages = document.querySelectorAll('.image-slot.filled').length;
+
+        if (remainingImages <= 1 && !uploadedFiles.size) {
+            alert('至少需要保留一張商品圖片');
+            return;
+        }
+
+        // 處理已存在的圖片
+        if (imageUrl && !deletedImages.includes(imageUrl)) {
+            deletedImages.push(imageUrl);
+            document.getElementById('deletedImages').value = JSON.stringify(deletedImages);
+        }
+
+        // 記錄被刪除的槽位索引
+        const slotIndex = Array.from(document.querySelectorAll('.image-slot')).indexOf(slot);
+        deletedSlotIndices.add(slotIndex);
+
+        // 移除對應的文件
+        uploadedFiles.forEach(file => {
+            if (file.slotIndex === slotIndex) {
+                uploadedFiles.delete(file);
+            }
+        });
+
+        // 重置槽位
+        slot.innerHTML = '<span class="add-icon">+</span>';
+        slot.classList.remove('filled');
+        slot.onclick = () => document.getElementById('fileInput').click();
+
+        // 重新排序圖片
+        reorderImages();
+        
+        // 更新 FileInput
+        updateFileInput();
+    }
+}
+
+function reorderImages() {
+    const allSlots = Array.from(document.querySelectorAll('.image-slot'));
+    const filledSlots = Array.from(document.querySelectorAll('.image-slot.filled'));
+    
+    // 保存所有已填充槽位的內容和對應的文件
+    const filledSlotsContent = filledSlots.map((slot, index) => {
+        const slotIndex = allSlots.indexOf(slot);
+        const matchingFile = Array.from(uploadedFiles).find(file => file.slotIndex === slotIndex);
+        return {
+            content: slot.innerHTML,
+            file: matchingFile
+        };
+    });
+    
+    // 重置所有槽位
+    allSlots.forEach(slot => {
+        slot.classList.remove('filled');
+        slot.innerHTML = '<span class="add-icon">+</span>';
+        slot.onclick = () => document.getElementById('fileInput').click();
+    });
+
+    // 重新填充內容
+    filledSlotsContent.forEach((content, index) => {
+        const slot = allSlots[index];
+        slot.innerHTML = content.content;
+        slot.classList.add('filled');
+        slot.onclick = null;
+
+        // 如果這個槽位對應一個新上傳的文件，更新它的 slotIndex
+        if (content.file) {
+            content.file.slotIndex = index;
+        }
+    });
+
+    // 確保第一個槽位有封面標記
+    const firstFilledSlot = document.querySelector('.image-slot.filled');
+    if (firstFilledSlot) {
+        document.querySelectorAll('.cover-label').forEach(label => label.remove());
+        firstFilledSlot.insertAdjacentHTML('beforeend', '<span class="cover-label">封面</span>');
+    }
+}
+
+function updateFileInput() {
+    const fileInput = document.getElementById('fileInput');
+    const dataTransfer = new DataTransfer();
+    
+    // 根據目前顯示的順序重新整理文件
+    const filledSlots = document.querySelectorAll('.image-slot.filled');
+    filledSlots.forEach((slot, index) => {
+        const slotIndex = Array.from(document.querySelectorAll('.image-slot')).indexOf(slot);
+        const matchingFile = Array.from(uploadedFiles).find(file => file.slotIndex === slotIndex);
+        if (matchingFile) {
+            dataTransfer.items.add(matchingFile);
+        }
+    });
+    
+    fileInput.files = dataTransfer.files;
+}
+
+function validateForm() {
+    const filledSlots = document.querySelectorAll('.image-slot.filled');
+    let hasValidImage = false;
+
+    // 檢查是否有任何有效的圖片（已存在的或新上傳的）
+    if (filledSlots.length > 0 || uploadedFiles.size > 0) {
+        hasValidImage = true;
+    }
+
+    if (!hasValidImage) {
+        alert('請至少上傳一張商品圖片');
+        return false;
+    }
+
+    // 確保有主圖
+    const hasMainImage = document.querySelector('.cover-label') !== null;
+    if (!hasMainImage) {
+        alert('請確保至少有一張封面圖片');
+        return false;
+    }
+
+    // 更新 FileInput
+    if (uploadedFiles.size > 0) {
+        const dataTransfer = new DataTransfer();
+        const sortedFiles = Array.from(uploadedFiles)
+            .sort((a, b) => a.slotIndex - b.slotIndex);
+            
+        sortedFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+        
+        document.getElementById('fileInput').files = dataTransfer.files;
+    }
+
+    return true;
+}
+
+    
+    // 新增品牌、分類、系列的函數
+    const csrfToken = '{{ csrf_token }}'
+
+    async function addNewBrand() {
+        const brandName = document.getElementById('new_brand').value;
+        if (!brandName) {
+            alert('請輸入品牌名稱');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/store_backend/add_brand/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    brand_name: brandName
+                })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'success') {
+                const select = document.getElementById('brand');
+                const option = new Option(brandName, data.brand_id);
+                select.add(option);
+                select.value = data.brand_id;
+                document.getElementById('new_brand').value = '';
+                alert('新增品牌成功！');
+            } else {
+                alert(data.message || '新增品牌失敗');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('新增品牌失敗，請檢查網絡連接或伺服器狀態。');
+        }
+    }
+
+    async function addNewCategory() {
+    const categoryName = document.getElementById('new_category').value;
+    if (!categoryName) {
+        alert('請輸入分類名稱');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/store_backend/add_category/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                category_name: categoryName
+            })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            const select = document.getElementById('category');
+            const option = new Option(categoryName, data.category_id);
+            select.add(option);
+            select.value = data.category_id;
+            document.getElementById('new_category').value = '';
+            alert('新增分類成功！');
+        } else {
+            alert(data.message || '新增分類失敗');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('新增分類失敗，請檢查網絡連接或伺服器狀態。');
+    }
+}
+
+async function addNewSeries() {
+    const seriesName = document.getElementById('new_series').value;  // 修正變數名稱
+    if (!seriesName) {
+        alert('請輸入系列名稱');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/store_backend/add_series/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                series_name: seriesName  // 修正鍵名稱
+            })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            const select = document.getElementById('series');
+            const option = new Option(seriesName, data.series_id);
+            select.add(option);
+            select.value = data.series_id;
+            document.getElementById('new_series').value = '';
+            alert('新增系列成功！');
+        } else {
+            alert(data.message || '新增系列失敗');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('新增系列失敗，請檢查網絡連接或伺服器狀態。');
+    }
+}
+</script>
+{% endblock %}

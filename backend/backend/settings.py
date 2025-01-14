@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cart',
     'products',
+    'products_backend',
     'users',        # 顯示 後端管理者頁面-member      
     'users_api',    # 串接 後端管理者介面-member
     'admins',       # 顯示 後端管理者頁面-admin
