@@ -299,7 +299,7 @@ CREATE TABLE Usercoupons (
     coupon_id INT NOT NULL,
     usage_limit INT DEFAULT NULL,  -- 此會員的使用次數限制
     usage_count INT DEFAULT 0,     -- 此會員已使用次數
-    used_in_order INT DEFAULT NULL,
+    used_in_order_id INT DEFAULT NULL,
     used_at DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
