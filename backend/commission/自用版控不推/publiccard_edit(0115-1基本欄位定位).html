@@ -267,7 +267,7 @@
 
   .right-section .form-check-input {
     position: absolute; /* 絕對定位 */
-    right: 40rem; /* 文字與開關的距離，越大越近 */
+    right: 680px; /* 文字與開關的距離，越大越近 */
     top: 40%; /* 垂直置中 */
     transform: translateY(-50%); /* 精確垂直置中 */
     margin: 0; /* 清除預設邊距 */
@@ -335,33 +335,32 @@
     padding: 0;
     margin: 0 0 10px 0;
   }
-  /* 喜好作品清單生成 */
+
   .favorite-works-list li {
     display: flex;
     align-items: flex-start; /* 改為靠上對齊，避免長文字時垃圾桶位置異常 */
     margin-bottom: 5px;
     padding: 5px 10px;
-    background-color: #f3f3f3; /* 喜好作品清單背景色 */
+    background-color: #E9ECEF;
     border-radius: 4px;
     word-break: break-all; /* 允許在任何字符間換行 */
     word-wrap: break-word; /* 確保長單詞也會換行 */
   }
 
-  /* 喜好作品清單生成 */
   .favorite-works-list li:before {
     /* content: "-"; */
     margin-right: 8px;
     color: #666;
     flex-shrink: 0; /* 防止符號被壓縮 */
   }
- /* 喜好作品清單-文字 */
+
   .work-text {
     flex-grow: 1; /* 讓文字佔據剩餘空間 */
     margin-right: 10px; /* 與垃圾桶圖示保持距離 */
-    padding-top: 5px; /* 文字與垃圾桶上切齊 */
+    padding-top: 5px;
     min-width: 0; /* 允許文字區域收縮 */
   }
-  /* 喜好作品清單-垃圾桶 */
+
   .remove-work {
     color: #dc3545;
     cursor: pointer;
@@ -378,7 +377,7 @@
     padding: 15px;
     background-color: #f8f9fa;
     border-radius: 4px;
-    width: 750px; /* 輸入框DIV寬度 */
+    width: 474px; /* 輸入框DIV寬度 */
   }
 
   .price-content-wrapper .form-label {
@@ -561,45 +560,37 @@
               <!-- 價目表的內容 -->
               <div class="price-content-wrapper">
                 <!-- 第一行：販售項目和價格輸入 -->
-                <div class="d-flex justify-content-between align-items-stretch mb-3">
-                  <!-- 左側容器 -->
-                  <div class="me-3" style="width: 70%;">
+                <div
+                  class="d-flex justify-content-between align-items-start mb-3"
+                >
+                  <div class="flex-grow-1 me-3">
                     <label class="form-label">輸入販售項目</label>
                     <input
                       type="text"
                       class="form-control"
                       placeholder="輸入販售項目"
                     />
-                    <label class="form-label mt-3">輸入接單規則</label>
-                    <textarea
-                      class="form-control"
-                      rows="4"
-                      placeholder="輸入接單規則"
-                    ></textarea>
                   </div>
-                  <!-- 右側容器 -->
-                  <div style="width: 40%;">
-                    <label class="form-label">示意圖(最多兩張)</label>
-                    <div class="d-flex" style="gap: 10px; height: 85%;">
-                      <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
-                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                        </svg>
-                      </div>
-                      <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
-                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                        </svg>
-                      </div>
-                    </div>
+                  <div style="width: 200px">
+                    <!-- 固定價格輸入框寬度 -->
+                    <label class="form-label">&nbsp;</label>
+                    <!-- 空白標籤保持對齊 -->
+                    <input
+                      type="text"
+                      class="form-control"
+                      placeholder="輸入價格"
+                    />
                   </div>
                 </div>
 
-                <!-- 第二行：新增按鈕 -->
-                <div class="d-flex justify-content-end mt-3">
-                  <button class="btn app-btn-primary">新增</button>
+                <!-- 第二行：接單規則 -->
+                <div class="mb-3">
+                  <label class="form-label">輸入接單規則</label>
+                  <textarea
+                    class="form-control"
+                    rows="4"
+                    placeholder="輸入接單規則"
+                  ></textarea>
                 </div>
               </div>
             </div>

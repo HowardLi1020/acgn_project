@@ -1,0 +1,865 @@
+{% extends '[BASE]ALL.html' %} 
+{% load static %}
+{% block app_css %}
+<!-- 如果應用程式有自己的css放這邊 -->
+<style>
+    /* 隱藏頂端列 */
+    .app-header-inner {
+      display: none;
+    }
+    /* 取消主板 .app 的 padding-top 設置 */
+    .app {
+      padding-top: 0 !important;
+    }
+
+    /* Banner 相關樣式 */
+    .app-card-thumb-holder {
+        position: relative;
+        background-position: center;
+        height: 160px; /* banner 高度 */
+        margin-bottom: 40px; /* 調整空間給頭像 */
+        background-size: cover;
+    }
+
+    /* 頭像和個人資訊容器 */
+    .profile-info-container {
+        position: absolute;
+        top: -120px; /* 頭像與 banner 的高度距離，數字越小越上方 */
+        left: 50px; /* 頭像與左邊界的距離 */
+        right: 20px;
+        z-index: 1;
+        overflow: visible; /* 允許內容超出容器 */
+    }
+
+    /* 頭像包裝器 */
+    .avatar-wrapper {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        /* border: 4px solid white; */
+        /* border-radius: 50%; */
+        overflow: hidden;
+        background-color: #f0f0f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        flex-shrink: 0; /* 防止頭像被壓縮 */
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* 用戶資訊區域 */
+    .user-info {
+        padding-left: 60px; /* 頭像與個人資訊的距離 */
+        margin-top: -55px; /* 暱稱、簡介的垂直位置，數字越小越上方 */
+    }
+
+    .nickname {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .introduction {
+        color: #666;
+    }
+
+    .banner-controls {
+        position: absolute;
+        top: 10px; /* 調整按鈕的垂直位置 */
+        right: 20px; /* 調整按鈕的水平位置 */
+        z-index: 2; /* 確保按鈕在 banner 上方 */
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        border-radius: 50%;
+        transition: .4s;
+    }
+
+    /* 新增喜好作品和Tag輸入區域的樣式 */
+    .profile-section {
+        margin-top: -100px; /* 調整與頭像的距離，數字越小越上方 */
+        width: 28%; /* 設置寬度為畫面的1/3 */
+        padding: 0 20px; /* 增加左右間距 */
+    }
+
+    .profile-form .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .profile-form .form-control {
+        width: 100%;
+    }
+
+    /* 標籤容器樣式 */
+    .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    /* 標籤樣式 */
+    .tag {
+        background-color: #e9ecef;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        margin-right: 5px; /* 控制水平間距 */
+        margin-bottom: 10px; /* 保持垂直間距 */
+    }
+
+    /* 刪除按鈕樣式 */
+    .tag .remove-tag {
+        margin-left: 8px;
+        cursor: pointer;
+        color: #666;
+    }
+
+    /* 輸入框容器樣式 */
+    .input-group {
+        display: flex;
+        align-items: stretch;
+        width: 100%;  /* 確保容器佔滿整個寬度 */
+    }
+
+    /* 輸入框樣式 */
+    .input-group .form-control {
+        flex: 1;  /* 讓輸入框佔據剩餘空間 */
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        margin-right: 0; /* 移除右側邊距 */
+    }
+
+    /* 新增按鈕樣式 */
+    .add-tag-btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        margin-left: -1px; /* 微調按鈕位置，使邊框重疊 */
+        white-space: nowrap; /* 防止按鈕文字換行 */
+        padding: 0.375rem 0.75rem; /* 標準按鈕內邊距 */
+        color: white; /* 設置字體顏色為白色 */
+    }
+
+    /* 新增輸入框樣式 */
+    .nickname input {
+        font-size: 1.75rem; /* h3 的大小 */
+        font-weight: bold;
+        border: none;
+        width: 230%;
+        padding: 0;
+        margin: 0;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+    }
+
+    .introduction textarea {  /* 改用 textarea */
+        border: none;
+        width: 230%;
+        padding: 4px;
+        margin: 0;
+        color: #666;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+        min-height: 80px;  /* 設置最小高度 */
+        resize: none;  /* 防止用戶調整大小 */
+        font-family: inherit;  /* 繼承字體 */
+        line-height: 1.5;  /* 行高 */
+        vertical-align: top;  /* 文字靠上對齊 */
+    }
+
+    /* 輸入框獲得焦點時的樣式 */
+    .nickname input:focus,
+    .introduction textarea:focus {
+        outline: none;
+    }
+
+    /* 右側區域容器樣式 */
+    .right-section {
+        position: absolute;
+        top: 300px;
+        left: 400px;
+        /*right: 0px;   與右邊界的距離 */
+        /* width: 28%;   設置寬度為畫面的28% */
+    }
+
+    /* 開關容器樣式 */
+    .switches-container {
+        display: grid;
+        /* grid-template-columns: repeat(2, 1fr); 2x2 網格布局 */
+        gap: 15px;
+    }
+
+    /* 最後更新時間樣式 */
+    .last-update {
+        position: absolute;
+        top: 210px;  /* 調整到 Banner 下方 */
+        right: 0px; /* 與右邊界的距離 */
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    /* 頭像控制項容器樣式 */
+    .avatar-controls {
+        position: absolute;
+        left: 170px;  /* 頭像寬度 + 一些間距 */
+        bottom: 0px;  /* 與頭像底部對齊 */
+        /* top: 20px;    與頭像頂部對齊 */
+        display: flex;
+        flex-direction: column;
+        gap: 5px; /* 調整間距，讓開關和按鈕更接近 */
+    }
+
+    /* 調整開關和按鈕的字體大小 */
+    .form-check-label {
+        font-size: 0.85rem; /* 調整字體大小 */
+    }
+
+    .avatar-controls .btn {
+        width: fit-content;
+        /* padding: 0.25rem 0.5rem; 調整內邊距，使按鈕變小 */
+        /* font-size: 0.85rem; 調整字體大小 */
+    }
+
+    /* 右側開關區域的獨立樣式 */
+    .right-section .form-check-label {
+        font-size: 1rem;  /* 調大文字 */
+        margin-right: 10px;  /* 文字與開關的間距 */
+    }
+
+    .right-section .form-check {
+        display: flex;
+        flex-direction: row-reverse;  /* 將開關放到右邊 */
+        justify-content: space-between;  /* 文字靠左，開關靠右 */
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-left: 0;  /* 移除預設的左邊距 */
+    }
+
+    .right-section .form-check-input {
+        margin-left: 10px;  /* 開關與文字的間距 */
+        margin-right: 0;    /* 重置預設的右邊距 */
+    }
+
+    /* 列表樣式 */
+    .content-list {
+         /*list-style: none;  移除預設的列表符號 */
+        padding: 0;
+        margin: 0;
+    }
+
+    .content-list li {
+        position: relative;
+        padding-left: 1.5em;  /* 為自訂符號留空間 */
+        margin-bottom: 1rem;
+    }
+
+    .content-list li::before {
+        /* content: "●"; */
+        position: absolute;
+        left: 0;
+        color: #333;
+    }
+
+    /* 開關容器樣式 */
+    .content-list .form-check {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+    }
+
+    .content-list .form-check-label {
+        font-size: 1rem;
+        margin-right: 10px;
+    }
+
+    /* 展開內容區域 */
+    .expandable-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        padding-left: 1.5em;
+    }
+
+    /* 展開時的狀態 */
+    .expandable-content.show {
+        max-height: 500px; /* 設置一個足夠大的高度，但不要太大以免影響動畫效果 */
+        transition: max-height 0.5s ease-in;
+    }
+
+    /* 調整按鈕樣式以匹配輸入框高度 */
+    .input-group .btn {
+        height: 40px; /* 使按鈕高度與輸入框相同 */
+        padding: 0.375rem 0.75rem; /* 調整內邊距 */
+        display: flex; /* 確保按鈕內部元素垂直居中 */
+        align-items: center; /* 垂直居中 */
+    }
+
+    .favorite-works-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 10px 0;
+    }
+
+    .favorite-works-list li {
+        display: flex;
+        align-items: flex-start; /* 改為靠上對齊，避免長文字時垃圾桶位置異常 */
+        margin-bottom: 5px;
+        padding: 5px 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        word-break: break-all; /* 允許在任何字符間換行 */
+        word-wrap: break-word; /* 確保長單詞也會換行 */
+    }
+
+    .favorite-works-list li:before {
+        /* content: "-"; */
+        margin-right: 8px;
+        color: #666;
+        flex-shrink: 0; /* 防止符號被壓縮 */
+    }
+
+    .work-text {
+        flex-grow: 1; /* 讓文字佔據剩餘空間 */
+        margin-right: 10px; /* 與垃圾桶圖示保持距離 */
+        min-width: 0; /* 允許文字區域收縮 */
+    }
+
+    .remove-work {
+        color: #dc3545;
+        cursor: pointer;
+        padding: 5px;
+        flex-shrink: 0; /* 防止圖示被壓縮 */
+    }
+
+    .remove-work:hover {
+        color: #c82333;
+    }
+
+    .price-content-wrapper {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .price-content-wrapper .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .price-content-wrapper textarea {
+        resize: vertical; /* 只允許垂直調整大小 */
+        min-height: 100px;
+    }
+</style>
+{% endblock %} 
+{% block app_title %}
+<!-- 直接打文字即可替換各自應用程式的標題 -->
+名片資訊編輯 (使用者ID：{{ ViewKey_DbPublicCardInfo.pk }})
+{% endblock %} 
+{% block app_content %}
+<!-- 白底編輯區 -->
+<div class="app-card app-card-settings shadow-sm p-4 mb-4 d-flex flex-column" style="flex-grow: 1;">
+<form method="post" enctype="multipart/form-data">
+  <!-- 名片橫幅 -->
+  <div class="app-card-thumb-holder" style="background-image: url('{{ MEDIA_URL }}commission/publiccard/banner/{% if HTML_publiccard.member_basic.user_gender == 'female' %}banner_female.png{% elif HTML_publiccard.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}'); background-size: cover; background-position: center; height: 200px;">
+    <!-- 右上角按鈕區域 -->
+    <div class="banner-controls d-flex align-items-center">
+      <div class="form-check form-switch mb-0 me-2">
+          <input class="form-check-input" type="checkbox" id="settings-switch-1" checked="">
+          <label class="form-check-label" for="settings-switch-1">回復預設</label>
+      </div>
+        <button class="btn app-btn-primary">變更橫幅</button>
+    </div>
+    <!-- 最後更新時間 -->
+    <div class="last-update">
+        最後更新：{{ ViewKey_DbPublicCardInfo.last_update|date:"Y.m.d H:i" }}
+    </div>
+  </div>
+
+  <!-- 頭像和個人資訊區域 -->
+  <div class="profile-info-container d-flex position-relative">
+      <!-- 頭像區域 -->
+      <div class="avatar-wrapper">
+          {% if ViewKey_DbPublicCardInfo.user_avatar %}
+              <img class="avatar-img" src="{{ MEDIA_URL }}commission/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}" alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像" />
+          {% endif %}
+      </div>
+      
+      <!-- 頭像控制項 -->
+      <div class="avatar-controls">
+          <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="settings-switch-2" checked="">
+              <label class="form-check-label" for="settings-switch-2">回復預設</label>
+          </div>
+          <button class="btn app-btn-primary">變更頭像</button>
+      </div>
+      
+      <!-- 暱稱和介紹區域 -->
+      <div class="user-info">
+          <div class="nickname">
+              <input type="text" 
+                     value="{{ ViewKey_DbPublicCardInfo.user_nickname }}" 
+                     placeholder="輸入暱稱"
+                     autocomplete="off">
+          </div>
+          <div class="introduction">
+              <textarea placeholder="輸入簡介"
+                        autocomplete="off">{{ ViewKey_DbPublicCardInfo.user_introduction }}</textarea>
+          </div>
+      </div>
+  </div>
+  <!-- 作品集和Tag輸入區域 -->
+  <div class="profile-section">
+    <!-- <div class="form-check form-switch mb-3">
+      <input class="form-check-input" type="checkbox" id="settings-switch-1" checked="">
+      <label class="form-check-label" for="settings-switch-1">依帳號設定</label>
+    </div>
+    <div class="mb-3">
+      <button class="btn app-btn-primary">變更頭像</button>      
+    </div> -->
+    <form class="profile-form">
+      <ul class="form-list">
+          <li>
+              <label class="form-label mb-2 mt-3">喜好作品 (平台分類/作品名)：</label>
+              <div class="favorite-works-container">
+                  <!-- 喜好作品清單會在這裡動態生成 -->
+                  <ul class="favorite-works-list"></ul>
+              </div>
+              <div class="input-group">
+                  <input type="text" class="form-control" id="workInput" placeholder="如：NS/寶可夢朱紫、手遊/FGO">
+                  <button type="button" class="btn btn-primary add-tag-btn" id="addWorkBtn">新增</button>
+              </div>
+          </li>
+  
+          <li>
+              <label class="form-label mb-2 mt-3">關聯Tag (至少三項增加曝光率)：</label>
+              <div class="tags-container" id="tagsContainer">
+                  <!-- 標籤會在這裡動態生成 -->
+              </div>
+              <div class="input-group">
+                  <input type="text" class="form-control" id="tagInput" placeholder="輸入標籤">
+                  <button type="button" class="btn btn-primary add-tag-btn" id="addTagBtn">新增</button>
+              </div>
+          </li>
+      </ul>
+  </form>
+  </div>
+
+
+<!-- <div class="switches-container"> -->
+  <div class="right-section">
+      <ul class="content-list">
+          <li>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="switch-price">
+                  <label class="form-check-label form-label" for="switch-price">接案價目表</label>
+              </div>
+              <div class="expandable-content" id="content-price">
+                  <div class="price-content-wrapper">
+                      <!-- 第一行：販售項目和價格輸入 -->
+                      <div class="d-flex justify-content-between align-items-start mb-3">
+                          <div class="flex-grow-1 me-3">
+                              <label class="form-label">輸入販售項目</label>
+                              <input type="text" class="form-control" placeholder="輸入販售項目">
+                          </div>
+                          <div style="width: 200px;"> <!-- 固定價格輸入框寬度 -->
+                              <label class="form-label">&nbsp;</label> <!-- 空白標籤保持對齊 -->
+                              <input type="text" class="form-control" placeholder="輸入價格">
+                          </div>
+                      </div>
+
+                      <!-- 第二行：接單規則 -->
+                      <div class="mb-3">
+                          <label class="form-label">輸入接單規則</label>
+                          <textarea class="form-control" rows="4" placeholder="輸入接單規則"></textarea>
+                      </div>
+                  </div>
+              </div>
+          </li>
+
+          <li>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="switch-portfolio">
+                  <label class="form-check-label form-label" for="switch-portfolio">公開作品列表</label>
+              </div>
+              <div class="expandable-content" id="content-portfolio">
+                  <!-- 作品列表的內容 -->
+                   223
+              </div>
+          </li>
+
+          <li>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="switch-completed">
+                  <label class="form-check-label form-label" for="switch-completed">已成交作品</label>
+              </div>
+              <div class="expandable-content" id="content-completed">
+                  <!-- 已成交作品的內容 -->
+                   323
+              </div>
+          </li>
+
+          <li>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="switch-commissioned">
+                  <label class="form-check-label form-label" for="switch-commissioned">發起過的委託</label>
+              </div>
+              <div class="expandable-content" id="content-commissioned">
+                  <!-- 發起過的委託內容 -->
+                   423
+              </div>
+          </li>
+      </ul>
+  </div>
+  <div class="d-flex justify-content-end mt-3">
+    <a href="#" id="cancelButton" class="btn app-btn-secondary me-2">返回上層</a>
+    <button type="submit" class="btn app-btn-primary">保存更改</button>
+  </div>
+</form>
+</div>
+  
+<!-- </div> -->
+
+
+
+
+  <!-- 右側範例圖片區 -->
+  <div class="example-images">
+      <div class="row">
+          <div class="col-6">
+              <div class="image-preview">
+                  <img src="default-example.png" alt="範例圖1" class="img-fluid">
+              </div>
+          </div>
+          <div class="col-6">
+              <div class="image-preview">
+                  <img src="default-example.png" alt="範例圖2" class="img-fluid">
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div class="col-12 col-md-4 d-flex flex-column">
+  <div class="app-card app-card-settings shadow-sm p-4 mb-4 d-flex flex-column" style="flex-grow: 1;">
+    <div class="content-wrapper">
+      <div class="mb-2"><strong>發布時間：</strong> {{ ViewKey_DbNeedInfo_need_id.publish_time|date:"Y-m-d H:i:s" }}</div>
+      <div class="mb-2"><strong>最後更新：</strong> {{ ViewKey_DbNeedInfo_need_id.last_update|date:"Y-m-d H:i:s" }}</div>
+      <p></p>
+      <h6>需求示意圖預覽</h6>
+
+      {% if ViewKey_DbNeedEdit_sketches %}
+        <div class="d-flex flex-wrap justify-content-start mt-3" id="image-preview-container">
+
+          {% for sketches in ViewKey_DbNeedEdit_sketches %}
+            <div class="d-flex align-items-center justify-content-center image-preview-wrapper" style="width: calc(50% - 10px); margin-right: 10px; margin-bottom: 10px;">
+              <img src="{{ MEDIA_URL }}commission/needID_img/{{ sketches.image_url }}" alt="需求示意圖 {{ sketches.step }}" style="width: 100%; height: auto; object-fit: cover; border-radius: 5px;">
+            </div>
+          {% endfor %}
+
+          {% if ViewKey_DbNeedEdit_sketches|length < 5 %}
+
+            {% for i in "12345"|slice:ViewKey_DbNeedEdit_sketches.count %}
+
+              <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="width: calc(33.33% - 10px); height: 100px; background-color: #e0e0e0; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                </svg>
+
+              </div>
+
+            {% endfor %}
+          {% endif %}
+
+        </div>
+      {% else %}
+        <p>目前沒有示意圖</p>
+
+        <div class="d-flex flex-wrap justify-content-start mt-3" id="image-preview-container">
+
+          {% for i in "12345" %}
+            <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="width: calc(33.33% - 10px); height: 100px; background-color: #e0e0e0; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;">
+
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+
+              </svg>
+            </div>
+
+          {% endfor %}
+
+        </div>
+      {% endif %}
+      <input type="file" id="image-upload-input" style="display: none;" accept="image/*" multiple>
+
+    </div>
+
+    <div class="flex-grow-1"></div>
+  </div>
+<div class="row g-4 settings-section">
+
+  <div class="col-12 col-md-8">
+    <div class="app-card app-card-settings shadow-sm p-4" style="min-height: 100%;">
+      <div class="app-card-body">
+        <form class="settings-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            
+            <label for="setting-input-1" class="form-label">需求標題 (50字內)<span class="ms-2" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-content="10字後的字元會於字卡省略，關係到搜尋曝光率，標題黨站出來！"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-info-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+              <circle cx="8" cy="4.5" r="1"/>
+            </svg></span>
+          </label>
+          <input type="text" class="form-control" id="setting-input-1" name="need_title" value="{{ ViewKey_DbNeedInfo_need_id.need_title }}" required maxlength="50">
+            <!-- <h3 class="section-title">需求人資訊</h3> -->
+             
+
+
+            <label for="setting-input-1" class="form-label">需求標題 (50字內)<span class="ms-2" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-content="10字後的字元會於字卡省略，關係到搜尋曝光率，標題黨站出來！"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-info-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                <circle cx="8" cy="4.5" r="1"/>
+              </svg></span>
+            </label>
+            <input type="text" class="form-control" id="setting-input-1" name="need_title" value="{{ ViewKey_DbNeedInfo_need_id.need_title }}" required maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label for="setting-input-2" class="form-label">需求種類</label>
+            <input type="text" class="form-control" id="setting-input-2" name="need_category" value="{{ ViewKey_DbNeedInfo_need_id.need_category }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="setting-input-3" class="form-label">需求說明<span class="ms-2" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-content="建議明確表達各項細節，越能減少溝通成本"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-info-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                <circle cx="8" cy="4.5" r="1"/>
+              </svg></span>
+            </label>
+            <textarea class="form-control" id="setting-input-3" name="need_description" style="height: 110px;" required>{{ ViewKey_DbNeedInfo_need_id.need_description }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label for="setting-input-4" class="form-label">關聯原作</label>
+            <input type="text" class="form-control" id="setting-input-4" name="need_original_from" value="{{ ViewKey_DbNeedInfo_need_id.need_original_from }}" maxlength="150">
+          </div>
+          <div class="mb-3">
+              <label for="setting-input-6" class="form-label">酬金</label>
+              <input type="number" class="form-control" id="setting-input-6" name="need_price" value="{{ ViewKey_DbNeedInfo_need_id.need_price }}" step="1" min="0">
+            </div>
+            <div class="mb-3">
+                <label for="setting-input-7" class="form-label">截止時間</label>
+                <input type="datetime-local" class="form-control" id="setting-input-7" name="deadline" value="{{ ViewKey_DbNeedInfo_need_id.deadline|date:'Y-m-d\TH:i' }}">
+            </div>
+            <div class="mb-3">
+              <label for="setting-input-5" class="form-label">需求示意圖(最多5張)</label>
+              <input type="file" class="form-control" id="setting-input-5" name="need_ex_image" accept="image/*" multiple>
+            </div>
+            <div class="mb-3 d-flex align-items-center">
+                <label for="setting-input-8" class="form-label me-3 mb-0">案件狀態</label>
+                <div id="setting-input-8" class="d-flex">
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="need_status" id="status1" value="徵件中" {% if ViewKey_DbNeedInfo_need_id.need_status == '徵件中' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-success" for="status1">
+                      徵件中
+                    </label>
+                  </div>
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="need_status" id="status2" value="截止" {% if ViewKey_DbNeedInfo_need_id.need_status == '截止' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-danger" for="status2">
+                      截止
+                    </label>
+                  </div>
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="need_status" id="status3" value="已成交" {% if ViewKey_DbNeedInfo_need_id.need_status == '已成交' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-warning" for="status3">
+                      已成交
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="need_status" id="status4" value="取消徵件" {% if ViewKey_DbNeedInfo_need_id.need_status == '取消徵件' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-secondary" for="status4">
+                      取消徵件
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <a href="#" id="cancelButton" class="btn app-btn-secondary me-2">返回上層</a>
+                <button type="submit" class="btn app-btn-primary">保存更改</button>
+              </div>
+        </form>
+      </div>
+      <!--//app-card-body-->
+    </div>
+    
+    <!--//app-card-->
+  </div>
+  
+    
+    <div class="app-card shadow-sm p-4 mt-auto rounded-3 needer-info-card">
+      
+  </div>
+</div>
+<!--//row-->
+{% endblock %} 
+{% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tagsContainer = document.getElementById('tagsContainer');
+    const tagInput = document.getElementById('tagInput');
+    const addTagBtn = document.getElementById('addTagBtn');
+    
+    // 新增標籤函數
+    function addTag() {
+        const tagText = tagInput.value.trim();
+        if (tagText) {
+            // 創建標籤元素
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${tagText}
+                <span class="remove-tag">×</span>
+            `;
+            
+            // 添加刪除功能
+            tag.querySelector('.remove-tag').addEventListener('click', function() {
+                tag.remove();
+            });
+            
+            // 添加標籤到容器
+            tagsContainer.appendChild(tag);
+            
+            // 清空輸入框
+            tagInput.value = '';
+        }
+    }
+    
+    // 點擊新增按鈕時添加標籤
+    addTagBtn.addEventListener('click', addTag);
+    
+    // 按下 Enter 鍵時也可以添加標籤
+    tagInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTag();
+        }
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 獲取所有開關
+    const switches = document.querySelectorAll('.form-check-input');
+    
+    // 為每個開關添加事件監聽器
+    switches.forEach(switchEl => {
+        switchEl.addEventListener('change', function() {
+            // 獲取對應的內容區域 ID
+            const contentId = 'content-' + this.id.split('-')[1];
+            const contentEl = document.getElementById(contentId);
+            
+            // 使用 classList 來切換 show 類別
+            if (this.checked) {
+                contentEl.classList.add('show');
+            } else {
+                contentEl.classList.remove('show');
+            }
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const worksList = document.querySelector('.favorite-works-list');
+    const workInput = document.getElementById('workInput');
+    const addWorkBtn = document.getElementById('addWorkBtn');
+    
+    // 新增作品函數
+    function addWork() {
+        const workText = workInput.value.trim();
+        if (workText) {
+            // 創建作品項目
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span class="work-text">${workText}</span>
+                <span class="remove-work">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                    </svg>
+                </span>
+            `;
+            
+            // 添加刪除功能
+            li.querySelector('.remove-work').addEventListener('click', function() {
+                li.remove();
+            });
+            
+            // 添加作品到列表
+            worksList.appendChild(li);
+            
+            // 清空輸入框
+            workInput.value = '';
+        }
+    }
+    
+    // 點擊新增按鈕時添加作品
+    addWorkBtn.addEventListener('click', addWork);
+    
+    // 按下 Enter 鍵時也可以添加作品
+    workInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addWork();
+        }
+    });
+});
+</script>
+
+{% endblock %}
