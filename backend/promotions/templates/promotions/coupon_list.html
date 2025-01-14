@@ -1,6 +1,8 @@
-{% extends "[BASE]ALL.html"%}
+{% extends "[BASE]ALL.html" %}
 {% load static %}
-{% block app_title %}<h1 class="mb-3">優惠券管理</h1>{% endblock %}
+{% block app_title %}
+<h1 class="mb-3">優惠券管理</h1>
+{% endblock %}
 {% block app_content %}
 <div class="container mt-4">
     {% if messages %}
@@ -25,7 +27,6 @@
                     <th>最大折扣</th>
                     <th>開始日期</th>
                     <th>結束日期</th>
-                    <th>剩餘可用次數</th>
                     <th>是否啟用</th>
                     <th>創建日期</th>
                     <th>更新日期</th>
@@ -42,14 +43,13 @@
                     <td>{{ coupon.max_discount|default:"-" }}</td>
                     <td>{{ coupon.start_date }}</td>
                     <td>{{ coupon.end_date }}</td>
-                    <td>{{ coupon.usage_limit|default:"1" }}</td>
                     <td>{{ coupon.is_active|yesno:"是,否" }}</td>
                     <td>{{ coupon.created_at|date:"Y-m-d H:i" }}</td>
                     <td>{{ coupon.updated_at|date:"Y-m-d H:i" }}</td>
                     <td>
-                        <a href="{% url 'promotions:edit_coupon' coupon.coupon_id %}" class="btn btn-warning">編輯</a>
-                        <a href="{% url 'promotions:delete_coupon' coupon.coupon_id %}" class="btn btn-sm btn-danger">刪除</a>
-                        <a href="{% url 'promotions:assign_coupon' coupon_id=coupon.coupon_id %}" class="btn btn-primary">分派</a>
+                        <a href="{% url 'promotions:edit_coupon' coupon.coupon_id %}" class="btn btn-warning btn-sm">編輯</a>
+                        <a href="{% url 'promotions:delete_coupon' coupon.coupon_id %}" class="btn btn-danger btn-sm">刪除</a>
+                        <a href="{% url 'promotions:assign_coupon' coupon_id=coupon.coupon_id %}" class="btn btn-primary btn-sm">分派</a>
                     </td>
                 </tr>
                 {% endfor %}

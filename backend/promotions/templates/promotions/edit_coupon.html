@@ -45,16 +45,9 @@
     </div>
 
     <div class="form-group">
-        {{ form.usage_limit.label_tag }}
-        {{ form.usage_limit }}
+        {{ form.is_active.label_tag }}
+        {{ form.is_active }}
     </div>
-
-    <div class="form-group">
-        <label for="id_is_active">是否啟用：</label>
-        <div class="radio-inline">
-            {{ form.is_active }}
-        </div>
-    </div>    
 
     <div class="form-group text-center">
         <button type="submit" class="btn btn-primary">保存變更</button>
@@ -63,18 +56,10 @@
 {% endblock %}
 {% block app_css %}
 <style>
-.radio-inline {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.radio-inline input[type="radio"] {
-    margin-right: 5px;
-}
-
-.radio-inline label {
-    margin: 0;
+select.form-control {
+    font-size: 16px; /* 調整字體大小 */
+    padding: 8px;    /* 增加內邊距 */
+    height: auto;    /* 自動調整高度，防止被裁切 */
 }
 .form-container {
     max-width: 600px;

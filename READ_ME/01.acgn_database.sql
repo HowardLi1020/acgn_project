@@ -280,36 +280,33 @@ CREATE TABLE product_member_ratings (
 -- 4-1 優惠券基本資料
 CREATE TABLE Coupons (
     coupon_id INT AUTO_INCREMENT PRIMARY KEY,
-    coupon_code VARCHAR(50) NOT NULL UNIQUE,         -- 優惠券代碼
-    discount_type ENUM('amount', 'percentage') NOT NULL, -- 折扣類型：金額折扣或百分比折扣
-    discount_value DECIMAL(10, 2) NOT NULL,          -- 折扣值：金額或百分比
-    min_purchase DECIMAL(10, 2) DEFAULT 0.00,        -- 最低消費金額，0表示無限制
-    max_discount DECIMAL(10, 2) DEFAULT NULL,        -- 最大折扣金額（百分比折扣適用）
-    start_date DATE NOT NULL,                        -- 優惠券開始日期
-    end_date DATE NOT NULL,                          -- 優惠券結束日期
-    usage_limit INT DEFAULT NULL,                    -- 優惠券總使用次數限制
-    used_count INT DEFAULT 0,                        -- 優惠券已使用次數
-    is_active BOOLEAN DEFAULT TRUE,                  -- 是否啟用
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    coupon_code VARCHAR(50) UNIQUE NOT NULL,
+    discount_type VARCHAR(10) NOT NULL,
+    discount_value DECIMAL(10, 2) NOT NULL,
+    min_purchase DECIMAL(10, 2) DEFAULT NULL,
+    max_discount DECIMAL(10, 2) DEFAULT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 4-3 紀錄會員領取的優惠券
-CREATE TABLE UserCoupons (
+CREATE TABLE Usercoupons (
     user_coupon_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,                            -- 使用者ID
-    coupon_id INT NOT NULL,                          -- 關聯優惠券ID
-    is_used BOOLEAN DEFAULT FALSE,                  -- 是否已使用
-    usage_count INT DEFAULT 0 COMMENT '會員已使用次數', -- 使用次數
-    used_in_order_id INT DEFAULT NULL,              -- 使用的訂單ID
-    used_at TIMESTAMP NULL,                         -- 使用日期
+    user_id INT NOT NULL,
+    coupon_id INT NOT NULL,
+    usage_limit INT DEFAULT NULL,  -- 此會員的使用次數限制
+    usage_count INT DEFAULT 0,     -- 此會員已使用次數
+    used_in_order INT DEFAULT NULL,
+    used_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (coupon_id) REFERENCES Coupons(coupon_id) ON DELETE CASCADE,
-    FOREIGN KEY (used_in_order_id) REFERENCES orders(order_id) ON DELETE SET NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
+    FOREIGN KEY (coupon_id) REFERENCES coupons(coupon_id) ON DELETE CASCADE,
+    FOREIGN KEY (used_in_order) REFERENCES orders(order_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 五、委託
 -- 5-1 需求資訊表
