@@ -63,34 +63,38 @@ def delete_coupon(request, coupon_id):
 
 
 def assign_coupon(request, coupon_id):
-    """分派優惠券，並設定每位會員的使用次數限制"""
+    """分派優惠券，檢查會員是否已經擁有該優惠券"""
     coupon = get_object_or_404(Coupons, pk=coupon_id)
 
     if request.method == 'POST':
         member_ids = request.POST.getlist('member_ids')
-        usage_limit = request.POST.get('usage_limit', 1)  # 默認每位會員可使用 1 次
-        try:
-            usage_limit = int(usage_limit)
-            if usage_limit <= 0:
-                raise ValueError("使用次數限制必須為正整數")
-        except ValueError:
-            messages.error(request, "請輸入有效的使用次數限制！")
-            return redirect(request.path)
+        usage_limit = int(request.POST.get('usage_limit', 1))  # 默認每位會員可使用 1 次
 
         members = MemberBasic.objects.filter(pk__in=member_ids)
-
         assigned_count = 0
-        for member in members:
-            if not Usercoupons.objects.filter(user=member, coupon=coupon).exists():
-                Usercoupons.objects.create(
-                    user=member,
-                    coupon=coupon,
-                    usage_limit=usage_limit,  # 設定使用次數限制
-                    usage_count=0  # 初始化已使用次數
-                )
-                assigned_count += 1
+        already_has_coupon = []  # 用於存放已擁有優惠券的會員清單
 
-        messages.success(request, f"優惠券 '{coupon.coupon_code}' 已成功分派給 {assigned_count} 位會員，每位會員可使用 {usage_limit} 次！")
+        for member in members:
+            # 檢查會員是否已擁有該優惠券
+            if Usercoupons.objects.filter(user=member, coupon=coupon).exists():
+                already_has_coupon.append(member.user_name)  # 保存會員名稱
+                continue  # 跳過此會員
+
+            # 如果會員未擁有，則新增記錄
+            Usercoupons.objects.create(
+                user=member,
+                coupon=coupon,
+                usage_limit=usage_limit,
+                usage_count=0
+            )
+            assigned_count += 1
+
+        # 顯示提示訊息
+        if assigned_count > 0:
+            messages.success(request, f"優惠券 '{coupon.coupon_code}' 已成功分派給 {assigned_count} 位會員，每位會員可使用 {usage_limit} 次！")
+        if already_has_coupon:
+            messages.warning(request, f"以下會員已擁有優惠券 '{coupon.coupon_code}'：{', '.join(already_has_coupon)}")
+
         return redirect('promotions:coupon_list')
 
     members = MemberBasic.objects.all()
@@ -98,3 +102,4 @@ def assign_coupon(request, coupon_id):
         'coupon': coupon,
         'members': members,
     })
+

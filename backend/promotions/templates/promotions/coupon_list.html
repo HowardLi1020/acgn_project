@@ -37,7 +37,15 @@
                 {% for coupon in coupons %}
                 <tr>
                     <td>{{ coupon.coupon_code }}</td>
-                    <td>{{ coupon.discount_type }}</td>
+                    <td>
+                        {% if coupon.discount_type == "percentage" %}
+                            百分比折扣
+                        {% elif coupon.discount_type == "amount" %}
+                            固定金額折扣
+                        {% else %}
+                            未知類型
+                        {% endif %}
+                    </td>
                     <td>{{ coupon.discount_value }}</td>
                     <td>{{ coupon.min_purchase|default:"-" }}</td>
                     <td>{{ coupon.max_discount|default:"-" }}</td>
@@ -66,4 +74,23 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block app_css %}
+<style>
+    .table {
+        table-layout: auto; /* 表格根據內容自適應寬度 */
+        width: 100%; /* 確保表格佔據容器寬度 */
+    }
+    .table th, .table td {
+        vertical-align: middle; /* 讓文字在單元格中垂直居中 */
+        padding: 8px; /* 增加內邊距，避免文字過於擁擠 */
+        white-space: nowrap; /* 避免內容自動換行 */
+    }
+    .thead-light th {
+        background-color: #f8f9fa; /* 表頭背景色 */
+    }
+    .btn-sm {
+        min-width: 70px; /* 設定按鈕最小寬度，保持整齊 */
+    }
+</style>
 {% endblock %}
