@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cart',
+    'cart_api',
     'products',
     'products_backend',
     'users',        # 顯示 後端管理者頁面-member      
