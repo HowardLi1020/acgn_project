@@ -29,7 +29,7 @@ import MyProduct from "./views/Store/MyProduct.vue";
 import EditProduct from "./views/Store/EditProduct.vue";
 
 // Cart
-import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
+import CartView from '@/views/cart/CartView.vue';
 
 
 // 導入 Pages範例模板
