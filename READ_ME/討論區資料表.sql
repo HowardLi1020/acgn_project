@@ -65,7 +65,7 @@ CREATE TABLE Likes (
     post_id INT NOT NULL,                                   -- 文章 ID，外鍵
     user_id INT NOT NULL,                                   -- 用戶 ID，外鍵
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 按讚時間
-    posts_report TINYINT(1) DEFAULT 0 NOT NULL,             -- 新增的欄位，可記錄 0 或 1
+    posts_report TINYINT DEFAULT 0 NOT NULL,             -- 新增的欄位，可記錄 0 或 1
     FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE, -- 外鍵，關聯 Posts
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE CASCADE -- 外鍵，關聯 member_basic
 );
