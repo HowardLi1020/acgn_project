@@ -1,31 +1,21 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
-
-
-class OrderItems(models.Model):
-    order_item_id = models.AutoField(primary_key=True)
-    order = models.ForeignKey('cart.Orders', models.DO_NOTHING)
-    product = models.ForeignKey('products.Products', models.DO_NOTHING)
-    product_price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.IntegerField()
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'order_items'
+from django.utils.timezone import now
 
 
 class Orders(models.Model):
+    ORDER_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PROCESSING', 'Processing'),
+        ('SHIPPED', 'Shipped'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
     order_id = models.AutoField(primary_key=True)
-    member = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
-    order_date = models.DateTimeField(blank=True, null=True)
+    user = models.ForeignKey('users.MemberBasic', on_delete=models.CASCADE)
+    order_date = models.DateTimeField(default=now)
     recipient = models.CharField(max_length=100)
+    recipient_phone = models.CharField(max_length=15, blank=True, null=True)
     city = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     detailed_address = models.CharField(max_length=255)
@@ -36,45 +26,73 @@ class Orders(models.Model):
     payment_status = models.CharField(max_length=9, blank=True, null=True)
     shipping_status = models.CharField(max_length=10, blank=True, null=True)
     payment_method = models.CharField(max_length=16)
-    order_status = models.CharField(max_length=9)
-    created_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(blank=True, null=True)
+    order_status = models.CharField(max_length=15, choices=ORDER_STATUS_CHOICES, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = 'orders'
 
+class OrderItems(models.Model):
+    order_item_id = models.AutoField(primary_key=True)
+    order = models.ForeignKey('cart.Orders', on_delete=models.CASCADE, related_name='order_items')
+    product = models.ForeignKey('products.Products', on_delete=models.CASCADE)
+    product_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField()
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    class Meta:
+        db_table = 'order_items'
+        unique_together = ('order', 'product')  # 確保訂單內每個商品唯一
+
+    def save(self, *args, **kwargs):
+        self.subtotal = self.product_price * self.quantity
+        super().save(*args, **kwargs)
 
 class ShoppingCartItems(models.Model):
     cart_item_id = models.AutoField(primary_key=True)
-    member = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
-    product = models.ForeignKey('products.Products', models.DO_NOTHING)
+    user = models.ForeignKey('users.MemberBasic', on_delete=models.CASCADE)
+    product = models.ForeignKey('products.Products', on_delete=models.CASCADE)
     quantity = models.IntegerField()
-    added_at = models.DateTimeField(blank=True, null=True)
+    added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'shopping_cart_items'
 
-
 class PaymentTransactions(models.Model):
+    PAYMENT_METHOD_CHOICES = [
+        ('CREDIT_CARD', 'Credit Card'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+        ('PAYPAL', 'PayPal'),
+    ]
+
+    PAYMENT_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+    ]
+
     payment_id = models.AutoField(primary_key=True)
-    order = models.ForeignKey(Orders, models.DO_NOTHING)
-    payment_method = models.CharField(max_length=16)
-    payment_status = models.CharField(max_length=9)
-    payment_date = models.DateTimeField(blank=True, null=True)
+    order = models.ForeignKey('cart.Orders', on_delete=models.CASCADE, related_name='payments')
+    payment_method = models.CharField(max_length=16, choices=PAYMENT_METHOD_CHOICES)
+    payment_status = models.CharField(max_length=9, choices=PAYMENT_STATUS_CHOICES)
+    payment_date = models.DateTimeField(auto_now_add=True)
     payment_amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'payment_transactions'
 
-
 class ShippingDetails(models.Model):
+    SHIPPING_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('SHIPPED', 'Shipped'),
+        ('DELIVERED', 'Delivered'),
+    ]
+
     shipping_id = models.AutoField(primary_key=True)
-    order = models.ForeignKey(Orders, models.DO_NOTHING)
-    shipping_status = models.CharField(max_length=10)
+    order = models.ForeignKey('cart.Orders', on_delete=models.CASCADE, related_name='shipping_details')
+    shipping_status = models.CharField(max_length=10, choices=SHIPPING_STATUS_CHOICES)
     carrier_name = models.CharField(max_length=100, blank=True, null=True)
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
     shipping_date = models.DateTimeField(blank=True, null=True)
@@ -82,15 +100,17 @@ class ShippingDetails(models.Model):
     actual_delivery_date = models.DateField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'shipping_details'
-
 
 class ProductMemberRatings(models.Model):
     rating_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
-    rated_by_user = models.ForeignKey('users.MemberBasic', models.DO_NOTHING, related_name='productmemberratings_rated_by_user_set')
-    order = models.ForeignKey(Orders, models.DO_NOTHING)
+    rated_by_user = models.ForeignKey(
+        'users.MemberBasic',
+        models.DO_NOTHING,
+        related_name='productmemberratings_rated_by_user_set'
+    )
+    order = models.ForeignKey('cart.Orders', models.DO_NOTHING)
     rating = models.IntegerField()
     rating_type = models.CharField(max_length=6)
     rating_date = models.DateTimeField(blank=True, null=True)
