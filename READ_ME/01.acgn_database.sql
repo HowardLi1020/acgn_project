@@ -305,7 +305,7 @@ CREATE TABLE Usercoupons (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE CASCADE,
     FOREIGN KEY (coupon_id) REFERENCES coupons(coupon_id) ON DELETE CASCADE,
-    FOREIGN KEY (used_in_order) REFERENCES orders(order_id) ON DELETE SET NULL
+    FOREIGN KEY (used_in_order_id) REFERENCES orders(order_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 五、委託
