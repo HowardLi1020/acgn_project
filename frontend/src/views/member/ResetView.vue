@@ -121,7 +121,7 @@ const handleSubmit = async (event) => {
         </div>
 
         <div class="auth-form-container text-left">
-          <div :class="['alert', isSuccess.value ? 'alert-success' : 'alert-danger']" v-if="errors.general" role="alert">
+          <div :class="['alert', isSuccess.valueOf ? 'alert-success' : 'alert-danger']" v-if="errors.general" role="alert">
             {{ errors.general }}
           </div>
 

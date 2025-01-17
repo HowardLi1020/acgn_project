@@ -33,6 +33,18 @@ const errors = ref({
   general: ''
 })
 
+const LINE_CLIENT_ID = "2006769537"; // 自己的 client_id
+const LINE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/verify-line/"); // 自己的 callback url
+const LINE_SCOPE = "openid%20profile%20email";   
+const LINE_STATE = "abcde"; // 可改為動態生成的隨機字串
+
+const LineLoginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CLIENT_ID}&redirect_uri=${LINE_REDIRECT_URI}&state=${LINE_STATE}&scope=${LINE_SCOPE}`;
+
+// 第三方登入 - 導向 LINE 授權頁面
+const handleLineLogin = () => {
+    window.location.href = LineLoginUrl;
+};
+
 onMounted(() => {
   // Get message and type from URL parameters
   const message = route.query.message
@@ -310,9 +322,11 @@ watchEffect(() =>{
         <br />
 		<!-- 放第三方登入圖示 -->
 		<hr />
-		<div class="text-center">或使用第三方進行註冊
+		<div class="text-center">或使用第三方登入/註冊
 			<img class="rounded-circle" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
-			<img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+			<button @click.prevent="handleLineLogin">
+        <img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      </button>
 		  <img class="rounded-circle" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
 		</div>
 

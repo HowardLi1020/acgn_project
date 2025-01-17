@@ -2,9 +2,9 @@
 -- 1-1 基本資料
 CREATE TABLE member_basic (
     user_id INT AUTO_INCREMENT PRIMARY KEY,                 -- 用戶 ID，主鍵
-    user_name VARCHAR(20) NOT NULL UNIQUE,                  -- 用戶名，唯一
-    user_password VARCHAR(128) NOT NULL,                    -- 用戶密碼
-    user_phone VARCHAR(10) NOT NULL UNIQUE,                 -- 手機號，唯一
+    user_name VARCHAR(50) NOT NULL UNIQUE,                  -- 用戶名，唯一
+    user_password VARCHAR(128) NULL,                    -- 用戶密碼
+    user_phone VARCHAR(10) NULL UNIQUE,                 -- 手機號，唯一
     user_email VARCHAR(120) NOT NULL UNIQUE,                -- 電子郵件，唯一
     user_nickname VARCHAR(20) NULL,                         -- 用戶暱稱
     user_gender ENUM('male', 'female', 'prefer_not_to_say') DEFAULT 'prefer_not_to_say', -- 性別
@@ -19,13 +19,13 @@ CREATE TABLE member_basic (
 
 -- 1-1-1 會員登入表
 create table member_login(
-login_id int primary key,
+login_id INT AUTO_INCREMENT PRIMARY KEY, 
 user_id int not null,
-provider varchar(50) null,
-provider_id_google varchar(50) null unique,
-provider_id_line varchar(50) null unique,
-provider_id_fb varchar(50) null unique,
-access_token varchar(50) null unique,
+provider ENUM('Line', 'Google', 'Facebook') NOT NULL,
+google_user_id varchar(50) null unique,
+line_user_id varchar(50) null unique,
+fb_user_id varchar(50) null unique,
+access_token varchar(128) null unique,
 created_at timestamp default current_timestamp,
 updated_at timestamp default current_timestamp on update current_timestamp,
 foreign key (user_id) references member_basic(user_id) ON DELETE CASCADE
@@ -57,11 +57,12 @@ CREATE TABLE member_privacy (
 
 -- 1-4 首頁類型設定
 create table member_indextype(
-type_id int primary key,
-user_id int not null,
-type_name varchar(50) null,
-created_at timestamp default current_timestamp,
-updated_at timestamp default current_timestamp on update current_timestamp,
+type_id INT AUTO_INCREMENT PRIMARY KEY,
+user_id int not null,                            -- 關聯用戶ID
+type_name varchar(50) null,                      -- 網站喜好類型
+sort_order INT NOT NULL,                         -- 網站喜好順序
+created_at timestamp default current_timestamp,  -- 記錄創建時間
+updated_at timestamp default current_timestamp on update current_timestamp,  -- 記錄更新時間
 foreign key (user_id) references member_basic(user_id) ON DELETE CASCADE
 );
 

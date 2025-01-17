@@ -7,6 +7,7 @@ export const useUserStore = defineStore('user', {
     accessToken: null, // 存放 access_token
     refreshToken: null, // 存放 refresh_token
     isAuthenticated: false, // 登入狀態
+    personalLikes: [], // 用戶的個人喜好
   }),
   getters: {
     // 檢查是否已登入
@@ -15,6 +16,13 @@ export const useUserStore = defineStore('user', {
     },
   },
   actions: {
+    setUser(userData, accessToken, refreshToken) {
+      this.user = userData;
+      this.accessToken = accessToken;
+      this.refreshToken = refreshToken;
+      this.isAuthenticated = true;
+    },
+
     // 登入
     login(userData, accessToken, refreshToken) {
       console.log("Login called");
@@ -34,17 +42,25 @@ export const useUserStore = defineStore('user', {
     // 登出
     logout() {
       console.log("Logout called");
+      const userId = this.user?.user_id;
       // 清空狀態
       this.user = null;
       this.accessToken = null;
       this.refreshToken = null;
       this.isAuthenticated = false;
+      this.personalLikes = []; // 清空個人喜好
 
       // 同步清空 localStorage
       localStorage.removeItem('memberData');
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('isAuthenticated');
+
+      // 删除特定的 personalLikes 项目
+      if (userId) {
+        localStorage.removeItem(`personalLikes_${userId}`);
+      }
+      localStorage.removeItem('personalLikes');
     },
 
     // 同步狀態與 localStorage
@@ -53,21 +69,30 @@ export const useUserStore = defineStore('user', {
         const userData = localStorage.getItem('memberData');
         const accessToken = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
-        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        // const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   
-        if (userData && accessToken && refreshToken && isAuthenticated) {
+        if (userData && accessToken && refreshToken) {
           this.user = JSON.parse(userData);
           this.accessToken = accessToken;
           this.refreshToken = refreshToken;
           this.isAuthenticated = true;
+
+          // 同步个人喜好
+          const userId = this.user?.user_id;
+          if (userId) {
+            const storedLikes = localStorage.getItem(`personalLikes_${userId}`);
+            if (storedLikes) {
+              this.personalLikes = JSON.parse(storedLikes);
+            }
+          }
         } else {
           this.logout(); // 同步失敗時清空狀態
         }
-      } catch (error) {
-        console.error('Error syncing with localStorage:', error);
-        this.logout(); // 清空狀態
-      }
-    },
+      }catch (error) {
+            console.error('Error syncing with localStorage:', error);
+            this.logout(); // 清空狀態
+          }
+        },
 
     // 更新用戶資料
     updateUser(updatedData) {
@@ -76,6 +101,17 @@ export const useUserStore = defineStore('user', {
 
       // 同步到 localStorage
       localStorage.setItem('memberData', JSON.stringify(this.user));
+    },
+
+    // 更新用戶個人喜好
+    updatePersonalLikes(updatedLikes) {
+      this.personalLikes = [...updatedLikes];
+      const userId = this.user?.user_id;
+      if (userId) {
+        localStorage.setItem(`personalLikes_${userId}`, JSON.stringify(this.personalLikes));
+      } else {
+        console.error('无法更新个人喜好：用户 ID 不存在');
+      }
     },
 
     // 檢查 Token 是否有效
@@ -90,19 +126,64 @@ export const useUserStore = defineStore('user', {
       }
     },
 
+    // // 刷新 Token
+    // async refreshTokenIfNeeded() {
+    //   if (!this.refreshToken) {
+    //     console.error("Refresh Token 不存在，無法刷新");
+    //     return false;
+    //   }
+
+    //   try {
+    //     // 使用 api.post 發送刷新 Token 請求
+    //     const response = await api.post('/member_api/auth/refresh_token/', {
+    //       refresh: this.refreshToken,
+    //     });
+
+    //     // 更新新的 Access Token 並存儲到本地
+    //     this.accessToken = response.data.access;
+    //     localStorage.setItem('access_token', response.data.access);
+
+    //     console.log('Token 刷新成功:', response.data.access);
+    //     return true;
+    //   } catch (error) {
+    //     // 錯誤處理，登出用戶並返回 false
+    //     console.error('刷新 Token 發生錯誤:', error);
+    //     this.logout(); // 如果需要登出邏輯
+    //     return false;
+    //   }
+    // },
+
     // 刷新 Token
     async refreshTokenIfNeeded() {
+      const refreshToken = this.refreshToken || localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        console.error("Refresh Token 不存在，無法刷新");
+        return false;
+      }
       try {
-        const response = await api.post('/member_api/auth/refresh_token/', {
-          refresh: this.refreshToken,
+        const response = await fetch('http://127.0.0.1:8000/member_api/auth/refresh_token/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refresh: this.refreshToken }),
         });
-        this.accessToken = response.data.access;
-        localStorage.setItem('access_token', response.data.access);
-        return response.data;
+
+        if (!response.ok) {
+          console.error('刷新 Token 失敗:', response.status);
+          this.logout(); // 如果需要登出邏輯
+          return false;
+        }
+
+        const data = await response.json();
+        this.accessToken = data.access;
+        localStorage.setItem('access_token', data.access);
+        console.log('Token 刷新成功:', data.access);
+        return true;
       } catch (error) {
-        console.error('刷新 Token 失敗:', error);
-        this.logout();
-        throw error;
+        console.error('刷新 Token 發生錯誤:', error.message);
+        this.logout(); // 如果需要登出邏輯
+        return false;
       }
     },
 

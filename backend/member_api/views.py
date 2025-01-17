@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import MemberBasic,  MemberIndextype, MemberLogin, MemberPhotos, MemberPrivacy, MemberVerify
 from cart.models import Orders
 from member_api.models import Usercoupons
-from .serializers import MemberSerializer, FavoriteSerializer, LoginSerializer, LoginSerializer, OrderdetailsSerializer, RegisterSerializer, PrivacySerializer, VerifySerializer, ThirdLoginSerializer
+from .serializers import MemberSerializer, LoginSerializer, OrderdetailsSerializer, RegisterSerializer, PrivacySerializer, VerifySerializer, ThirdLoginSerializer, MemberIndextypeSerializer, EmptySerializer
 from django.http import HttpResponseRedirect
 import os
 import random
@@ -27,6 +27,9 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.db import transaction
+import requests
+import requests.exceptions 
+import hashlib
 
 # Create your views here.
 # 自訂 Token 驗證方法!!
@@ -53,8 +56,6 @@ def verify_jwt_token(request):
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = MemberBasic.objects.all()
     serializer_class = MemberSerializer
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, pk=None):
         try:
@@ -81,10 +82,6 @@ class MemberViewSet(viewsets.ModelViewSet):
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         except AuthenticationFailed as e:
             return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-
-class FavoriteViewSet(viewsets.ModelViewSet):
-    queryset = MemberIndextype.objects.all()
-    serializer_class = FavoriteSerializer
 
 class PrivacyViewSet(viewsets.ModelViewSet):
     queryset = MemberPrivacy.objects.all()
@@ -191,7 +188,6 @@ class AuthViewSet(viewsets.GenericViewSet):
                 'error': '該郵箱未註冊，請再次確認郵箱或註冊新帳號。'
             }, status=status.HTTP_401_UNAUTHORIZED)
                 
-
     # 註冊 1. 送出註冊
     @action(detail=False, methods=['POST'], serializer_class=RegisterSerializer)
     def register(self, request):
@@ -263,7 +259,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     # 刷新 Token
-    @action(detail=False, methods=['POST'])
+    @action(detail=False, methods=['POST'], serializer_class=EmptySerializer)
     def refresh_token(self, request):
         refresh_token = request.data.get('refresh')
         
@@ -279,43 +275,6 @@ class AuthViewSet(viewsets.GenericViewSet):
             return Response({
                 'error': '無效的刷新令牌'
             }, status=status.HTTP_401_UNAUTHORIZED)
-        
-    # 更新 前台會員資料和喜好
-    @action(detail=False, methods=['POST'], serializer_class=MemberSerializer, permission_classes=[AllowAny])
-    def update_info(self, request):
-        print("当前用户:", request.user)  # 打印当前用户信息
-        user_id = request.data.get("user_id")  # 从请求中获取用户ID
-        user = MemberBasic.objects.filter(user_id=user_id).first()  # 根据用户ID查找用户
-
-        if not user:
-            return Response({"error": "用户未找到"}, status=status.HTTP_404_NOT_FOUND)
-
-        # 更新用户信息
-        serializer = self.get_serializer(user, data=request.data, partial=True)  # 允许部分更新
-        if serializer.is_valid():
-            serializer.save()  # 保存更新
-            
-            # 处理会员喜好更新
-            personal_like_data = request.data.get("personal_like", [])  # 从请求中获取personal_like 数据
-            user.personal_like_set.all().delete()  # 清空現有數據
-
-            for like in personal_like_data:
-                favorite_serializer = FavoriteSerializer(data=like)
-                if favorite_serializer.is_valid():
-                    favorite_serializer.save(user=user)  # 联当前用户
-                else:
-                    return Response({
-                        'error': favorite_serializer.errors
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response({
-                'message': '會員資料和喜好更新成功',
-                'user': serializer.data
-            }, status=status.HTTP_200_OK)
-
-        return Response({
-            'error': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
     
 # 註冊 2. 發送帳號驗證信 並跳轉到登入頁面
 class VerifyEmailView(APIView):
@@ -355,6 +314,172 @@ class VerifyEmailView(APIView):
         except Exception as e:
             print("Error during verification:", str(e))
             return Response({"message": "驗證失敗", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# 第三方串接登入-Line
+class LineLoginView(APIView):
+    def post(self, request):
+        """
+        處理 LINE Login 回應，交換 Access Token 並取得用戶資訊。
+        """
+        # 從請求中獲取授權碼
+        code = request.data.get("code")
+        state = request.data.get("state")
+        print("接收到的 code state :", code, state)  # 日誌
+
+        if not code or not state:
+            return Response(
+                {"error": "缺少授權碼或狀態參數"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 用於交換 Access Token 的 LINE API URL
+        token_url = "https://api.line.me/oauth2/v2.1/token"
+
+        try:
+            # 使用授權碼交換 Access Token
+            token_data = {
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": settings.LINE_REDIRECT_URI,
+                "client_id": settings.LINE_CLIENT_ID,
+                "client_secret": settings.LINE_CLIENT_SECRET,
+            }
+            token_response = requests.post(
+                token_url,
+                data=token_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+
+            if token_response.status_code != 200:
+                return Response(
+                    {"error": f"無法交換 Access Token: {token_response.json().get('error_description')}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            token_info = token_response.json()
+            access_token = token_info.get("access_token")
+            refresh_token = token_info.get("refresh_token")
+            id_token = token_info.get("id_token")
+            print("獲取的 Token_info:", token_info)
+
+            if not access_token:
+                return Response(
+                    {"error": "無法獲取 Access Token"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+
+            # 用於交換 ID Token 的 LINE API URL
+            verify_idtoken = "https://api.line.me/oauth2/v2.1/verify"
+
+            # 使用授權碼交換 Access Token
+            id_data = {
+                "id_token": id_token,
+                "client_id": settings.LINE_CLIENT_ID,
+            }
+            id_response = requests.post(
+                verify_idtoken,
+                data=id_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            print("ID Token 請求內容:", id_response.text)
+            if id_response.status_code != 200:
+                return Response(
+                    {"error": f"無法驗證 ID Token: {id_response.json().get('error_description')}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            id_info = id_response.json()
+            email = id_info.get("email")
+            if not email:
+                return Response(
+                    {"error": "無法獲取用戶 Email，請確認 LINE 應用是否啟用了 Email 權限"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 使用 Access Token 獲取用戶資訊
+            profile_url = "https://api.line.me/v2/profile"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            profile_response = requests.get(profile_url, headers=headers)
+
+            if profile_response.status_code != 200:
+                return Response(
+                    {"error": "無法獲取用戶資訊"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            profile_info = profile_response.json()
+            line_user_id = profile_info.get("userId")
+            display_name = profile_info.get("displayName")
+            picture_url = profile_info.get("pictureUrl")
+
+            # 將 access_token 進行哈希處理
+            hashed_access_token = hashlib.sha256(access_token.encode()).hexdigest()
+
+            # 查找或創建會員資料
+            user, created = MemberBasic.objects.get_or_create(
+                user_email=email,
+                defaults={
+                    "user_name": display_name,
+                    "user_avatar": picture_url,
+                    "vip_status": "0",
+                },
+            )
+
+            # 檢查手機號碼是否存在，若不存在則不進行更新
+            if not user.user_phone:
+                # 這裡可以選擇不更新手機號碼，或者返回提示
+                pass  # 或者根據需求進行其他處理
+
+            # 如果是現有用戶，更新資料
+            if not created:
+                user.user_name = display_name
+                user.user_avatar = picture_url
+                user.vip_status = "0"
+                user.created_at = now()
+                user.updated_at = now()
+                user.save()
+
+            # 更新 MemberLogin 資料
+            MemberLogin.objects.update_or_create(
+                user=user,  # 根據 user 關聯檢查
+                provider="Line",
+                defaults={
+                    "line_user_id": line_user_id,
+                    "access_token": hashed_access_token,
+                    "created_at": now(),
+                    "updated_at": now()
+                },
+            )
+
+            # 返回用戶資料及登入 Token
+            serializer = MemberSerializer(user)
+
+            # 生成 JWT Token
+            refresh = RefreshToken.for_user(user)
+            tokens = {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+
+            return Response(
+                {
+                    "user": serializer.data,
+                    "tokens": tokens,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {"error": f"LINE API 通訊錯誤: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"伺服器錯誤: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 # 更新 前台會員中心資料
 class UpdateUserInfoView(APIView):
@@ -448,6 +573,87 @@ class UpdateUserInfoView(APIView):
         except AuthenticationFailed as e:  # 處理驗證失敗的異常
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# 更新 前台會員進階設定資料
+class UpdateUserLikesView(APIView):
+    def get(self, request, pk):
+        try:
+            # 驗證 JWT Token
+            decoded_token = verify_jwt_token(request)
+
+            # 檢查 Token 中的 user_id 是否匹配
+            if str(decoded_token["user_id"]) != str(pk):
+                return Response({"error": "用戶 ID 與 Token 不匹配"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 獲取用戶
+            user = MemberBasic.objects.get(user_id=pk)
+
+            # 獲取並排序用戶喜好資料
+            personal_likes = MemberIndextype.objects.filter(user=user).order_by('sort_order')  # 使用模型進行查詢
+
+            # 使用序列化器格式化數據
+            personal_likes_data = MemberIndextypeSerializer(personal_likes, many=True).data
+            
+            return Response({
+                "user_id": user.user_id,
+                "personal_likes": personal_likes_data
+            }, status=status.HTTP_200_OK)
+
+        except MemberBasic.DoesNotExist:
+            return Response({"error": "用户不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, pk):
+        try:
+            # 手動驗證 JWT Token
+            decoded_token = verify_jwt_token(request)
+
+            # 檢查 Token 中的 user_id 是否匹配
+            if str(decoded_token["user_id"]) != str(pk):
+                return Response({"error": "用戶 ID 與 Token 不匹配"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 獲取用戶
+            user = MemberBasic.objects.get(user_id=pk)
+
+            personal_likes = request.data.get("personal_likes", [])
+            if not isinstance(personal_likes, list):
+                return Response({"error": "personal_likes 必須為列表格式"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 使用事務確保數據一致性
+            with transaction.atomic():
+                # 刪除現有喜好
+                MemberIndextype.objects.filter(user=user).delete()  # 使用模型進行查詢
+
+                # 過濾重複的 type_name
+                unique_likes = list(set(personal_likes))
+
+                # 創建新的喜好記錄，避免插入重複資料
+                for sort_order, type_name in enumerate(unique_likes, 1):
+                    # 創建新記錄
+                    MemberIndextype.objects.create(
+                        user=user,
+                        type_name=type_name,
+                        sort_order=sort_order,
+                        created_at=now(),
+                        updated_at=now()
+                    )
+
+            # 查詢並使用序列化器返回更新後的喜好數據
+            updated_likes = MemberIndextype.objects.filter(user=user).order_by('sort_order')  # 使用模型進行查詢
+            updated_likes_data = MemberIndextypeSerializer(updated_likes, many=True).data
+
+            # 返回用戶 ID 和更新後的喜好列表
+            return Response({
+                "user_id": user.user_id,
+                "personal_likes": updated_likes_data
+            }, status=status.HTTP_200_OK)
+        except AuthenticationFailed as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        except MemberBasic.DoesNotExist:
+            return Response({"error": "用戶不存在"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

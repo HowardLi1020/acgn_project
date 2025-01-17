@@ -125,10 +125,12 @@ DATABASES = {
         'USER': 'root', #登入資料庫的帳號
         'PASSWORD': 'P@ssw0rd', #登入資料庫帳號的密碼
         'HOST':'localhost', #MySQL所在位置，localhost表示本機
-        'PORT':3306 #MySQL所在位置的Port號
+        'PORT':3306, #MySQL所在位置的Port號
+        'OPTIONS': {
+            'charset': 'utf8mb4'
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -196,6 +198,11 @@ SITE_URL = 'http://127.0.0.1:8000'  # 開發環境
 
 # 定向用戶到前端
 FRONTEND_URL = "http://localhost:5173/"
+
+# 定向LINE相關到前端
+LINE_CLIENT_ID = "2006769537"
+LINE_CLIENT_SECRET = "c77386e6e4b34536a694db28767d6998"
+LINE_REDIRECT_URI = "http://localhost:5173/verify-line/"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",

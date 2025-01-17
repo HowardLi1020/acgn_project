@@ -1,50 +1,95 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 
+const route = useRoute()
 const router = useRouter()
-const route = useRoute(); // 獲取當前路由
 const userStore = useUserStore(); // Pinia 用戶狀態
 
-const BASE_URL = import.meta.env.VITE_MemberApi   // 後端 MemberApi 的主機地址
+const BASE_URL = import.meta.env.VITE_MemberApi
 const LOAD_URL = `${BASE_URL}profile/`
 
-const BASIC_URL = "http://127.0.0.1:8000"   // 後端 API 的主機地址
+const BASIC_URL = import.meta.env.VITE_APIURL
 const loadAvatar = ref(`${BASIC_URL}/media/default.png`) // 後端返回的 user_avatar
 
 const selectedFile = ref(null); // 用戶選擇的文件
-const avatarURL = computed(() => loadAvatar.value); // 自動更新的完整路徑
+// const avatarURL = computed(() => loadAvatar.value); // 自動更新的完整路徑
+const avatarURL = computed(() => {
+  const avatar = loadAvatar.value;
+  console.log("Current avatar:", avatar);
 
-const API_URL = `${BASE_URL}auth/update_info/`   // 上傳後端接口地址
+  if (!avatar) {
+    console.log("Default avatar path used.");
+    return `${BASIC_URL}/media/default.png`; // 如果未設定頭像，返回預設路徑
+  }
+
+  // 如果路徑是本地圖片，處理 %3A 等 URL 編碼
+  if (avatar.includes('%3A')) {
+    const decodedAvatar = decodeURIComponent(avatar.replace("http://127.0.0.1:8000/media/", ""));
+    console.log("Decoded avatar path:", decodedAvatar);
+    return decodedAvatar;
+  }
+
+    // 如果是 Blob URL，直接返回
+    if (avatar.startsWith('blob:')) {
+    console.log("Blob URL detected:", avatar);
+    return avatar;
+  }
+
+  // 如果是以 "http" 或 "https" 開頭，直接返回（適用於 LINE 的外部頭像 URL）
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+    console.log("External avatar URL detected:", avatar);
+    return avatar;
+  }
+});
+
+const API_URL = `${BASE_URL}auth/update-info/`   // 上傳後端接口地址
 const memberData = ref({}) // 用來存當前登入會員的資料
-const accessToken = localStorage.getItem("access_token");
 
 
 // 1. 載入會員資料
 const loadData = async () => {
   const userId = userStore.user?.user_id;
-
   if (!userId) {
     console.error("User ID not found, cannot fetch data.");
+    alert("無法獲取用戶 ID，請重新登入。");
+    router.push("/login");
+    return;
+  }
+  // 在請求前檢查並刷新 Token
+  const isTokenValid = await userStore.refreshTokenIfNeeded();
+  if (!isTokenValid) {
+    console.error("Token 無效或刷新失敗，請重新登入");
+    alert("您的Token已過期，請重新登入");
+    router.push("/login");
     return;
   }
 
   try {
+    const accessToken = userStore.user?.access_token || localStorage.getItem('access_token');
+    console.log("使用的 Access Token:", accessToken); // 调试输出 Access Token
     const response = await fetch(`${LOAD_URL}${userId}/`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${userStore.accessToken}`, // 使用 Pinia 中的 accessToken
+        Authorization: `Bearer ${accessToken}`, // 使用最新的 accessToken
         "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        // 如果 access_token 失效，導向到登入頁面
+        alert("您的登入已過期，請重新登入。");
+        router.push("/login");
+        return;
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
     console.log("Fetched member data:", data);
+
 
     // 更新 Vue Ref 和 Pinia 狀態
     memberData.value = data;
@@ -91,6 +136,12 @@ const ChangeInfo = async () => {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        // 如果 access_token 失效，導向到登入頁面
+        alert("您的登入已過期，請重新登入。");
+        router.push("/login");
+        return;
+      }
       const errorText = await response.text();
       console.error("Update failed:", errorText);
       alert("該圖片已存在或重複數據，請檢查後再試");
@@ -111,22 +162,22 @@ const ChangeInfo = async () => {
 };
 
 // 4. 登出處理
-const handleLogout = () => {
-  const confirmLogout = confirm("您即將登出頁面...請您再次確認~*");
+const handleLogout = async () => {
+    const confirmLogout = confirm("您即將登出頁面...請您再次確認~*");
+    console.log("用戶確認登出:", confirmLogout);
 
-  if (confirmLogout) {
-    userStore.logout(); // 清除 Pinia 狀態
-    router.push("/login");
-  }
-
-  if (confirmLogout === false) {
+    if (confirmLogout) {
+        try {
+            console.log("開始登出流程");
+            userStore.logout(); // 調用 Pinia 的 logout 方法
+            await router.push({ name: 'login' }); // 導向登入頁面
+        } catch (error) {
+            console.error("登出過程發生錯誤:", error);
+        }
+    } else {
         console.log("用戶取消登出");
-        console.log("取消後 localStorage 狀態:", localStorage.length);
-        return;
     }
 };
-
-
 </script>
 
 <template>
