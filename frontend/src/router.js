@@ -31,7 +31,7 @@ import EditProduct from "./views/Store/EditProduct.vue";
 
 // Cart
 import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
-
+import Checkout from "./views/cart/Checkout.vue";
 
 // 導入 Pages範例模板
 import FruitablesHomeView from "./views/FruitablesHomeView.vue";
@@ -207,6 +207,12 @@ const routes =[
     path: '/shoppingcart',
     name: 'ShoppingCart',
     component: CartView,
+},
+
+{
+    path: '/checkout',
+    name: 'Checkout',
+    component: Checkout,
 },
 
 // 以下為 Pages範例模板 連結

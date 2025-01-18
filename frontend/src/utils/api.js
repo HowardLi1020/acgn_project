@@ -277,6 +277,23 @@ export const cartAPI = {
 	},
 };
 
+// Order API
+export const orderAPI = {
+	submitOrder : async (orderdata) => {
+		try {
+			const response = await api.post('/cart_api/create_order/', orderdata);
+			return response.data; // 返回訂單數據
+		} catch (error) {
+			if (error.response && error.response.data) {
+				throw new Error(error.response.data.message || '訂單提交失敗');
+			} else {
+				throw new Error('無法連接到伺服器，請稍後再試');
+			}
+		}
+	},
+};
+
+
 
 // Coupon API
 export const couponAPI = {
@@ -315,5 +332,6 @@ export default {
 	uploadAPI,
 	cartAPI,
 	couponAPI,
+	orderAPI,
 	api,
 };

@@ -71,43 +71,59 @@ class OrdersView(APIView):
     #建立訂單
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        # 獲取當前用戶購物車項目
+        # 接收前端提交的數據
+        serializer = OrdersSerializer(data=request.data)
+        if not serializer.is_valid():
+            print("序列化器錯誤：", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # 創建訂單，將前端提交的總金額存入 total_amount
+        order = serializer.save(user=request.user)
+
+        # 從購物車提取數據並重新計算總金額
         cart_items = ShoppingCartItems.objects.filter(user=request.user)
         if not cart_items.exists():
+            # 刪除訂單並返回錯誤
+            order.delete()
             return Response({"message": "購物車內沒有商品，無法創建訂單。"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 創建訂單
-        serializer = OrdersSerializer(data=request.data)
-        if serializer.is_valid():
-            # 保存訂單基本信息
-            order = serializer.save(user=request.user)
+        backend_total_amount = 0
+        for cart_item in cart_items:
+            backend_total_amount += cart_item.product.price * cart_item.quantity
 
-            # 將購物車項目轉移到 OrderItems
-            total_amount = 0
-            for cart_item in cart_items:
-                order_item = OrderItems.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    product_price=cart_item.product.price,
-                    quantity=cart_item.quantity,
-                    subtotal=cart_item.product.price * cart_item.quantity
-                )
-                total_amount += order_item.subtotal
-            # 更新訂單總金額
-            order.total_amount = total_amount
-            print(f"Order total_amount : {order.total_amount}")  # 打印內存中的值
-            order.save()
-            # 清空購物車
-            cart_items.delete()
-
+        # 比對前端提交的 total_amount 和後端計算的金額
+        if order.total_amount != backend_total_amount:
+            # 刪除訂單
+            order.delete()
             return Response(
-                {
-                    "message": "訂單建立成功",
-                    "data": serializer.data
-                },
-                status=status.HTTP_201_CREATED
+                {"message": "總金額錯誤，請重新創建訂單。"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # 金額一致，更新訂單總金額並保存訂單
+        order.total_amount = backend_total_amount
+        order.save()
+
+        # 將購物車項目轉移到 OrderItems
+        for cart_item in cart_items:
+            OrderItems.objects.create(
+                order=order,
+                product=cart_item.product,
+                product_price=cart_item.product.price,
+                quantity=cart_item.quantity,
+                subtotal=cart_item.product.price * cart_item.quantity,
+            )
+
+        # 清空購物車
+        cart_items.delete()
+
+        return Response(
+            {
+                "message": "訂單建立成功",
+                "data": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     #刪除訂單
     def delete(self, request, order_id, *args, **kwargs):

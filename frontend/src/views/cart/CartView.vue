@@ -76,7 +76,7 @@ export default {
 		},
 		// 前往結帳
 		checkout() {
-			alert("結帳功能尚未實作！");
+			this.$router.push({ name: "Checkout" });
 		},
 	},
 	created() {
