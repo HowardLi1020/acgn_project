@@ -1,0 +1,53 @@
+{% extends "[BASE]ALL.html" %}
+{% block app_title %}
+<h1 class="text-center mb-3">分派優惠券：{{ coupon.coupon_code }}</h1>
+{% endblock %}
+{% block app_content %}
+<div class="container mt-5">
+    <form method="post" action="{% url 'promotions:assign_coupon' coupon_id=coupon.coupon_id %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="usage_limit">設定每位會員的使用次數限制：</label>
+            <input type="number" name="usage_limit" id="usage_limit" class="form-control" placeholder="請輸入次數限制" value="1" required>
+        </div>
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>選擇</th>
+                    <th>會員姓名</th>
+                    <th>會員 Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="member_ids" value="{{ member.user_id }}">
+                    </td>
+                    <td>{{ member.user_name }}</td>
+                    <td>{{ member.user_email }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">目前沒有會員</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-between mt-3">
+            <button type="submit" class="btn btn-success">確定分派</button>
+            <a href="{% url 'promotions:coupon_list' %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block app_css %}
+<style>
+.form-group {
+    margin-bottom: 20px;
+}
+.table {
+    margin-top: 20px;
+}
+</style>
+{% endblock %}

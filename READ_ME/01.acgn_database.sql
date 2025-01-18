@@ -2,9 +2,9 @@
 -- 1-1 基本資料
 CREATE TABLE member_basic (
     user_id INT AUTO_INCREMENT PRIMARY KEY,                 -- 用戶 ID，主鍵
-    user_name VARCHAR(20) NOT NULL UNIQUE,                  -- 用戶名，唯一
-    user_password VARCHAR(128) NOT NULL,                    -- 用戶密碼
-    user_phone VARCHAR(10) NOT NULL UNIQUE,                 -- 手機號，唯一
+    user_name VARCHAR(50) NOT NULL UNIQUE,                  -- 用戶名，唯一
+    user_password VARCHAR(128) NULL,                    -- 用戶密碼
+    user_phone VARCHAR(10) NULL UNIQUE,                 -- 手機號，唯一
     user_email VARCHAR(120) NOT NULL UNIQUE,                -- 電子郵件，唯一
     user_nickname VARCHAR(20) NULL,                         -- 用戶暱稱
     user_gender ENUM('male', 'female', 'prefer_not_to_say') DEFAULT 'prefer_not_to_say', -- 性別
@@ -19,13 +19,13 @@ CREATE TABLE member_basic (
 
 -- 1-1-1 會員登入表
 create table member_login(
-login_id int primary key,
+login_id INT AUTO_INCREMENT PRIMARY KEY, 
 user_id int not null,
-provider varchar(50) null,
-provider_id_google varchar(50) null unique,
-provider_id_line varchar(50) null unique,
-provider_id_fb varchar(50) null unique,
-access_token varchar(50) null unique,
+provider ENUM('Line', 'Google', 'Facebook') NOT NULL,
+google_user_id varchar(50) null unique,
+line_user_id varchar(50) null unique,
+fb_user_id varchar(50) null unique,
+access_token varchar(128) null unique,
 created_at timestamp default current_timestamp,
 updated_at timestamp default current_timestamp on update current_timestamp,
 foreign key (user_id) references member_basic(user_id) ON DELETE CASCADE
@@ -57,11 +57,12 @@ CREATE TABLE member_privacy (
 
 -- 1-4 首頁類型設定
 create table member_indextype(
-type_id int primary key,
-user_id int not null,
-type_name varchar(50) null,
-created_at timestamp default current_timestamp,
-updated_at timestamp default current_timestamp on update current_timestamp,
+type_id INT AUTO_INCREMENT PRIMARY KEY,
+user_id int not null,                            -- 關聯用戶ID
+type_name varchar(50) null,                      -- 網站喜好類型
+sort_order INT NOT NULL,                         -- 網站喜好順序
+created_at timestamp default current_timestamp,  -- 記錄創建時間
+updated_at timestamp default current_timestamp on update current_timestamp,  -- 記錄更新時間
 foreign key (user_id) references member_basic(user_id) ON DELETE CASCADE
 );
 
@@ -194,73 +195,80 @@ CREATE TABLE product_recommendations (
 -- 3-1 購物車項目
 CREATE TABLE shopping_cart_items (
     cart_item_id INT AUTO_INCREMENT PRIMARY KEY,
-    member_id INT NOT NULL,                          -- 關聯用戶ID
-    product_id INT NOT NULL,                         -- 關聯商品ID
-    quantity INT NOT NULL CHECK (quantity > 0),      -- 商品數量
-    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- 添加時間
-    FOREIGN KEY (member_id) REFERENCES member_basic(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
-);
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES member_basic (user_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- 3-2 訂單基本資料(購買者資料、支付狀況、物流狀況...等)
 CREATE TABLE orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
-    member_id INT NOT NULL,                              -- 關聯用戶ID
-    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- 訂單生成時間
-    recipient VARCHAR(100) NOT NULL,                    -- 收件人姓名
-    city VARCHAR(100) NOT NULL,                         -- 城市
-    region VARCHAR(100) NOT NULL,                       -- 地區
-    detailed_address VARCHAR(255) NOT NULL,             -- 詳細地址
-    postal_code VARCHAR(20) NOT NULL,                   -- 郵遞區號
-    total_amount DECIMAL(10, 2) NOT NULL,               -- 訂單總金額
-    coupon_code VARCHAR(50) DEFAULT NULL,               -- 使用的優惠券代碼
-    coupon_discount DECIMAL(10, 2) DEFAULT 0.00,        -- 優惠券折扣金額
-    payment_status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending', -- 支付狀態
-    shipping_status ENUM('pending', 'shipped', 'in_transit', 'delivered', 'returned', 'canceled') DEFAULT 'pending', -- 配送狀態
-    payment_method ENUM('credit_card', 'paypal', 'cash_on_delivery') NOT NULL,  -- 支付方式
-    order_status ENUM('pending', 'shipped', 'delivered', 'canceled') NOT NULL,  -- 訂單狀態
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,       -- 訂單建立時間
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 訂單更新時間
-    FOREIGN KEY (member_id) REFERENCES member_basic(user_id) ON DELETE CASCADE
-);
+    user_id INT NOT NULL,
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    recipient VARCHAR(100) NOT NULL,
+    recipient_phone VARCHAR(15) NULL,
+    city VARCHAR(100) NOT NULL,
+    region VARCHAR(100) NOT NULL,
+    detailed_address VARCHAR(255) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    total_amount DECIMAL(10, 2) NOT NULL,
+    coupon_code VARCHAR(50) DEFAULT NULL,
+    coupon_discount DECIMAL(10, 2) DEFAULT NULL,
+    payment_status VARCHAR(9) DEFAULT NULL,
+    shipping_status VARCHAR(10) DEFAULT NULL,
+    payment_method VARCHAR(16) NOT NULL,
+    order_status VARCHAR(15) NOT NULL DEFAULT 'PENDING',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES member_basic (user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 
 -- 3-2-1 金流資料
 CREATE TABLE payment_transactions (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,                              -- 關聯訂單ID
-    payment_method ENUM('credit_card', 'paypal', 'cash_on_delivery') NOT NULL,  -- 支付方式
-    payment_status ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL, -- 支付狀態
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- 支付時間
-    payment_amount DECIMAL(10, 2) NOT NULL,             -- 支付金額
-    transaction_id VARCHAR(100) DEFAULT NULL,           -- 第三方支付流水號
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
-);
+    order_id INT NOT NULL,
+    payment_method VARCHAR(16) NOT NULL,
+    payment_status VARCHAR(9) NOT NULL,
+    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    payment_amount DECIMAL(10, 2) NOT NULL,
+    transaction_id VARCHAR(100) DEFAULT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- 3-2-2 物流資料
 CREATE TABLE shipping_details (
     shipping_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,                              -- 關聯訂單ID
-    shipping_status ENUM('pending', 'shipped', 'in_transit', 'delivered', 'returned', 'canceled') NOT NULL, -- 配送狀態
-    carrier_name VARCHAR(100) DEFAULT NULL,             -- 承運商名稱
-    tracking_number VARCHAR(100) DEFAULT NULL,          -- 物流追蹤編號
-    shipping_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 出貨時間
-    estimated_delivery_date DATE DEFAULT NULL,          -- 預計送達時間
-    actual_delivery_date DATE DEFAULT NULL,             -- 實際送達時間
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
-);
+    order_id INT NOT NULL,
+    shipping_status VARCHAR(10) NOT NULL,
+    carrier_name VARCHAR(100) DEFAULT NULL,
+    tracking_number VARCHAR(100) DEFAULT NULL,
+    shipping_date DATETIME DEFAULT NULL,
+    estimated_delivery_date DATE DEFAULT NULL,
+    actual_delivery_date DATE DEFAULT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- 3-3 訂單的商品項目資料
 CREATE TABLE order_items (
     order_item_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,                          -- 關聯訂單ID
-    product_id INT NOT NULL,                        -- 商品ID
-    product_price DECIMAL(10, 2) NOT NULL,          -- 商品價格
-    quantity INT NOT NULL CHECK (quantity > 0),     -- 商品數量
-    subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (product_price * quantity) STORED, -- 小計
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
-);
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    product_price DECIMAL(10, 2) NOT NULL,
+    quantity INT NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL,
+    UNIQUE (order_id, product_id),
+    FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- 3-4 用戶對訂單的評分(交易評價、買賣家評價...等)
 CREATE TABLE product_member_ratings (
@@ -280,34 +288,33 @@ CREATE TABLE product_member_ratings (
 -- 4-1 優惠券基本資料
 CREATE TABLE Coupons (
     coupon_id INT AUTO_INCREMENT PRIMARY KEY,
-    coupon_code VARCHAR(50) NOT NULL UNIQUE,         -- 優惠券代碼
-    discount_type ENUM('amount', 'percentage') NOT NULL, -- 折扣類型：金額折扣或百分比折扣
-    discount_value DECIMAL(10, 2) NOT NULL,          -- 折扣值：金額或百分比
-    min_purchase DECIMAL(10, 2) DEFAULT 0.00,        -- 最低消費金額，0表示無限制
-    max_discount DECIMAL(10, 2) DEFAULT NULL,        -- 最大折扣金額（百分比折扣適用）
-    start_date DATE NOT NULL,                        -- 優惠券開始日期
-    end_date DATE NOT NULL,                          -- 優惠券結束日期
-    usage_limit INT DEFAULT NULL,                    -- 優惠券總使用次數限制
-    used_count INT DEFAULT 0,                        -- 優惠券已使用次數
-    is_active BOOLEAN DEFAULT TRUE,                  -- 是否啟用
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    coupon_code VARCHAR(50) UNIQUE NOT NULL,
+    discount_type VARCHAR(10) NOT NULL,
+    discount_value DECIMAL(10, 2) NOT NULL,
+    min_purchase DECIMAL(10, 2) DEFAULT NULL,
+    max_discount DECIMAL(10, 2) DEFAULT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 4-3 紀錄會員領取的優惠券
-CREATE TABLE UserCoupons (
+CREATE TABLE Usercoupons (
     user_coupon_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,                            -- 使用者ID
-    coupon_id INT NOT NULL,                          -- 關聯優惠券ID
-    is_used BOOLEAN DEFAULT FALSE,                   -- 是否已使用
-    used_in_order_id INT DEFAULT NULL,               -- 使用的訂單ID
-    used_at TIMESTAMP NULL,                          -- 使用日期
+    user_id INT NOT NULL,
+    coupon_id INT NOT NULL,
+    usage_limit INT DEFAULT NULL,  -- 此會員的使用次數限制
+    usage_count INT DEFAULT 0,     -- 此會員已使用次數
+    used_in_order_id INT DEFAULT NULL,
+    used_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (coupon_id) REFERENCES Coupons(coupon_id) ON DELETE CASCADE,
-    FOREIGN KEY (used_in_order_id) REFERENCES orders(order_id) ON DELETE SET NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    FOREIGN KEY (coupon_id) REFERENCES coupons(coupon_id) ON DELETE CASCADE,
+    FOREIGN KEY (used_in_order_id) REFERENCES orders(order_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 五、委託
 -- 5-1 需求資訊表

@@ -2,13 +2,14 @@
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { ref, watchEffect, onMounted } from 'vue'
 import Swal from 'sweetalert2'
+import { useUserStore } from '@/stores/user'; // 引入 pinia 用戶狀態
 
+const authStore = useUserStore();  // Pinia 用戶狀態
 const route = useRoute(); // 獲取當前路由
 const router = useRouter()
 const BASE_URL = import.meta.env.VITE_MemberApi
 const REG_URL = `${BASE_URL}auth/register/`
 const TermsPrivacyPopup = ref(false); // 控制顯示服務條款彈窗
-const message = ref('')
 
 // 表單數據
 const formData = ref({
@@ -32,6 +33,17 @@ const errors = ref({
   general: ''
 })
 
+const LINE_CLIENT_ID = "2006769537"; // 自己的 client_id
+const LINE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/verify-line/"); // 自己的 callback url
+const LINE_SCOPE = "openid%20profile%20email";   
+const LINE_STATE = "abcde"; // 可改為動態生成的隨機字串
+
+const LineLoginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CLIENT_ID}&redirect_uri=${LINE_REDIRECT_URI}&state=${LINE_STATE}&scope=${LINE_SCOPE}`;
+
+// 第三方登入 - 導向 LINE 授權頁面
+const handleLineLogin = () => {
+    window.location.href = LineLoginUrl;
+};
 
 onMounted(() => {
   // Get message and type from URL parameters
@@ -50,104 +62,39 @@ onMounted(() => {
   }
 })
 
-
-
 // 表單狀態
 const isSubmitting = ref(false)
 
-// 驗證電子郵箱格式
-const validateEmail = (user_email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(user_email)
-}
-
-// 驗證密碼強度
-const validatePassword = (user_password) => {
-    // 檢查密碼長度
-    if (user_password.length < 8) {
-        return false;
-    }
-    // 檢查是否包含至少一個字母和一個數字
-    const hasLetter = /[a-zA-Z]/.test(user_password);
-    const hasNumber = /\d/.test(user_password);
-    return hasLetter && hasNumber;
-}
-
-// 驗證手機號碼格式
-const validatePhone = (user_phone) => {
-  const phoneRegex = /^09\d{8}$/
-  return phoneRegex.test(user_phone)
-}
-
 // 驗證表單
 const validateForm = () => {
-  let isValid = true
-  
-  // 重置錯誤信息
-  Object.keys(errors.value).forEach(key => errors.value[key] = '')
-
-  // 驗證姓名
-  if (!formData.value.user_name) {
-    errors.value.user_name = '請輸入姓名'
-    isValid = false
-  } else if (formData.value.user_name.length < 2 || formData.value.user_name.length > 10) {
-    errors.value.user_name = '姓名長度必須在2-10個字符之間'
-    isValid = false
-  }
-
-  // 驗證手機號碼
-  if (!formData.value.user_phone) {
-    errors.value.user_phone = '請輸入手機號碼'
-    isValid = false
-  } else if (!validatePhone(formData.value.user_phone)) {
-    errors.value.user_phone = '請輸入有效的手機號碼格式（09開頭的10位數字）'
-    isValid = false
-  }
-
-  // 驗證電子郵箱
-  if (!formData.value.user_email) {
-    errors.value.user_email = '請重新輸入電子郵箱'
-    isValid = false
-  } else if (!validateEmail(formData.value.user_email)) {
-    errors.value.user_email = '請輸入有效的電子郵箱格式'
-    isValid = false
-  }
-
-  // 驗證密碼
-  if (!formData.value.user_password) {
-    errors.value.user_password = '請輸入密碼'
-    isValid = false
-  } else if (!validatePassword(formData.value.user_password)) {
-    errors.value.user_password = '密碼長度至少需要8個字符，英文(不分大小寫)+數字'
-    isValid = false
-  }
-
-  // 驗證確認密碼
-  if (!formData.value.confirm_password) {
-    errors.value.confirm_password = '請確認密碼'
-    isValid = false
-  } else if (formData.value.user_password !== formData.value.confirm_password) {
-    errors.value.confirm_password = '兩次輸入的密碼不一致，請再次確認'
-    isValid = false
-  }
-
-  // 驗證服務條款
-  if (!formData.value.agreeToTerms) {
-    errors.value.agreeToTerms = '請您查看並同意服務條款和隱私政策'
-    isValid = false
-  }
-
-  return isValid
-}
+  const validationErrors = authStore.validateForm(formData.value);
+  errors.value = { ...validationErrors };
+  return Object.keys(validationErrors).length === 0; // 沒有錯誤時返回 true
+};
 
 // 顯示"服務條款與隱私政策"
-const handleTermsPrivacy = (event) => {
+const handleTermsPrivacy = async (event) => {
     event.preventDefault()
-    const confirmSignup = confirm("歡迎註冊ACGN動漫資訊平台！為確保用戶權益並遵守相關法律法規，我們制定了以下服務條款和隱私政策，請仔細閱讀。您送出註冊即表示您同意遵守以下條款。");
-    if (confirmSignup) {
-      TermsPrivacyPopup.value = true;  // 彈窗顯示條款與隱私內容
-    }
-    
+    const result = await Swal.fire({
+      title: '服務條款和隱私政策',
+      text: '請仔細閱讀以下條款和隱私政策，點擊同意後即可註冊。',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: '同意',
+      cancelButtonText: '取消',
+      showLoaderOnConfirm: true,
+      preConfirm: () => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve()
+          }, 2000)
+        })
+      }
+    })
+
+    if (result.isConfirmed) {
+    TermsPrivacyPopup.value = true;
+  }
 };
 
 // 關閉彈窗時自動勾選同意
@@ -186,7 +133,10 @@ const handleSubmit = async (event) => {
     })
 
     if (!response.ok) {
-      const errorData = await response.json(); // 獲取後端返回的錯誤訊息
+      const errorData = await response.json();
+      if (errorData.message) {
+        Swal.fire('錯誤', errorData.message, 'error');
+      }
       Object.keys(errorData).forEach((key) => {
         if (key in errors.value) {
           errors.value[key] = errorData[key];
@@ -219,8 +169,6 @@ const handleSubmit = async (event) => {
     isSubmitting.value = false
   }
 }
-
-
 
 watchEffect(() =>{
   localStorage.setItem("formData", JSON.stringify(formData.value))
@@ -374,9 +322,11 @@ watchEffect(() =>{
         <br />
 		<!-- 放第三方登入圖示 -->
 		<hr />
-		<div class="text-center">或使用第三方進行註冊
+		<div class="text-center">或使用第三方登入/註冊
 			<img class="rounded-circle" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
-			<img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+			<button @click.prevent="handleLineLogin">
+        <img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      </button>
 		  <img class="rounded-circle" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
 		</div>
 

@@ -1,15 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import  VerifyEmailView, UpdateUserInfoView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView
+from .views import  VerifyEmailView, UpdateUserInfoView, UpdateUserLikesView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView, LineLoginView
 from member_api.views import AuthViewSet
 router = DefaultRouter()
 # https://...../profile/
 router.register('profile', views.MemberViewSet)
-# https://...../favorite/
-router.register('favorite', views.FavoriteViewSet)
-# https://...../coupon/
-router.register('coupon', views.CouponViewSet)
 # https://...../thirdparty/
 router.register('thirdparty', views.ThirdLoginViewSet)
 # https://...../orderdetails/
@@ -24,8 +20,10 @@ router.register(r'auth', AuthViewSet, basename='auth')
 app_name = 'member_api'
 urlpatterns = [
     path('', include(router.urls)),
-    path('auth/protected_route/', views.ProtectedRouteView.as_view(), name='protected_route'),
-    path('auth/update_info/<int:pk>/', UpdateUserInfoView.as_view(), name='update_user_info'),
+    path('auth/protected-route/', views.ProtectedRouteView.as_view(), name='protected_route'),
+    path('auth/update-info/<int:pk>/', UpdateUserInfoView.as_view(), name='update_user_info'),
+    path('auth/update-likes/<int:pk>/', UpdateUserLikesView.as_view(), name='update_user_likes'),
+    path('auth/line-login/', LineLoginView.as_view(), name='line-login'),
     path('verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),   #註冊驗證連結
     path('reset/', SendResetLinkView.as_view(), name='send-reset-link'),                 #發送密碼重置驗證碼
     path('reset/<int:code>/', ResetPasswordView.as_view(), name='reset_password'),       #密碼重置驗證連結

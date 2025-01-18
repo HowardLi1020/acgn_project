@@ -1,12 +1,14 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import draggable from "vuedraggable";
+import { useUserStore } from '@/stores/user';
 
 const router = useRouter()
-const route = useRoute(); // 獲取當前路由
+const userStore = useUserStore(); // Pinia 用戶狀態
+
 const BASE_URL = import.meta.env.VITE_MemberApi
-const API_URL = `${BASE_URL}auth/update_info/`
+const API_URL = `${BASE_URL}auth/update-likes/`
 const memberData = ref(null); // 用於存儲當前登入會員的資料
 const showVIPBenefitsPopup = ref(false); // 控制顯示升級VIP會員優點彈窗
 
@@ -19,12 +21,55 @@ const formData = ref({
     privicy_set: '',
 })
 
+// 定義初始數據
+const initialPersonalLikes = ["論壇(首頁)", "周邊商店", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"];
+const personalLikes = ref([...initialPersonalLikes]); // 使用初始數據
+
 onMounted(() => {
-    const storedMemberData = JSON.parse(localStorage.getItem('memberData'));
-    if (storedMemberData) {
-        memberData.value = storedMemberData; // 將資料賦值給 memberData
+    // 同步 Pinia Store 与 localStorage
+    userStore.syncWithLocalStorage();
+
+    const userId = userStore.user?.user_id;
+    if (!userId) {
+      alert("用戶未登入或 ID 丟失");
+      console.error("無法加載個人喜好：用戶 ID 不存在");
+      router.push('/login'); // 跳轉回登入頁
+      return;
+    }
+
+    fetchPersonalLikes(); // 獲取個人喜好
+
+    if (userId) {
+        const storedLikes = localStorage.getItem(`personalLikes_${userId}`);
+        if (storedLikes) {
+            try {
+                const parsedLikes = JSON.parse(storedLikes);
+                if (Array.isArray(parsedLikes) && parsedLikes.length > 0) {
+                  personalLikes.value = parsedLikes; // 從 localStorage 加載排序資料
+                  LikesData.value.personal_like = parsedLikes; // 同步到表單數據
+                } else {
+                  console.warn('存儲的個人喜好資料無效或為空');
+                }
+            } catch (error) {
+              console.error('解析 localStorage 中的資料時發生錯誤', error);
+            }
+        } else {
+            console.warn('未找到會員喜好資料');
+        }
     } else {
-        console.warn('No member data found in localStorage'); // 輸出警告
+        console.error("無法加載會員喜好：用户ID不存在");
+    }
+
+    // 從 localStorage 加載會員資料
+    try {
+      const storedMemberData = localStorage.getItem('memberData');
+      if (storedMemberData) {
+        memberData.value = JSON.parse(storedMemberData); // 賦值給 memberData
+      } else {
+        console.warn('未找到會員資料');
+      }
+    } catch (error) {
+      console.error('加載會員資料時出錯:', error);
     }
 });
 
@@ -36,10 +81,61 @@ onBeforeUnmount(() => {
 
 // 定義狀態
 const showPopup = ref(false);
-const personalLikes = ref(["討論區(首頁)", "周邊商店", "活動專區", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"]); // 初始數據
+// const personalLikes = ref(["論壇(首頁)", "周邊商店", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"]); // 初始數據
 const LikesData = ref({
   personal_like: "", // 存儲用戶選擇的喜好
 });
+
+// 獲取個人喜好資料 (GET)
+const fetchPersonalLikes = async () => {
+  const userId = userStore.user?.user_id;
+
+  if (!userId) {
+    console.error('無法加載個人喜好：用戶ID不存在');
+    alert('用戶未登入或ID丟失');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}${userId}/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${userStore.accessToken}`, // 加入 JWT Token
+      },
+    });
+
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      console.error('獲取個人喜好失敗，HTTP状态碼:', response.status, '錯誤詳情:', errorResponse);
+      throw new Error(errorResponse.error || '獲取失敗');
+    }
+
+    // 解析後端返回資料
+    const responseData = await response.json();
+    console.log('獲取個人喜好成功:', responseData);
+
+    // 檢查 personal_likes 是否為陣列
+    if (!Array.isArray(responseData.personal_likes)) {
+      console.error('personal_likes 的數據格式錯誤:', responseData.personal_likes);
+      alert('返回數據格式錯誤，請聯繫後端檢查');
+      return;
+    }
+
+    // 當 personal_likes 為空陣列時，保持預設值
+    if (responseData.personal_likes.length === 0) {
+      console.warn('用戶無個人喜好資料，使用預設資料');
+      personalLikes.value = ["論壇(首頁)", "周邊商店", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"];
+    } else {
+      // 將後端返回的資料映射為字符串陣列
+      personalLikes.value = responseData.personal_likes.map(item => item.type_name || '未命名項目');
+    }
+
+    LikesData.value.personal_like = [...personalLikes.value]; // 同步到表單數據
+  } catch (error) {
+    console.error('獲取個人喜好失敗:', error);
+    alert('獲取個人喜好失敗，請檢查後端或網絡連線');
+  }
+};
 
 // 刪除項目
 const removeItem = (index) => {
@@ -48,10 +144,27 @@ const removeItem = (index) => {
 
 // 保存排序方法
 const saveOrder = () => {
-  LikesData.value.personal_like = personalLikes.value.join(", ");
+  LikesData.value.personal_like = [...personalLikes.value]; // 保留列表格式
   showPopup.value = false; // 關閉彈窗
-  console.log(`排序已保存：${LikesData.value.personal_like}`);
-  alert(`排序已保存：${LikesData.value.personal_like}`);
+
+  // 更新到 localStorage，使用 user_id 作為鍵的一部分
+  const userId = userStore.user?.user_id;
+  if (userId) {
+    localStorage.setItem(
+      `personalLikes_${userId}`,
+      JSON.stringify(LikesData.value.personal_like)
+    );
+  } else {
+    console.error('用戶 ID 未找到，無法保存排序');
+  }
+  console.log(`排序已保存：`, LikesData.value.personal_like);
+  alert(`排序已保存：${LikesData.value.personal_like.join(", ")}`);
+};
+
+// 恢復初始狀態
+const resetToInitial = () => {
+    personalLikes.value = [...initialPersonalLikes]; // 重置為初始值
+    alert('已重置為初始排序');
 };
 
 // 處理升級VIP會員的邏輯
@@ -65,37 +178,75 @@ const handleUpgradeVIP = () => {
 
 const ChangeInfo = async(event) => {
     event.preventDefault();
-
-    // 確保個人喜好有加到 memberData
-    memberData.value.personal_like = LikesData.value.personal_like; 
+    const userId = userStore.user?.user_id;
 
     // 确保 user_id 存在
-    if (!memberData.value.user_id) {
+    if (!userId) {
         console.error('用户ID未找到');
         alert('用户ID未找到，请检查用户信息');
         return;
     }
 
+    // 移除重複的項目
+    const removeDuplicates = (array) => [...new Set(array)];
+    LikesData.value.personal_like = removeDuplicates(LikesData.value.personal_like);
+
+    // 確保 `personal_likes` 是列表
+    if (!Array.isArray(LikesData.value.personal_like)) {
+      console.error('personal_likes 必須為列表格式');
+      alert('個人喜好數據格式錯誤，請重試');
+      return;
+    }
+
     try {
-        const response = await fetch(API_URL, {
+        // 構建請求的 payload，加入 user_id
+        const payload = {
+            user_id: userId,
+            personal_likes: LikesData.value.personal_like,
+        };
+        console.log('LikesData請求:', JSON.stringify(payload));
+
+        // 發送請求
+        const response = await fetch(`${API_URL}${userId}/`, {
             method: 'POST',
-            body: JSON.stringify(memberData.value), // 更新的资料，包括 user_id 和個人喜好
+            body: JSON.stringify(payload),
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${userStore.accessToken}`,
             },
         });
-        console.log('请求体:', JSON.stringify(memberData.value));
-
+        
         if (!response.ok) {
-            throw new Error('更新失敗，請檢查您的資料');
+            const errorResponse = await response.json();
+            console.error('喜好更新失敗，HTTP状态碼:', response.status, '錯誤詳情:', errorResponse);
+            throw new Error(errorResponse.error || '更新失敗');
         }
 
-        const result = await response.json();
-        console.log('更新成功:', result);
-        // 更新前台資料
-        memberData.value = { ...memberData.value, ...result };
+        // 解析後端返回資料
+        const updatedLikesData  = await response.json();
+        console.log('更新 LikesData 成功:', updatedLikesData );
+
+        // 更新 Pinia store
+        userStore.updatePersonalLikes(updatedLikesData.personal_likes);
+        
+        alert('資料更新成功！');
+
+        // 檢查後端返回的資料結構
+        if (!Array.isArray(updatedLikesData.personal_likes)) {
+            console.error('後端返回的資料格式錯誤:', updatedLikesData);
+            alert('後端返回資料錯誤，請重試');
+            return;
+        }
+
+        // 更新前端資料，提取 type_name 進行顯示
+        LikesData.value.personal_like = updatedLikesData.personal_likes.map(item => item.type_name);
+        // LikesData.value.personal_like = updatedLikesData.personal_likes;
+        personalLikes.value = [...updatedLikesData.personal_likes]; // 更新顯示的排序
+
+        console.log('更新後的個人喜好:', LikesData.value.personal_like);
     } catch (error) {
         console.error('更新失败:', error);
+        alert('更新失敗，請檢查後端或網絡連線');
     }
 };
 
@@ -103,23 +254,17 @@ const ChangeInfo = async(event) => {
 const handleLogout = async () => {
     const confirmLogout = confirm("您即將登出頁面...請您再次確認~*");
     console.log("用戶確認登出:", confirmLogout);
-    console.log("當前 localStorage 狀態:", localStorage.length);
 
-    if (confirmLogout === false) {
-        console.log("用戶取消登出");
-        console.log("取消後 localStorage 狀態:", localStorage.length);
-        return;
-    }
-
-     // 用戶確認登出時才執行以下程式碼
-     if (confirmLogout === true) {
+    if (confirmLogout) {
         try {
             console.log("開始登出流程");
-            localStorage.clear();
-            await router.push({ name: 'login' });
+            userStore.logout(); // 調用 Pinia 的 logout 方法
+            await router.push({ name: 'login' }); // 導向登入頁面
         } catch (error) {
             console.error("登出過程發生錯誤:", error);
         }
+    } else {
+        console.log("用戶取消登出");
     }
 };
 </script>
@@ -165,6 +310,7 @@ const handleLogout = async () => {
 
 
             <button @click="saveOrder" class="btn btn-success me-3 btn-sm">保存排序</button>
+            <button @click..prevent="resetToInitial" class="btn btn-info me-3 btn-sm">網站初始排序</button>
             <button @click="showPopup = false" class="btn btn-secondary me-3 btn-sm">取消</button>
           </div>
         </div>

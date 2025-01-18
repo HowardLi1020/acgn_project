@@ -1,0 +1,81 @@
+{% extends "[BASE]ALL.html" %}
+{% load static %}
+{% block app_title %}
+<h1 class="text-center mb-3">新增優惠券</h1>
+{% endblock %}
+{% block app_content %}
+<form method="post" class="form-container">
+    {% csrf_token %}
+    <div class="form-group">
+        {{ form.coupon_code.label_tag }}
+        {{ form.coupon_code }}
+        {% if form.coupon_code.help_text %}
+        <small class="form-text text-muted">{{ form.coupon_code.help_text }}</small>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        {{ form.discount_type.label_tag }}
+        {{ form.discount_type }}
+    </div>
+
+    <div class="form-group">
+        {{ form.discount_value.label_tag }}
+        {{ form.discount_value }}
+    </div>
+
+    <div class="form-group">
+        {{ form.min_purchase.label_tag }}
+        {{ form.min_purchase }}
+    </div>
+
+    <div class="form-group">
+        {{ form.max_discount.label_tag }}
+        {{ form.max_discount }}
+    </div>
+
+    <div class="form-group">
+        {{ form.start_date.label_tag }}
+        {{ form.start_date }}
+    </div>
+
+    <div class="form-group">
+        {{ form.end_date.label_tag }}
+        {{ form.end_date }}
+    </div>
+
+    <div class="form-group">
+        {{ form.is_active.label_tag }}
+        {{ form.is_active }}
+    </div>
+
+    <div class="form-group text-center">
+        <button type="submit" class="btn btn-primary">提交</button>
+    </div>
+</form>
+{% endblock %}
+{% block app_css %}
+<style>
+select.form-control {
+    font-size: 16px; /* 調整字體大小 */
+    padding: 8px;    /* 增加內邊距 */
+    height: auto;    /* 自動調整高度，防止被裁切 */
+}
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+</style>
+{% endblock %}

@@ -1,127 +1,155 @@
 <template>
-  <div class="cart-view">
-    <h1>購物車頁面</h1>
-
-    <!-- 加載中提示 -->
-    <div v-if="isLoading" class="loading">加載中...</div>
-
-    <!-- 錯誤提示 -->
-    <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
-
-    <!-- 購物車內容 -->
-    <div v-if="cartItems.length > 0">
-      <CartItem
-        v-for="item in cartItems"
-        :key="item.cart_item_id"
-        :item="item"
-        @update-quantity="updateQuantity"
-        @remove-item="removeItem"
-      />
-      <CouponInput :coupon-code="couponCode" @apply-coupon="applyCoupon" />
-      <SubmitOrder :coupon-code="couponCode" @submit-order="submitOrder" />
-    </div>
-
-    <!-- 空購物車提示 -->
-    <div v-else class="empty-cart">
-      <p>購物車是空的，快去添加商品吧！</p>
-    </div>
-  </div>
+	<div class="cart-view">
+		<h1>購物車</h1>
+		<!-- 檢查是否有商品 -->
+		<div v-if="cartItems.length > 0">
+			<!-- 顯示每個購物車商品 -->
+			<CartItem
+				v-for="item in cartItems"
+				:key="item.cart_item_id"
+				:item="item"
+				:onUpdate="handleCartUpdate"
+			/>
+			<div class="cart-summary">
+				<p>總金額：<span class="total-price">{{ totalPrice }}</span></p>
+				<button @click="checkout" class="checkout-btn">前往結帳</button>
+			</div>
+		</div>
+		<p v-else class="empty-cart">購物車內沒有商品</p>
+	</div>
 </template>
 
 <script>
 import CartItem from "@/components/cart/CartItem.vue";
-import CouponInput from "@/components/cart/CouponInput.vue";
-import SubmitOrder from "@/components/cart/SubmitOrder.vue";
-import axios from "@/utils/api.js"; // 假設這是配置了基礎 API 的 axios 實例
+import { cartAPI } from "@/utils/api";
 
 export default {
-  name: "CartView",
-  components: { CartItem, CouponInput, SubmitOrder },
-  data() {
-    return {
-      cartItems: [],
-      couponCode: "",
-      isLoading: false,
-      errorMessage: "",
-    };
-  },
-  methods: {
-    // 獲取購物車內容
-    async fetchCartItems() {
-      this.isLoading = true;
-      this.errorMessage = "";
-      try {
-        const response = await axios.get("/cart/");
-        this.cartItems = response.data;
-      } catch (error) {
-        this.errorMessage = "無法加載購物車數據，請稍後重試。";
-        console.error(error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    // 更新商品數量
-    async updateQuantity({ cartItemId, newQuantity }) {
-      this.errorMessage = "";
-      try {
-        await axios.put(`/cart/update/${cartItemId}/`, { quantity: newQuantity });
-        this.fetchCartItems(); // 更新購物車內容
-      } catch (error) {
-        this.errorMessage = "更新數量失敗，請稍後重試。";
-        console.error(error);
-      }
-    },
-    // 刪除商品
-    async removeItem(cartItemId) {
-      this.errorMessage = "";
-      try {
-        await axios.delete(`/cart/delete/${cartItemId}/`);
-        this.fetchCartItems(); // 更新購物車內容
-      } catch (error) {
-        this.errorMessage = "刪除商品失敗，請稍後重試。";
-        console.error(error);
-      }
-    },
-    // 套用優惠券
-    applyCoupon(code) {
-      this.couponCode = code.trim();
-      console.log(`套用優惠券: ${this.couponCode}`);
-      // 可在此調用後端 API 驗證優惠券
-    },
-    // 提交訂單
-    async submitOrder() {
-      this.errorMessage = "";
-      try {
-        const response = await axios.post("/orders/create/", {
-          coupon_code: this.couponCode,
-        });
-        alert(`訂單提交成功，訂單編號: ${response.data.order_id}`);
-        this.fetchCartItems(); // 清空購物車
-        this.couponCode = ""; // 清空優惠券
-      } catch (error) {
-        this.errorMessage = "提交訂單失敗，請稍後重試。";
-        console.error(error);
-      }
-    },
-  },
-  mounted() {
-    this.fetchCartItems();
-  },
+	components: {
+		CartItem,
+	},
+	data() {
+		return {
+			cartItems: [], // 儲存購物車內容
+		};
+	},
+	computed: {
+		// 計算總金額
+		totalPrice() {
+			return this.cartItems
+				.reduce((total, item) => total + item.price * item.quantity, 0)
+				.toFixed(2);
+		},
+	},
+	methods: {
+		// 獲取購物車內容的函示
+		async fetchCartItems() {
+			try {
+				this.cartItems = await cartAPI.getCartItems();
+			} catch (error) {
+				alert(error.message);
+			}
+		},
+		async handleCartUpdate(action) {
+			try {
+				if (action.action === "increment") {
+					// 增加數量
+					await cartAPI.updateCartItem({
+            product_id: action.product_id,
+						action: "increment",
+					});
+				} else if (action.action === "decrement") {
+					// 減少數量
+					await cartAPI.updateCartItem({
+            product_id: action.product_id,
+						action: "decrement",
+					});
+				} else if (!action.action) {
+					// 如果沒有 action，執行刪除操作
+					await cartAPI.deleteCartItem(action.product_id);
+				}
+				// 操作完成後刷新購物車
+				this.fetchCartItems();
+			} catch (error) {
+				console.error("操作失敗：", error);
+				alert("操作失敗，請稍後再試！");
+			}
+		},
+		// 前往結帳
+		checkout() {
+			this.$router.push({ name: "Checkout" });
+		},
+	},
+	created() {
+		this.fetchCartItems(); // 初始化時獲取購物車內容
+	},
 };
 </script>
 
 <style scoped>
 .cart-view {
-  padding: 20px;
+	padding: 20px;
+	margin: 100px auto;
+	margin-top: 180px;
+	max-width: 800px;
+	background-color: #f9f9f9;
+	border-radius: 10px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-.loading {
-  color: #007bff;
+
+.cart-view h1 {
+	margin-bottom: 20px;
+	font-size: 28px;
+	text-align: center;
+	font-weight: bold;
+	color: #333;
 }
-.error {
-  color: red;
+
+.cart-container {
+	background-color: white;
+	border-radius: 10px;
+	padding: 20px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.cart-summary {
+	margin-top: 20px;
+	padding-top: 10px;
+	border-top: 1px solid #ccc;
+	text-align: right;
+}
+
+.cart-summary p {
+	margin-bottom: 10px;
+	font-size: 18px;
+	font-weight: bold;
+	color: #444;
+}
+
+.cart-summary .total-price {
+	color: #007bff;
+}
+
+.cart-summary .checkout-btn {
+	padding: 12px 24px;
+	background-color: #007bff;
+	color: white;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+	transition: background-color 0.3s ease;
+}
+
+.cart-summary .checkout-btn:hover {
+	background-color: #0056b3;
+}
+
 .empty-cart {
-  text-align: center;
-  color: gray;
+	text-align: center;
+	margin-top: 50px;
+	font-size: 18px;
+	color: #777;
+	font-style: italic;
 }
 </style>
+

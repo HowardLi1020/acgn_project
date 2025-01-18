@@ -19,6 +19,7 @@ import PhoneResetView from "./views/member/PhoneResetView.vue";
 import EmailChangeView from "./views/member/EmailChangeView.vue";
 import EmailVerifyView from "./views/member/EmailVerifyView.vue";
 import EmailResetView from "./views/member/EmailResetView.vue";
+import VerifyLineView from "./views/member/VerifyLineView.vue";
 
 
 // Store
@@ -30,7 +31,7 @@ import EditProduct from "./views/Store/EditProduct.vue";
 
 // Cart
 import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
-
+import Checkout from "./views/cart/Checkout.vue";
 
 // 導入 Pages範例模板
 import FruitablesHomeView from "./views/FruitablesHomeView.vue";
@@ -162,10 +163,16 @@ const routes =[
     component: EmailVerifyView,
 },
 {
-    //http://localhost:5173/reset  => 載入 EmailResetView 進行 修改電子郵件
+    //http://localhost:5173/email-reset  => 載入 EmailResetView 進行 修改電子郵件
     path: '/email-reset',
     name: 'EmailReset',
     component: EmailResetView,
+},
+{
+    //http://localhost:5173/verify-line  => 載入 VerifyLineView 進行 驗證Line
+    path: '/verify-line',
+    name: 'VerifyLine',
+    component: VerifyLineView,
 },
 
 // Store
@@ -200,6 +207,12 @@ const routes =[
     path: '/shoppingcart',
     name: 'ShoppingCart',
     component: CartView,
+},
+
+{
+    path: '/checkout',
+    name: 'Checkout',
+    component: Checkout,
 },
 
 // 以下為 Pages範例模板 連結

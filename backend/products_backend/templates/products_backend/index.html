@@ -1,0 +1,313 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %}
+
+{% block app_css %}
+<style>
+    .filter-container {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    #filter-form {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    #filter-form select,
+    #filter-form input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        min-width: 150px;
+    }
+    
+    #filter-form input[type="number"] {
+        width: 120px;
+    }
+    
+    #filter-form select:focus,
+    #filter-form input:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    </style>
+{% endblock %}
+
+{% block app_title %}
+ACGN_周邊商品
+{% endblock %}
+
+{% block app_content %}
+<div class="add-product-link"></div>
+<div class="container">
+    <!-- 搜索表單 -->
+    <form id="search-form">
+        <input type="text" id="search-input" placeholder="搜索商品...">
+    </form>
+
+    <div id="search-results" class="product-list">
+        <!-- 搜索結果將在這裡動態顯示 -->
+    </div>
+     <!-- 篩選表單 -->
+     <div class="filter-container">
+        <form id="filter-form">
+            <select id="category-select" name="category">
+                <option value="">所有分類</option>
+                {% for category in categories %}
+                    <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                {% endfor %}
+            </select>
+    
+            <select id="brand-select" name="brand">
+                <option value="">所有品牌</option>
+                {% for brand in brands %}
+                    <option value="{{ brand.brand_id }}">{{ brand.brand_name }}</option>
+                {% endfor %}
+            </select>
+    
+            <select id="series-select" name="series">
+                <option value="">所有系列</option>
+                {% for series_item in series %}
+                    <option value="{{ series_item.series_id }}">{{ series_item.series_name }}</option>
+                {% endfor %}
+            </select>
+    
+            <input type="number" id="min-price" name="min_price" placeholder="最低價格">
+            <input type="number" id="max-price" name="max_price" placeholder="最高價格">
+    
+            <select id="sort-order" name="sort">
+                <option value="newest">最新上架</option>
+                <option value="price_asc">價格由低到高</option>
+                <option value="price_desc">價格由高到低</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<div id="all-products" class="product-list">
+    {% if products_data %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>圖片</th>
+                <th>商品名稱</th>
+                <th>品牌</th>
+                <th>分類</th>
+                <th>系列</th>
+                <th>價格</th>
+                <th>庫存</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in products_data %}
+            <tr>
+                <td>
+                    {% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.product.product_name }}" style="width: 50px; height: 50px; object-fit: cover;">
+                    {% else %}
+                        <span>無圖片</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.product.product_name }}</td>
+                <td>{{ item.product.brand.brand_name|default:"未指定" }}</td>
+                <td>{{ item.product.category.category_name|default:"未指定" }}</td>
+                <td>{{ item.product.series.series_name|default:"未指定" }}</td>
+                <td>{{ item.product.price|floatformat:0 }}</td>
+                <td>{{ item.product.stock }}</td>
+                <td>
+                    <a href="{% url 'products_backend:edit_product' item.product.product_id %}" class="btn btn-primary btn-sm">編輯</a>
+                    <button class="btn btn-danger btn-sm delete-product" data-product-id="{{ item.product.product_id }}" data-product-name="{{ item.product.product_name }}">刪除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>暫無商品</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block app_script %}
+<script>
+    var MEDIA_URL = "{{ MEDIA_URL }}";
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // 防抖函數
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    
+        // 更新商品列表函數
+        function fetchProducts() {
+    const formData = {
+        category: $('#category-select').val() || '',
+        brand: $('#brand-select').val() || '',
+        series: $('#series-select').val() || '',
+        min_price: $('#min-price').val() || '',
+        max_price: $('#max-price').val() || '',
+        sort: $('#sort-order').val() || 'newest',
+        search: $('#search-input').val() || ''
+    };
+
+    $.ajax({
+        url: window.location.pathname,
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            updateProductList(response.products);
+            // 更新選項
+            updateCategoryOptions(response.categories);
+            updateBrandOptions(response.brands);
+            updateSeriesOptions(response.series);
+        },
+        error: function(error) {
+            console.error('Error fetching products:', error);
+        }
+    });
+}
+
+// 更新分類選項
+function updateCategoryOptions(categories) {
+    const select = $('#category-select');
+    let options = '<option value="">所有分類</option>';
+    categories.forEach(category => {
+        options += `<option value="${category.category_id}" ${category.category_id == $('#category-select').val() ? 'selected' : ''}>${category.category_name}</option>`;
+    });
+    select.html(options);
+}
+
+// 更新品牌選項
+function updateBrandOptions(brands) {
+    const select = $('#brand-select');
+    let options = '<option value="">所有品牌</option>';
+    brands.forEach(brand => {
+        options += `<option value="${brand.brand_id}" ${brand.brand_id == $('#brand-select').val() ? 'selected' : ''}>${brand.brand_name}</option>`;
+    });
+    select.html(options);
+}
+
+// 更新系列選項
+function updateSeriesOptions(series) {
+    const select = $('#series-select');
+    let options = '<option value="">所有系列</option>';
+    series.forEach(seriesItem => {
+        options += `<option value="${seriesItem.series_id}" ${seriesItem.series_id == $('#series-select').val() ? 'selected' : ''}>${seriesItem.series_name}</option>`;
+    });
+    select.html(options);
+}
+    
+        // 更新商品列表顯示
+        function updateProductList(products) {
+            const productList = $('#all-products');
+            if (products && products.length > 0) {
+                let tableHtml = `<table class="table table-striped">
+                    <thead><tr>
+                        <th>圖片</th>
+                        <th>商品名稱</th>
+                        <th>品牌</th>
+                        <th>分類</th>
+                        <th>系列</th>
+                        <th>價格</th>
+                        <th>庫存</th>
+                        <th>操作</th>
+                    </tr></thead><tbody>`;
+    
+                products.forEach(product => {
+                    tableHtml += `
+                        <tr>
+                            <td>${product.image_url ? 
+                                `<img src="${product.image_url}" alt="${product.product_name}" style="width: 50px; height: 50px; object-fit: cover;">` : 
+                                '<span>無圖片</span>'}
+                            </td>
+                            <td>${product.product_name}</td>
+                            <td>${product.brand_name}</td>
+                            <td>${product.category_name}</td>
+                            <td>${product.series_name}</td>
+                            <td>${product.price}</td>
+                            <td>${product.stock}</td>
+                            <td>
+                                <a href="/store_backend/edit_product/${product.id}/" class="btn btn-primary btn-sm">編輯</a>
+                                <button class="btn btn-danger btn-sm delete-product" 
+                                    data-product-id="${product.id}" 
+                                    data-product-name="${product.product_name}">刪除</button>
+                            </td>
+                        </tr>`;
+                });
+    
+                tableHtml += '</tbody></table>';
+                productList.html(tableHtml);
+                bindDeleteProductEvent();
+            } else {
+                productList.html('<p>暫無商品</p>');
+            }
+        }
+    
+        // 綁定刪除按鈕事件
+        function bindDeleteProductEvent() {
+            $('.delete-product').on('click', function() {
+                const productId = $(this).data('product-id');
+                const productName = $(this).data('product-name');
+                
+                if (confirm(`確定要刪除商品 "${productName}" 嗎？此操作無法恢復。`)) {
+                    $.ajax({
+                        url: `/store_backend/delete_product/${productId}/`,
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                fetchProducts(); // 重新加載商品列表
+                                alert('商品已成功刪除！');
+                            } else {
+                                alert(response.message || '刪除商品失敗');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Delete request failed:', error);
+                            alert('刪除商品時發生錯誤，請稍後再試。');
+                        }
+                    });
+                }
+            });
+        }
+    
+        // 監聽搜索表單提交
+        $('#search-form').on('submit', function(e) {
+            e.preventDefault();
+            fetchProducts();
+        });
+    
+        // 監聽所有篩選條件的變化
+        $('#filter-form select, #filter-form input').on('change', debounce(fetchProducts, 300));
+        
+        // 監聽搜索輸入
+        $('#search-input').on('input', debounce(fetchProducts, 300));
+    
+        // 初始加載
+        fetchProducts();
+    
+        // 初始綁定刪除按鈕事件
+        bindDeleteProductEvent();
+    });
+    </script>
+{% endblock %}

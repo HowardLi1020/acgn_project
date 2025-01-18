@@ -1,0 +1,96 @@
+{% extends "[BASE]ALL.html" %}
+{% load static %}
+{% block app_title %}
+<h1 class="mb-3">優惠券管理</h1>
+{% endblock %}
+{% block app_content %}
+<div class="container mt-4">
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+        <div class="alert alert-success" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="coupon-list">
+        {% if coupons %}
+        <!-- 如果有優惠券，顯示表格 -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>優惠券代碼</th>
+                    <th>折扣類型</th>
+                    <th>折扣值</th>
+                    <th>最小消費</th>
+                    <th>最大折扣</th>
+                    <th>開始日期</th>
+                    <th>結束日期</th>
+                    <th>是否啟用</th>
+                    <th>創建日期</th>
+                    <th>更新日期</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for coupon in coupons %}
+                <tr>
+                    <td>{{ coupon.coupon_code }}</td>
+                    <td>
+                        {% if coupon.discount_type == "percentage" %}
+                            百分比折扣
+                        {% elif coupon.discount_type == "amount" %}
+                            固定金額折扣
+                        {% else %}
+                            未知類型
+                        {% endif %}
+                    </td>
+                    <td>{{ coupon.discount_value }}</td>
+                    <td>{{ coupon.min_purchase|default:"-" }}</td>
+                    <td>{{ coupon.max_discount|default:"-" }}</td>
+                    <td>{{ coupon.start_date }}</td>
+                    <td>{{ coupon.end_date }}</td>
+                    <td>{{ coupon.is_active|yesno:"是,否" }}</td>
+                    <td>{{ coupon.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ coupon.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'promotions:edit_coupon' coupon.coupon_id %}" class="btn btn-warning btn-sm">編輯</a>
+                        <a href="{% url 'promotions:delete_coupon' coupon.coupon_id %}" class="btn btn-danger btn-sm">刪除</a>
+                        <a href="{% url 'promotions:assign_coupon' coupon_id=coupon.coupon_id %}" class="btn btn-primary btn-sm">分派</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <!-- 如果沒有優惠券，顯示提示信息 -->
+        <p class="text-center">目前尚無優惠券，請新增一個優惠券。</p>
+        {% endif %}
+        
+        <!-- 新增優惠券按鈕 -->
+        <div class="text-center mt-4">
+            <a href="{% url 'promotions:add_coupon' %}" class="btn btn-success">新增優惠券</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block app_css %}
+<style>
+    .table {
+        table-layout: auto; /* 表格根據內容自適應寬度 */
+        width: 100%; /* 確保表格佔據容器寬度 */
+    }
+    .table th, .table td {
+        vertical-align: middle; /* 讓文字在單元格中垂直居中 */
+        padding: 8px; /* 增加內邊距，避免文字過於擁擠 */
+        white-space: nowrap; /* 避免內容自動換行 */
+    }
+    .thead-light th {
+        background-color: #f8f9fa; /* 表頭背景色 */
+    }
+    .btn-sm {
+        min-width: 70px; /* 設定按鈕最小寬度，保持整齊 */
+    }
+</style>
+{% endblock %}

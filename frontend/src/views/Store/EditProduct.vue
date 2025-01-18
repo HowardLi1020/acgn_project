@@ -195,12 +195,22 @@ const handleSubmit = async (event) => {
     isSubmitting.value = true;
 
     try {
+        // 計算實際剩餘的圖片數量
+        // 原有圖片數量 (imagePreviews.value.length - images.value.length) - 被標記刪除的數量 (deletedImages.value.length) + 新上傳的圖片數量 (images.value.length)
+        const remainingImagesCount = imagePreviews.value.length;
+
+        if (remainingImagesCount < 1) {
+            await Swal.fire({
+                title: "錯誤",
+                text: "至少需要一張圖片",
+                icon: "error",
+            });
+            return;
+        }
+
         const formDataToSend = new FormData();
         formDataToSend.append("product_name", formData.value.product_name);
-        formDataToSend.append(
-            "description_text",
-            formData.value.description_text
-        );
+        formDataToSend.append("description_text", formData.value.description_text);
         formDataToSend.append("category", formData.value.category);
         formDataToSend.append("brand", formData.value.brand);
         formDataToSend.append("series", formData.value.series);
@@ -214,10 +224,9 @@ const handleSubmit = async (event) => {
 
         // 添加新上傳的圖片
         images.value.forEach((image) => {
-            formDataToSend.append("images", image);
+            formDataToSend.append("image_url", image);  // 修改為 image_url 以匹配後端
         });
 
-        // 使用 PUT 方法更新商品
         const response = await fetch(
             `${apiUrl}/store/edit_product/${productId}/`,
             {
@@ -240,7 +249,7 @@ const handleSubmit = async (event) => {
         router.push("/store/my-products");
     } catch (error) {
         console.error("Error:", error);
-        Swal.fire({
+        await Swal.fire({
             title: "錯誤",
             text: error.message || "更新商品失敗",
             icon: "error",
@@ -286,18 +295,32 @@ const handleFileUpload = (event) => {
 };
 
 const removeImage = (index) => {
-    // 如果是原有的圖片（從服務器加載的）
-    if (index < imagePreviews.value.length && !images.value[index]) {
-        // 記錄要刪除的圖片URL
+    // 計算原始圖片數量（從伺服器載入的圖片）
+    const originalImagesCount = imagePreviews.value.length - images.value.length;
+
+    // 計算刪除後的總圖片數量
+    const totalImagesAfterDelete = imagePreviews.value.length - 1;
+
+    // 檢查刪除後是否還有圖片
+    if (totalImagesAfterDelete < 1) {
+        Swal.fire({
+            title: "錯誤",
+            text: "至少需要保留一張商品圖片",
+            icon: "error",
+        });
+        return;
+    }
+
+    // 如果是原有圖片（從伺服器載入的）
+    if (index < originalImagesCount) {
         const imageUrl = imagePreviews.value[index];
         deletedImages.value.push(imageUrl);
     } else {
         // 如果是新上傳的圖片
-        const localIndex = index - (imagePreviews.value.length - images.value.length);
-        if (localIndex >= 0) {
-            images.value.splice(localIndex, 1);
-        }
+        const newImageIndex = index - originalImagesCount;
+        images.value.splice(newImageIndex, 1);
     }
+
     // 從預覽中移除
     imagePreviews.value.splice(index, 1);
 };

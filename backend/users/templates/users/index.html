@@ -67,7 +67,12 @@
             <td>{{ member.user_birth }}</td>
             <td>{{ member.vip_status }}</td>
 
-            <td><img style="height: 80px;" src="{{ MEDIA_URL }}{{ member.user_avatar }}" alt="{{ member.user_name }}"></td>
+            <td>
+                <img style="height: 80px;" 
+     src="{% if member.avatar_url %}{{ member.avatar_url }}{% else %}{{ MEDIA_URL }}{{ member.user_avatar }}{% endif %}" 
+     alt="{{ member.user_name }}">
+                
+                <!-- <img style="height: 80px;" src="{{ MEDIA_URL }}{{ member.user_avatar }}" alt="{{ member.user_name }}"></td> -->
             <td>
                 <a href="{% url 'users:personal' %}?id={{ member.user_id }}" class="btn btn-outline-primary">個人頁面</a>
                 <a href="{% url 'users:edit' %}?id={{ member.user_id }}" class="btn btn-outline-primary">修改資料</a>

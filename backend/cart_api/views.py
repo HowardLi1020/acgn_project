@@ -1,143 +1,146 @@
+from django.shortcuts import  get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from cart.models import Orders, OrderItems, ShoppingCartItems
-from .serializers import (
-    OrdersSerializer,
-    OrderItemsSerializer,
-    ShoppingCartItemsSerializer,
-)
+from authentication.permissions import IsAuthenticatedWithCustomToken
+from cart.models import ShoppingCartItems, Orders, OrderItems
+from products.models import Products
+from cart_api.serializers import ShoppingCartItemsSerializer, OrdersSerializer
+from django.db import transaction
+#購物車功能
+class ShoppingCartView(APIView):
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from cart.models import ShoppingCartItems
-from .serializers import ShoppingCartItemsSerializer
-from rest_framework.permissions import IsAuthenticated
-
-
-class ShoppingCartListView(APIView):
-    """
-    查看用戶購物車
-    """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+    
+    #獲取當前用戶購物車內容
     def get(self, request):
-        user = request.user
-        cart_items = ShoppingCartItems.objects.filter(member=user)
-        serializer = ShoppingCartItemsSerializer(cart_items, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ShoppingCartAddView(APIView):
-    """
-    添加商品到購物車
-    """
-    permission_classes = [IsAuthenticated]
+        cart_items = ShoppingCartItems.objects.filter( user = request.user )
+        serializer = ShoppingCartItemsSerializer(cart_items, many=True, context={'request': request} )
+        # print("Authorization Header:", request.headers.get("Authorization"))
+        return Response(serializer.data)
+    
+    #在商店新增商品到購物車
     def post(self, request):
-        serializer = ShoppingCartItemsSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "商品已成功加入購物車"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        product_id = request.data.get('product_id')
+        quantity = request.data.get('quantity', 1 )
+        product = get_object_or_404(Products, product_id = product_id)
 
-
-class ShoppingCartUpdateView(APIView):
-    """
-    更新購物車中的商品數量
-    """
-    permission_classes = [IsAuthenticated]
-    def put(self, request, cart_item_id):
+        #檢查購物車內是否已有該商品，如果有直接做數量上的增加
         try:
-            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id)
-            serializer = ShoppingCartItemsSerializer(cart_item, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "購物車更新成功"}, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            cart_item = ShoppingCartItems.objects.get(user=request.user, product=product)
+            # 如果存在，直接更新數量
+            cart_item.quantity += quantity
+            cart_item.save()
+            message = '商品數量已更新到購物車'
         except ShoppingCartItems.DoesNotExist:
-            return Response({"error": "購物車項目不存在"}, status=status.HTTP_404_NOT_FOUND)
+            # 如果不存在，創建新的條目
+            cart_item = ShoppingCartItems.objects.create(
+            user=request.user, 
+            product=product, 
+            quantity=quantity
+            )
+            message = '商品已成功添加到購物車'
+        return Response({'message':message}, status = status.HTTP_201_CREATED)
 
+    #在購物車內更新商品的數量
+    def put(self, request):
+        product_id = request.data.get('product_id')
+        action = request.data.get('action') # 'increment' 或 'decrement'
+        cart_item = get_object_or_404(ShoppingCartItems, user = request.user , product_id = product_id )
 
-class ShoppingCartDeleteView(APIView):
-    """
-    從購物車中移除商品
-    """
-    permission_classes = [IsAuthenticated]
-    def delete(self, request, cart_item_id):
-        try:
-            cart_item = ShoppingCartItems.objects.get(pk=cart_item_id)
-            cart_item.delete()
-            return Response({"message": "商品已從購物車中移除"}, status=status.HTTP_204_NO_CONTENT)
-        except ShoppingCartItems.DoesNotExist:
-            return Response({"error": "購物車項目不存在"}, status=status.HTTP_404_NOT_FOUND)
+        if action == 'increment':
+            cart_item.quantity += 1
+        if action == 'decrement':
+            cart_item.quantity -= 1
+        cart_item.save()
 
+        return Response({'message':'商品數量已更新'}, status=status.HTTP_200_OK)
+    
+    #移除購物車內的商品
+    def delete(self, request):
+        product_id = request.data.get('product_id')
+        cart_item = get_object_or_404(ShoppingCartItems, user = request.user, product_id = product_id )
+        cart_item.delete()
+        return Response({'message':'商品已從購物車移除'}, status=status.HTTP_200_OK)
 
-class OrderCreateView(APIView):
-    """
-    用戶提交訂單
-    """
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
+#訂單功能
+class OrdersView(APIView):
+
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
+    #建立訂單
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        # 接收前端提交的數據
         serializer = OrdersSerializer(data=request.data)
-        if serializer.is_valid():
-            # 創建訂單
-            order = serializer.save()
+        if not serializer.is_valid():
+            print("序列化器錯誤：", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            # 從購物車生成 OrderItems
-            cart_items = ShoppingCartItems.objects.filter(member=request.user)
-            for cart_item in cart_items:
-                OrderItems.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    quantity=cart_item.quantity,
-                    product_price=cart_item.product.price,
-                    subtotal=cart_item.quantity * cart_item.product.price,
-                )
+        # 創建訂單，將前端提交的總金額存入 total_amount
+        order = serializer.save(user=request.user)
 
-            # 清空購物車
-            cart_items.delete()
+        # 從購物車提取數據並重新計算總金額
+        cart_items = ShoppingCartItems.objects.filter(user=request.user)
+        if not cart_items.exists():
+            # 刪除訂單並返回錯誤
+            order.delete()
+            return Response({"message": "購物車內沒有商品，無法創建訂單。"}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({
-                "message": "訂單提交成功",
-                "order_id": order.order_id
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        backend_total_amount = 0
+        for cart_item in cart_items:
+            backend_total_amount += cart_item.product.price * cart_item.quantity
 
+        # 比對前端提交的 total_amount 和後端計算的金額
+        if order.total_amount != backend_total_amount:
+            # 刪除訂單
+            order.delete()
+            return Response(
+                {"message": "總金額錯誤，請重新創建訂單。"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-class UserOrdersView(APIView):
-    """
-    用戶查看自己的所有訂單
-    """
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        user = request.user
-        orders = Orders.objects.filter(member=user)
-        serializer = OrdersSerializer(orders, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # 金額一致，更新訂單總金額並保存訂單
+        order.total_amount = backend_total_amount
+        order.save()
 
-class OrderDetailView(APIView):
-    """
-    查看單個訂單詳細信息（包含購物細項）
-    """
-    permission_classes = [IsAuthenticated]
+        # 將購物車項目轉移到 OrderItems
+        for cart_item in cart_items:
+            OrderItems.objects.create(
+                order=order,
+                product=cart_item.product,
+                product_price=cart_item.product.price,
+                quantity=cart_item.quantity,
+                subtotal=cart_item.product.price * cart_item.quantity,
+            )
 
-    def get(self, request, order_id):
+        # 清空購物車
+        cart_items.delete()
+
+        return Response(
+            {
+                "message": "訂單建立成功",
+                "data": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    #刪除訂單
+    def delete(self, request, order_id, *args, **kwargs):
         try:
-            # 使用 select_related 和 prefetch_related 提高效能
-            order = Orders.objects.select_related('member').prefetch_related(
-                'orderitems_set__product'
-            ).get(pk=order_id)
-
-            # 使用統一的 OrdersSerializer，包括訂單細項
-            order_serializer = OrdersSerializer(order)
-
-            return Response({
-                "status": "success",
-                "message": "訂單詳情獲取成功",
-                "data": order_serializer.data
-            }, status=status.HTTP_200_OK)
+            # 確保僅能刪除與當前用戶相關的訂單
+            order = Orders.objects.get(order_id=order_id, user=request.user)
+            order.delete()
+            return Response(
+                {
+                    "message" : "訂單已刪除",
+                },
+                status= status.HTTP_204_NO_CONTENT
+            )
         except Orders.DoesNotExist:
-            return Response({
-                "status": "error",
-                "message": "訂單不存在"
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "message" : "無此訂單",
+                },
+                status= status.HTTP_404_NOT_FOUND
+            )

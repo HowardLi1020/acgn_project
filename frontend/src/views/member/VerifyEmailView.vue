@@ -15,6 +15,7 @@ const API_URL = `${BASE_URL}verify-email/${token}/`;
 // 處理 URL 中的 status 參數
 const handleStatusResponse = () => {
   if (status === 'success') {
+    localStorage.removeItem('formData'); // 清空註冊資料
     isVerificationPopupVisible.value = true; // 顯示成功彈窗
   } else if (status === 'invalid') {
     Swal.fire('驗證失敗', '您的驗證鏈接無效', 'error');
@@ -31,6 +32,7 @@ const handleBackendVerification = async () => {
     const response = await fetch(API_URL); // 調用後端 API
     const data = await response.json(); // 獲取 JSON 數據
     if (data.message === 'success') {
+      localStorage.removeItem('formData'); // 清空註冊資料
       isVerificationPopupVisible.value = true; // 顯示成功彈窗
     } else {
       Swal.fire('驗證失敗', '您的驗證鏈接無效或已過期', 'error');

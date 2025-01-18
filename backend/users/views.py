@@ -12,6 +12,7 @@ from django.db import transaction
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.timezone import now
+from urllib.parse import unquote 
 # Create your views here.
 
 # 1. 後台-用戶管理首頁(總覽)   OKOK!!
@@ -19,6 +20,18 @@ def index(request):
     # 資料庫的操作    
     # 讀取會員所有資料
     members = MemberBasic.objects.all()
+
+    # 修正圖片 URL
+    for member in members:
+        if member.user_avatar:
+            # 解碼 URL
+            decoded_avatar = unquote(member.user_avatar.url)
+
+            if decoded_avatar.startswith('/media/https:/'):
+                member.avatar_url = decoded_avatar.replace('/media/', '')
+            else:
+                member.avatar_url = decoded_avatar  # 不修改
+
     # return JsonResponse(members, safe=False)
     return render(request, "users/index.html", {"members":members} )
 
@@ -137,6 +150,15 @@ def hand_verify(request):
 def personal(request):
     id = request.GET.get("id", 1)
     member = MemberBasic.objects.get(user_id=id)
+    if member.user_avatar:
+            # 解碼 URL
+            decoded_avatar = unquote(member.user_avatar.url)
+
+            if decoded_avatar.startswith('/media/https:/'):
+                member.avatar_url = decoded_avatar.replace('/media/', '')
+            else:
+                member.avatar_url = decoded_avatar  # 不修改
+                
     account, created = MemberPrivacy.objects.get_or_create(user_id=id)
     return render(request, "users/personal.html", {"member": member, "account": account})
 

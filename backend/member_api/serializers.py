@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from users.models import MemberBasic, MemberIndextype, MemberLogin,  MemberPhotos, MemberPrivacy, MemberVerify
-from promotions.models import Coupons
+from users.models import MemberBasic, MemberIndextype, MemberLogin,  MemberPrivacy, MemberVerify
+from member_api.models import Usercoupons
 from cart.models import Orders
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.timezone import now
@@ -135,24 +135,20 @@ class VerifySerializer(serializers.ModelSerializer):
 class UploadAvatarSerializer(serializers.Serializer):
     avatar = serializers.ImageField(required=True)
 
-
-
-# 尚未使用 MemberIndextype
-class FavoriteSerializer(serializers.ModelSerializer):
+# 6. 使用者網站個人喜好排序
+class MemberIndextypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberIndextype
-        fields = '__all__'
+        fields = ['type_name', 'sort_order']
+
+# 7. 空序列化器
+class EmptySerializer(serializers.Serializer):
+    pass
 
 # 尚未使用 MemberPrivacy
 class PrivacySerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberPrivacy
-        fields = '__all__'
-
-# 尚未使用 Coupon
-class CouponSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Coupons
         fields = '__all__'
 
 # 尚未使用 第三方登入
@@ -165,11 +161,4 @@ class ThirdLoginSerializer(serializers.ModelSerializer):
 class OrderdetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Orders
-        fields = '__all__'
-
-# 尚未使用 MemberPhotos
-class PhotoSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = MemberPhotos
         fields = '__all__'

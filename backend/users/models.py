@@ -10,9 +10,9 @@ from django.db import models
 
 class MemberBasic(models.Model):
     user_id = models.AutoField(primary_key=True)
-    user_name = models.CharField(unique=True, max_length=20)
-    user_password = models.CharField(max_length=128)
-    user_phone = models.CharField(unique=True, max_length=10)
+    user_name = models.CharField(unique=True, max_length=50)
+    user_password = models.CharField(max_length=128, null=True)
+    user_phone = models.CharField(unique=True, max_length=10, null=True)
     user_email = models.CharField(unique=True, max_length=120)
     user_nickname = models.CharField(max_length=20, blank=True, null=True)
     user_gender = models.CharField(max_length=17, blank=True, null=True)
@@ -30,13 +30,13 @@ class MemberBasic(models.Model):
 
 
 class MemberLogin(models.Model):
-    login_id = models.IntegerField(primary_key=True)
+    login_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
-    provider = models.CharField(max_length=50, blank=True, null=True)
-    provider_id_google = models.CharField(unique=True, max_length=50, blank=True, null=True)
-    provider_id_line = models.CharField(unique=True, max_length=50, blank=True, null=True)
-    provider_id_fb = models.CharField(unique=True, max_length=50, blank=True, null=True)
-    access_token = models.CharField(unique=True, max_length=50, blank=True, null=True)
+    provider = models.CharField(max_length=50)
+    google_user_id = models.CharField(unique=True, max_length=50, blank=True, null=True)
+    line_user_id = models.CharField(unique=True, max_length=50, blank=True, null=True)
+    fb_user_id = models.CharField(unique=True, max_length=50, blank=True, null=True)
+    access_token = models.CharField(unique=True, max_length=128, blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
@@ -46,15 +46,17 @@ class MemberLogin(models.Model):
 
 
 class MemberIndextype(models.Model):
-    type_id = models.IntegerField(primary_key=True)
+    type_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
     type_name = models.CharField(max_length=50, blank=True, null=True)
+    sort_order = models.IntegerField()
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'member_indextype'
+        unique_together = ('user', 'type_name')  # 確保用戶的喜好項目是唯一的
 
 
 class MemberPhotos(models.Model):
@@ -113,16 +115,4 @@ class ProductWishlist(models.Model):
         db_table = 'product_wishlist'
 
 
-class Usercoupons(models.Model):
-    user_coupon_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
-    coupon = models.ForeignKey('promotions.Coupons', models.DO_NOTHING)
-    is_used = models.IntegerField(blank=True, null=True)
-    used_in_order = models.ForeignKey('cart.Orders', models.DO_NOTHING, blank=True, null=True)
-    used_at = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(blank=True, null=True)
 
-    class Meta:
-        managed = False
-        db_table = 'usercoupons'

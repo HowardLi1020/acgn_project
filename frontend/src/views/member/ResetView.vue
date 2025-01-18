@@ -1,126 +1,132 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user'; // 引入用於處理認證的 Store
 
-const route = useRoute(); // 獲取當前路由
-const router = useRouter(); // 用於路由跳轉
+const authStore = useUserStore(); // 用於獲取登入狀態和用戶信息
 
 const BASE_URL = import.meta.env.VITE_MemberApi;
-const code = route.params.code; // 提取 URL 中的令牌
 const API_URL = `${BASE_URL}reset/`;
 
 // 表單數據
 const formData = ref({
     user_email: ''
-})
+});
 
 // 錯誤信息
 const errors = ref({
     user_email: '',
     general: ''
-})
+});
 
 // 表單狀態
-const isSubmitting = ref(false)
+const isSubmitting = ref(false);
+const isSuccess = ref(false); // 控制成功樣式
 
-const isSuccess = ref(false) // 控制成功樣式
+// 用戶是否已登入
+const isLoggedIn = ref(authStore.isAuthenticated); // 判斷用戶是否登入
 
-// 驗證電子郵箱格式
-const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-}
+// 在已登入情況下初始化電子郵箱
+onMounted(() => {
+    if (isLoggedIn.value) {
+        const userEmail = authStore.user?.user_email; // 獲取用戶的郵箱（儲在 authStore.user）
+        if (userEmail) {
+            formData.value.user_email = userEmail;
+        }
+    }
+});
 
 // 驗證表單
 const validateForm = () => {
-    let isValid = true
-    
-    // 重置錯誤信息
-    Object.keys(errors.value).forEach(key => errors.value[key] = '')
+    let isValid = true;
+    errors.value.user_email = '';
 
     // 驗證電子郵箱
-    if (!formData.value.user_email) {
-        errors.value.user_email = '請輸入電子郵箱'
-        isValid = false
-        isSuccess.value = false
-    } else if (!validateEmail(formData.value.user_email)) {
-        errors.value.user_email = '請輸入有效的電子郵箱格式'
-        isValid = false
+    const emailError = authStore.validateEmail(formData.value.user_email);
+    if (emailError) {
+      errors.value.user_email = emailError;
+      isValid = false;
     }
 
-    return isValid
-}
+    if (!isLoggedIn.value) {
+        // 如果未登入，用戶必須輸入電子郵箱
+        if (!formData.value.user_email) {
+            errors.value.user_email = '請輸入電子郵箱';
+            isValid = false;
+        } else if (!validateEmail(formData.value.user_email)) {
+            errors.value.user_email = '請輸入有效的電子郵箱格式';
+            isValid = false;
+        }
+    }
+
+    return isValid;
+};
 
 // 提交表單
 const handleSubmit = async (event) => {
-    event.preventDefault()
-    
+    event.preventDefault();
+
     if (!validateForm()) {
-        return
+        return;
     }
 
     try {
-        isSubmitting.value = true
-        
-        // 這裡添加實際的 API 調用
+        isSubmitting.value = true;
+
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        if (isLoggedIn.value) {
+            headers.Authorization = `Bearer ${authStore.accessToken}`;
+      }
+
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify({
               user_email: formData.value.user_email
             })
-        })
+        });
 
         if (!response.ok) {
-            throw new Error('重置密碼請求失敗')
+            // 解析錯誤訊息
+            const errorData = await response.json();
+            throw new Error(errorData.message || '重置密碼請求失敗');
         }
 
-        // 顯示成功信息
-        errors.value.general = '如果電子郵箱存在，我們會發送重置鏈接'
-        isSuccess.value = true
+        errors.value.general = '如果電子郵箱存在，我們會發送重置連結~!';
+        isSuccess.value = true;
     } catch (error) {
-        errors.value.general = error.message || '發送重置密碼郵件時發生錯誤，請稍後重試'
-        isSuccess.value = false
+        errors.value.general = error.message || '發送重置密碼郵件時發生錯誤，請稍後重試';
+        isSuccess.value = false;
     } finally {
-        isSubmitting.value = false
+        isSubmitting.value = false;
     }
-}
+};
 </script>
 
 <template>
   <div class="page-container">
-    <!-- 左側表單 -->
     <div class="form-section">
       <div class="form-content">
-        <div class="text-center mb-4">	
+        <div class="text-center mb-4">
           <RouterLink :to="{ name: 'Reset' }" class="app-logo">
             <img class="rounded-circle" src="@/assets/img/acgn-icon.jpg" alt="Logo" width="50" height="50">
             <h2 class="auth-heading text-center mb-4">Forgot Password ／忘記密碼</h2>
           </RouterLink>
         </div>
-        
 
         <div class="auth-intro mb-4 text-center">
-          請於下方輸入您註冊的電子郵箱，我們將發送連接至您的電子郵箱，<br>以便您快速重置密碼。<br>
+          請於下方輸入您註冊的電子郵箱，我們將發送連結至您的電子郵箱，<br>以便您快速重置密碼。<br>
           Enter your email address below. <br> We'll email you a link to a page <br> where you can easily create a new password.
         </div>
 
         <div class="auth-form-container text-left">
-          <!-- 錯誤/成功信息顯示 -->
-          <!-- <div v-if="errors.general" 
-               :class="{'alert alert-danger': errors.general.includes('失敗') || errors.general.includes('錯誤'),
-                       'alert alert-success': errors.general.includes('發送重置連接')}" 
-               role="alert">
-            {{ errors.general }}
-          </div> -->
-          <div :class="['alert', isSuccess.value ? 'alert-danger' : 'alert-success']" v-if="errors.general" role="alert">
+          <div :class="['alert', isSuccess.valueOf ? 'alert-success' : 'alert-danger']" v-if="errors.general" role="alert">
             {{ errors.general }}
           </div>
 
           <form class="auth-form resetpass-form" @submit="handleSubmit">
-            <div class="email mb-3">
+            <div class="email mb-3" v-if="!isLoggedIn">
               <label class="sr-only" for="reset-email">電子郵箱</label>
               <input 
                 id="reset-email" 
@@ -136,6 +142,10 @@ const handleSubmit = async (event) => {
               </div>
             </div>
 
+            <div v-else>
+              <p class="text-muted">已登入的用戶電子郵箱：{{ formData.user_email }}</p>
+            </div>
+
             <div class="text-center">
               <button 
                 type="submit" 
@@ -146,7 +156,7 @@ const handleSubmit = async (event) => {
               </button>
             </div>
           </form>
-          
+
           <div class="auth-option text-center pt-5">
             <RouterLink :to="{ name: 'login' }" class="app-link">Log in／登入</RouterLink>
             <span class="px-2">|</span>
@@ -156,12 +166,12 @@ const handleSubmit = async (event) => {
       </div>
     </div>
 
-    <!-- 右側背景 -->
     <div class="background-section">
       <div class="bg-image"></div>
     </div>   
   </div>
 </template>
+
 
 <style scoped>
 .page-container {

@@ -12,6 +12,29 @@ const userStore = useUserStore(); // Pinia 用戶狀態
 const BASE_URL = import.meta.env.VITE_MemberApi
 const API_URL = `${BASE_URL}auth/login/`
 
+const LINE_CLIENT_ID = "2006769537"; // 自己的 client_id
+const LINE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/verify-line/"); // 自己的 callback url
+const LINE_SCOPE = "openid%20profile%20email";   
+const LINE_STATE = "abcde"; // 可改為動態生成的隨機字串
+
+// LINE_STATE 動態生成的隨機字串
+// function generateRandomState(length = 16) {
+//   const array = new Uint8Array(length);
+//   window.crypto.getRandomValues(array);
+//   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+// }
+
+// const LINE_STATE = generateRandomState();
+// localStorage.setItem("line_state", LINE_STATE);
+// console.log("Generated LINE_STATE:", LINE_STATE);
+
+const LineLoginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CLIENT_ID}&redirect_uri=${LINE_REDIRECT_URI}&state=${LINE_STATE}&scope=${LINE_SCOPE}`;
+
+// 第三方登入 - 導向 LINE 授權頁面
+const handleLineLogin = () => {
+    window.location.href = LineLoginUrl;
+};
+
 // 表單數據
 const formData = ref({
   user_email: '',
@@ -29,17 +52,6 @@ const errors = ref({
 // 表單狀態
 const isSubmitting = ref(false)
 
-// 驗證電子郵箱格式
-const validateEmail = (user_email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(user_email)
-}
-
-// 驗證密碼強度
-const validatePassword = (user_password) => {
-  return user_password.length >= 8
-}
-
 // 驗證表單
 const validateForm = () => {
     let isValid = true
@@ -48,21 +60,17 @@ const validateForm = () => {
     Object.keys(errors.value).forEach(key => errors.value[key] = '')
 
     // 驗證電子郵箱
-    if (!formData.value.user_email) {
-        errors.value.user_email = '請輸入電子郵箱'
-        isValid = false
-    } else if (!validateEmail(formData.value.user_email)) {
-        errors.value.user_email = '請輸入有效的郵箱格式'
-        isValid = false
+    const emailError = userStore.validateEmail(formData.value.user_email);
+    if (emailError) {
+      errors.value.user_email = emailError;
+      isValid = false;
     }
 
     // 驗證密碼
-    if (!formData.value.user_password) {
-        errors.value.user_password = '請輸入密碼'
-        isValid = false
-    } else if (!validatePassword(formData.value.user_password)) {
-	  errors.value.user_password = '密碼長度至少需要8個字符'
-	  isValid = false
+    const passwordError = userStore.validatePassword(formData.value.user_password);
+    if (passwordError) {
+      errors.value.user_password = passwordError;
+      isValid = false;
     }
 
     return isValid
@@ -99,10 +107,10 @@ const handleSubmit = async (event) => {
         const data = await response.json();
         console.log("Login Response:", data);  // 打印 API 響應
 
-        const { user, tokens } = data;
+        const { user, tokens, personalLikes } = data;
 
         // 使用 Pinia 儲存用戶資料
-        userStore.login(user, tokens.access, tokens.refresh);
+        userStore.login(user, tokens.access, tokens.refresh, personalLikes);
         // localStorage 檢查
         console.log("Access Token in LocalStorage:", localStorage.getItem('access_token'));
         console.log("Refresh Token in LocalStorage:", localStorage.getItem('refresh_token'));
@@ -118,9 +126,8 @@ const handleSubmit = async (event) => {
         }
         };
 
-// 頁面載入提示信息
-onMounted(() => {
-  // Get message and type from URL parameters
+onMounted( async() => {
+  // 頁面載入提示信息
   const message = route.query.message
   const type = route.query.type
 
@@ -201,9 +208,11 @@ onMounted(() => {
         <br />
 		<!-- 放第三方登入圖示 -->
 		<hr />
-		<div class="text-center">或使用第三方登入
+		<div class="text-center">或使用第三方登入/註冊
 			<img class="rounded-circle" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
-			<img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+			<button @click.prevent="handleLineLogin">
+        <img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      </button>
 		  <img class="rounded-circle" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
 		</div>
 
@@ -212,13 +221,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- 右側背景 -->
-    <!-- <div class="background-section">
-      <div class="bg-image"></div>
-    </div> -->
 </div>
-  <!-- </div> -->
 </template>
 
 <style scoped>
