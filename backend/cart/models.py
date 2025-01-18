@@ -45,10 +45,6 @@ class OrderItems(models.Model):
         db_table = 'order_items'
         unique_together = ('order', 'product')  # 確保訂單內每個商品唯一
 
-    def save(self, *args, **kwargs):
-        self.subtotal = self.product_price * self.quantity
-        super().save(*args, **kwargs)
-
 class ShoppingCartItems(models.Model):
     cart_item_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('users.MemberBasic', on_delete=models.CASCADE)

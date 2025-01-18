@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cart.models import ShoppingCartItems
+from cart.models import ShoppingCartItems, Orders, OrderItems
 from products.models import ProductImages
 
 class ShoppingCartItemsSerializer(serializers.ModelSerializer):
@@ -18,3 +18,19 @@ class ShoppingCartItemsSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(product_image.image_url.url)
         return None
 
+class OrdersSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Orders
+        fields = [
+            'recipient', 'recipient_phone', 'city', 'region', 'detailed_address', 'postal_code',  'payment_method', 'order_status', 'total_amount'
+        ]
+
+class OrderItemsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OrderItems
+        fields = [
+            'product_id', 'product_name' , 'price', 'quantity', 'subtotal'
+        ]
+        read_only_fields = ['subtotal']
