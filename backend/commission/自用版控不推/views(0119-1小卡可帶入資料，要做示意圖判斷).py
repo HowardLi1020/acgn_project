@@ -404,11 +404,9 @@ def ViewFn_publiccard_list(request):
 def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, pk=view_fn_publiccard_id)
     
-    # 獲取該用戶的需求列表，並預加載相關的圖片
+    # 獲取該用戶的需求列表
     view_db_need_info = DbNeedInfo.objects.filter(
-        needer_id=view_db_publiccard_info.member_basic_id
-    ).prefetch_related(
-        'dbneedimages_set'  # 預加載關聯的圖片
+        needer_id=view_db_publiccard_info.member_basic_id  # 修改為正確的欄位名稱 needer_id
     ).order_by('-publish_time')  # 使用 publish_time 進行排序
     
     context = {

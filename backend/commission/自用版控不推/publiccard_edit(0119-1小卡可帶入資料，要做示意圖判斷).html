@@ -1,4 +1,4 @@
-{% extends '[BASE]ALL.html' %}
+{% extends '[BASE]ALL.html' %} 
 {% load static %} 
 {% block app_css %}
 <!-- 如果應用程式有自己的css放這邊 -->
@@ -393,7 +393,7 @@
   /* 價目表樣式 */
   .price-content-wrapper {
     padding: 15px;
-    background-color: #f1f1f1;
+    background-color: #f8f9fa;
     border-radius: 4px;
     width: 750px; /* 輸入框DIV寬度 */
   }
@@ -411,7 +411,7 @@
 
   /* 委託狀態 radio 按鈕樣式 */
   input.form-check-input.need-list-radio {
-    position: static; /* 覆蓋 .right-section .form-check-input 的定位 */
+    position: static;  /* 覆蓋 .right-section .form-check-input 的定位 */
     right: auto;
     top: auto;
     transform: none;
@@ -419,8 +419,8 @@
 
   /* 修正 form-check 的樣式 */
   .content-list .form-check.me-3 {
-    flex-direction: row; /* 覆蓋 row-reverse */
-    justify-content: flex-start; /* 覆蓋 space-between */
+    flex-direction: row;  /* 覆蓋 row-reverse */
+    justify-content: flex-start;  /* 覆蓋 space-between */
   }
 
   /* 發起過的需求 - 需求小卡樣式 */
@@ -430,79 +430,10 @@
 
   /* 需求小卡容器樣式 */
   .need-card-container {
-    position: relative; /* 為遮罩層提供定位基準 */
     border: 1px solid #ccc;
     border-radius: 5px;
     overflow: hidden;
-    margin-top: 10px;
-    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 添加陰影效果 */
-  }
-
-  /* 遮罩層樣式 */
-  .need-card-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0); /* 初始透明 */
-    pointer-events: none; /* 允許點擊穿透 */
-    transition: background-color 0.3s ease; /* 添加過渡效果 */
-    z-index: 1; /* 確保遮罩在內容之上 */
-  }
-
-  /* 非公開狀態的遮罩層 */
-  .need-card-container.private .need-card-overlay {
-    background-color: rgba(0, 0, 0, 0.2); /* 半透明黑色 */
-  }
-
-  /* 需求小卡標題樣式 - 深色版本 */
-  .need-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px;
-  }
-
-  /* 需求小卡內容樣式 - 淺色版本 */
-  .need-card-body {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    height: 100px;
-  }
-
-  /* 徵件中狀態 */
-  .need-card-header.status-recruiting {
-    background-color: #b8e7be; 
-  }
-  .need-card-body.status-recruiting {
-    background-color: #ebf8ec;
-  }
-
-  /* 截止狀態 */
-  .need-card-header.status-closed {
-    background-color: #f3cdcd; 
-  }
-  .need-card-body.status-closed {
-    background-color: #fcecec;
-  }
-
-  /* 已成交狀態 */
-  .need-card-header.status-completed {
-    background-color: #d6e8f9;
-  }
-  .need-card-body.status-completed {
-    background-color: #eef4fc;
-  }
-
-  /* 取消徵件狀態 */
-  .need-card-header.status-cancelled {
-    background-color: #CECECE;
-  }
-  .need-card-body.status-cancelled {
-    background-color: #F0F0F0; 
+    font-family: Arial, sans-serif;
   }
 
   /* 需求小卡標題樣式 */
@@ -510,23 +441,24 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: #ccc;
     padding: 5px;
   }
 
   /* 需求小卡標題文字樣式 */
   .need-card-title {
     margin: 0;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
   }
 
-  /* 需求小卡內容樣式 - 確保固定高度 */
+  /* 需求小卡內容樣式 */
   .need-card-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    height: 100px; /* 設定固定高度 */
+    background-color: #f0f0f0;
   }
 
   /* 需求小卡描述樣式 */
@@ -541,49 +473,37 @@
     color: #555;
   }
 
-  /* 需求小卡預覽圖容器樣式 */
+  /* 需求小卡預覽樣式 */
   .need-card-preview {
-    width: 80%;
-    height: 110%;
-    /* background-color: #d0d0d0; */
+    width: 80px;
+    height: 80px;
+    background-color: #d0d0d0;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* 防止圖片溢出 */
-    margin-left: 5px;
   }
 
-  /* 需求小卡預覽圖片樣式 */
-  .need-card-preview img {
-    width: auto; /* 自動寬度 */
-    height: auto; /* 自動高度 */
-    max-width: 100%; /* 最大寬度 */
-    max-height: 100%; /* 最大高度 */
-    object-fit: contain; /* 保持原圖比例 */
+  /* 需求小卡預覽文字樣式 */
+  .need-card-preview-text {
+    font-size: 14px;
+    color: #555;
   }
 
-  /* 需求小卡公開狀態樣式 */
+  /* 需求小卡狀態樣式 */
   .need-card-status {
     padding: 10px;
+    background-color: #fff;
     display: flex;
     justify-content: center;
     gap: 5px;
   }
 
-  /* 需求小卡公開狀態標籤樣式 */
+  /* 需求小卡狀態標籤樣式 */
   .need-card-status .form-check-label {
     font-size: 0.75em;
   }
-
-  /* 輸入框提示字 placeholder 樣式 */
-  .form-control::placeholder {
-    font-size: 0.875rem;  /* 14px，比預設的 16px 小一點 */
-    color: #7b838d;          /* 淺灰色 */
-    opacity: 0.8;         /* 稍微調整透明度 */
-  }
-
 </style>
-{% endblock %}
+{% endblock %} 
 {% block app_title %}
 <!-- 直接打文字即可替換各自應用程式的標題 -->
 名片資訊編輯 (使用者ID：{{ ViewKey_DbPublicCardInfo.pk }}) 
@@ -668,7 +588,7 @@
       </div>
     </div>
     <!-- 新增一個容器來包住兩個區塊 -->
-    <div class="sections-container" style="display: flex; margin-top: -100px">
+    <div class="sections-container" style="display: flex; margin-top: -100px;">
       <!-- 作品集和Tag輸入區域 -->
       <div class="profile-section">
         <!-- <div class="form-check form-switch mb-3">
@@ -753,86 +673,36 @@
               <!-- 價目表的內容 -->
               <div class="price-content-wrapper">
                 <!-- 第一行：販售項目和價格輸入 -->
-                <div
-                  class="d-flex justify-content-between align-items-stretch mb-3"
-                >
+                <div class="d-flex justify-content-between align-items-stretch mb-3">
                   <!-- 左側容器 -->
-                  <div class="me-3" style="width: 70%">
-                    <label class="form-label">販售項目</label>
-                    <div class="d-flex gap-3">  <!-- 使用 flex 容器並排項目並添加間距 -->
-                        <input
-                            type="text"
-                            class="form-control"
-                            placeholder="如：頭像、人設、半身像、上色...等"
-                            style="flex: 1;" 
-                        />
-                        <input
-                            type="text"
-                            class="form-control"
-                            placeholder="輸入價格 NTD"
-                            style="width: 120px;"  
-                        />
-                    </div>
-                    
-                    <label class="form-label mt-3">接單規則、注意事項</label>
+                  <div class="me-3" style="width: 70%;">
+                    <label class="form-label">輸入販售項目</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      placeholder="輸入販售項目"
+                    />
+                    <label class="form-label mt-3">輸入接單規則</label>
                     <textarea
                       class="form-control"
                       rows="4"
-                      placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
+                      placeholder="輸入接單規則"
                     ></textarea>
                   </div>
                   <!-- 右側容器 -->
-                  <div style="width: 40%">
+                  <div style="width: 40%;">
                     <label class="form-label">示意圖(最多兩張)</label>
-                    <div class="d-flex" style="gap: 10px; height: 85%">
-                      <div
-                        class="d-flex align-items-center justify-content-center image-upload-placeholder"
-                        style="
-                          flex: 1;
-                          background-color: #e0e0e0;
-                          border-radius: 5px;
-                          cursor: pointer;
-                        "
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          fill="currentColor"
-                          class="bi bi-plus-circle"
-                          viewBox="0 0 16 16"
-                        >
-                          <path
-                            d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
-                          />
-                          <path
-                            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
-                          />
+                    <div class="d-flex" style="gap: 10px; height: 85%;">
+                      <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                         </svg>
                       </div>
-                      <div
-                        class="d-flex align-items-center justify-content-center image-upload-placeholder"
-                        style="
-                          flex: 1;
-                          background-color: #e0e0e0;
-                          border-radius: 5px;
-                          cursor: pointer;
-                        "
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          fill="currentColor"
-                          class="bi bi-plus-circle"
-                          viewBox="0 0 16 16"
-                        >
-                          <path
-                            d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
-                          />
-                          <path
-                            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
-                          />
+                      <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                         </svg>
                       </div>
                     </div>
@@ -897,30 +767,8 @@
               <label
                 class="form-check-label form-label me-2"
                 for="switch-need-list"
-                >發起過的需求<span
-                  class="ms-2"
-                  data-bs-container="body"
-                  data-bs-toggle="popover"
-                  data-bs-trigger="hover focus"
-                  data-bs-placement="top"
-                  data-bs-content="公開狀態僅控制是否顯示在名片上，不影響是否公開於大廳"
-                  ><svg
-                    width="1em"
-                    height="1em"
-                    viewBox="0 0 16 16"
-                    class="bi bi-info-circle"
-                    fill="currentColor"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
-                    />
-                    <path
-                      d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"
-                    />
-                    <circle cx="8" cy="4.5" r="1" /></svg></span
-              ></label>
+                >發起過的需求</label
+              >
               <div class="form-check form-switch">
                 <input
                   class="form-check-input"
@@ -932,102 +780,57 @@
             </div>
             <div class="expandable-content show" id="content-need">
               <div class="d-flex flex-row flex-wrap gap-3">
-                {% if ViewKey_DbNeedInfo %} 
-                {% for HTML_need in ViewKey_DbNeedInfo %}
-                <div class="need-card" style="flex: 0 0 auto; width: 210px">
-                  <div
-                    class="need-card-container {% if not HTML_need.need_is_public %}private{% endif %}"
-                  >
-                    <div class="need-card-overlay"></div>
-                    <!-- 上層DIV -->
-                    <div class="need-card-header 
-                        {% if HTML_need.need_status == '徵件中' %}status-recruiting
-                        {% elif HTML_need.need_status == '截止' %}status-closed
-                        {% elif HTML_need.need_status == '已成交' %}status-completed
-                        {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
-                      <h5 class="need-card-title">{{ HTML_need.need_title }}</h5>
-                      <span
-                      class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-info {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
-                    >
-                      {{HTML_need.need_status}}
-                    </span>
-                    </div>
-                    <!-- 下層DIV -->
-                    <div class="need-card-body
-                        {% if HTML_need.need_status == '徵件中' %}status-recruiting
-                        {% elif HTML_need.need_status == '截止' %}status-closed
-                        {% elif HTML_need.need_status == '已成交' %}status-completed
-                        {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
-                      {% with first_need_image=HTML_need.dbneedimages_set.all|first %} 
-                      {% if first_need_image %}
-                      <div class="need-card-description" style="flex: 0 1 auto">
-                        <p class="need-card-text">
-                          {{ HTML_need.need_description|truncatechars:15 }}
-                        </p>
+                {% if ViewKey_DbNeedInfo %}
+                  {% for need in ViewKey_DbNeedInfo %}
+                    <div class="need-card" style="flex: 0 0 auto; width: 200px;">
+                      <div class="need-card-container">
+                        <!-- 上層DIV -->
+                        <div class="need-card-header">
+                          <h5 class="need-card-title">{{ need.need_title }}</h5>
+                        </div>
+                        <!-- 下層DIV -->
+                        <div class="need-card-body">
+                          <div class="need-card-description">
+                            <p class="need-card-text">{{ need.need_description|truncatechars:15 }}</p>
+                          </div>
+                          <div class="need-card-preview">
+                            {% if need.need_image %}
+                              <img src="{{ need.need_image.url }}" alt="需求預覽圖" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                              <span class="need-card-preview-text">示意預覽</span>
+                            {% endif %}
+                          </div>
+                        </div>
                       </div>
-                      <div class="need-card-preview">
-                        <img
-                          src="{{ MEDIA_URL }}commission/needID_img/{{ first_need_image.image_url }}"
-                          alt="需求預覽圖"
-                          style="object-fit: contain; width: 100%; height: 100%;"
-                        />
+                      <!-- 公開狀態切換 -->
+                      <div class="need-card-status">
+                        <div class="form-check">
+                          <label class="form-check-label badge bg-success" for="status{{ need.need_id }}_public">
+                            公開
+                          </label>
+                          <input class="form-check-input need-list-radio mx-2" 
+                                 type="radio" 
+                                 name="needStatus{{ need.need_id }}" 
+                                 id="status{{ need.need_id }}_public" 
+                                 {% if need.need_is_public %}checked{% endif %} />
+                        </div>
+                        <div class="form-check">
+                          <label class="form-check-label badge bg-secondary" for="status{{ need.need_id }}_private">
+                            非公開
+                          </label>
+                          <input class="form-check-input need-list-radio mx-2" 
+                                 type="radio" 
+                                 name="needStatus{{ need.need_id }}" 
+                                 id="status{{ need.need_id }}_private" 
+                                 {% if not need.need_is_public %}checked{% endif %} />
+                        </div>
                       </div>
-                      {% else %}
-                      <div class="need-card-description" style="flex: 1">
-                        <p class="need-card-text">
-                          {{ HTML_need.need_description|truncatechars:30 }}
-                        </p>
-                      </div>
-                      {% endif %} 
-                      {% endwith %}
                     </div>
-                  </div>
-                  <!-- 公開狀態切換 -->
-                  <div class="need-card-status">
-                    <div class="form-check">
-                      <label
-                        class="form-check-label badge bg-success"
-                        for="status{{ HTML_need.need_id }}_public"
-                      >
-                        公開
-                      </label>
-                      <input
-                        class="form-check-input need-list-radio mx-2"
-                        type="radio"
-                        name="needStatus{{ HTML_need.need_id }}"
-                        id="status{{ HTML_need.need_id }}_public"
-                        onchange="handleVisibilityChange(this, {{ HTML_need.need_id }})"
-                        {%
-                        if
-                        HTML_need.need_is_public
-                        %}checked{%
-                        endif
-                        %}
-                      />
-                    </div>
-                    <div class="form-check">
-                      <label
-                        class="form-check-label badge bg-secondary"
-                        for="status{{ HTML_need.need_id }}_private"
-                      >
-                        非公開
-                      </label>
-                      <input
-                        class="form-check-input need-list-radio mx-2"
-                        type="radio"
-                        name="needStatus{{ HTML_need.need_id }}"
-                        id="status{{ HTML_need.need_id }}_private"
-                        onchange="handleVisibilityChange(this, {{ HTML_need.need_id }})"
-                        {% if not HTML_need.need_is_public %}checked{% endif %}
-                      />
-                    </div>
-                  </div>
-                </div>
-                {% endfor %} {% else %}
-                <div class="text-muted">使用者未有發起過的需求</div>
+                  {% endfor %}
+                {% else %}
+                  <div class="text-muted">使用者未有發起過的需求</div>
                 {% endif %}
-              </div>
-              <!-- 結束水平排列的 div -->
+              </div>  <!-- 結束水平排列的 div -->
             </div>
           </li>
         </ul>
@@ -1048,7 +851,7 @@
 <!-- </div> -->
 
 <!--//row-->
-{% endblock %} 
+{% endblock %}
 {% block app_script %}
 <!-- 如果應用程式有自己的JAVA Script放這邊 -->
 
@@ -1126,7 +929,7 @@
                 <span class="work-text">${workText}</span>
                 <span class="remove-work">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                         <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                     </svg>
                 </span>
@@ -1160,28 +963,9 @@
   function toggleContent(contentId) {
     const content = document.getElementById(contentId);
     if (content) {
-      content.classList.toggle("show");
+        content.classList.toggle('show');
     }
   }
-
-  function handleVisibilityChange(radio, needId) {
-    const container = radio
-      .closest(".need-card")
-      .querySelector(".need-card-container");
-    if (radio.id === `status${needId}_private`) {
-      container.classList.add("private");
-    } else {
-      container.classList.remove("private");
-    }
-  }
-
-  // 頁面載入時初始化所有卡片狀態
-  document.addEventListener("DOMContentLoaded", function () {
-    const radios = document.querySelectorAll(".need-list-radio:checked");
-    radios.forEach((radio) => {
-      handleVisibilityChange(radio, radio.id.match(/\d+/)[0]);
-    });
-  });
 </script>
 
 {% endblock %}

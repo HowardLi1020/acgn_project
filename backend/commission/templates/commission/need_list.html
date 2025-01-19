@@ -185,7 +185,7 @@
               />
             </div>
             <div class="col-auto">
-              <button type="submit" class="btn app-btn-secondary">搜尋</button>
+              <button type="submit" class="btn app-btn-primary">搜尋</button>
             </div>
             <div class="col-auto">
               <button
@@ -430,7 +430,7 @@
                 </td>
                 <td class="cell" data-column="status">
                   <span
-                    class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-warning {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
+                    class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-info {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
                   >
                     {{HTML_need.need_status}}
                   </span>
