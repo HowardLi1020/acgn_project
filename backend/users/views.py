@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import make_password, check_password
-from users.models import MemberBasic, MemberVerify, MemberPrivacy, MemberPhotos
+from users.models import MemberBasic, MemberVerify, MemberPrivacy, MemberPhotos, MemberLogin
 from django.core.files.storage import FileSystemStorage
 import os
 from django.conf import settings
@@ -44,7 +44,16 @@ def register(request):
 def edit(request):
     id = request.GET.get('id')
     member = MemberBasic.objects.get(user_id=id)
-    
+
+    if member.user_avatar:
+            # 解碼 URL
+            decoded_avatar = unquote(member.user_avatar.url)
+
+            if decoded_avatar.startswith('/media/https:/'):
+                member.avatar_url = decoded_avatar.replace('/media/', '')
+            else:
+                member.avatar_url = decoded_avatar  # 不修改
+
     if request.method == "POST":
         # 接收使用者上傳的資料
         name = request.POST.get('username')
@@ -53,19 +62,16 @@ def edit(request):
         nickname = request.POST.get('usernickname')
         gender = request.POST.get('usergender', 'prefer_not_to_say')  # 預設值
         birth = request.POST.get('userbirth')
-        vip_status = request.POST.get("vip_status","0")
+        vip_status = request.POST.get("vip_status", "0")
 
         # 接收上傳的檔案
         userphoto = request.FILES.get('userphoto')
         if userphoto:
-            # fs = FileSystemStorage()
-            # upload_file = fs.save(userphoto.name, userphoto)
-            # 儲存到 avatars 子目錄
             fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'avatars'))
             upload_file = f"avatars/{fs.save(userphoto.name, userphoto)}"
-
         else:
             upload_file = member.user_avatar
+        print(f"upload_file: {upload_file}")  # 記錄解碼後的 URL
 
         # 有效性檢查
         valid_genders = ['male', 'female', 'prefer_not_to_say']
@@ -93,9 +99,8 @@ def edit(request):
         member.user_birth = birth
         member.vip_status = vip_status
 
-        if upload_file:
-            member.user_avatar = upload_file
         member.save()
+        print(f"Updated user_avatar in database: {member.user_avatar}")
 
         # 刪除同一用戶的重複 MemberPhoto 紀錄，只保留最新的一條
         member_photos = MemberPhotos.objects.filter(user=member)
@@ -103,11 +108,11 @@ def edit(request):
             member_photos.exclude(pk=member_photos.first().pk).delete()  # 只保留一條紀錄，刪除其他紀錄
 
         # 更新 MemberPhoto 資料
-        MemberPhotos.objects.update_or_create (
+        MemberPhotos.objects.update_or_create(
             user=member,  # 根據 member 關聯檢查
             defaults={
                 "photo_url": member.user_avatar.url if member.user_avatar and member.user_avatar.name else None,
-                "updated_at" : now()
+                "updated_at": now()
             },
         )
 
@@ -123,9 +128,10 @@ def delete(request, id):
         member = MemberBasic.objects.get(user_id=id)
         email = member.user_email
 
-        # 刪除相關的 MemberPrivacy MemberVerify 記錄
+        # 刪除相關的 MemberPrivacy MemberVerify MemberLogin 記錄
         MemberPrivacy.objects.filter(user_id=id).delete()
         MemberVerify.objects.filter(user_id=id).delete()
+        MemberLogin.objects.filter(user_id=id).delete()
 
         # 最後刪除 MemberBasic 記錄
         member.delete()

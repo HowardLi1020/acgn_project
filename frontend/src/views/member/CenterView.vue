@@ -97,6 +97,9 @@ const loadData = async () => {
     loadAvatar.value = data.user_avatar || `${BASIC_URL}/media/default.png`;
   } catch (error) {
     console.error("Error fetching member data:", error.message);
+    alert("查無此用戶紀錄，請重新登入。");
+    router.push("/login");
+    return;
   }
 };
 
