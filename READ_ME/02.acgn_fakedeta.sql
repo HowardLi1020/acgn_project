@@ -177,7 +177,7 @@ INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, user_intro
 SELECT 
     user_id,
     user_nickname,
-    user_avatar,
+    -- user_avatar,
     NULL -- 初始時用 NULL 填充 user_introduction
 FROM member_basic;
 INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, user_introduction, card_banner, card_status, last_update) VALUES 

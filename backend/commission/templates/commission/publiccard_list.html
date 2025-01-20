@@ -139,7 +139,7 @@
             <!-- 名片橫幅 -->
             <div class="app-card-thumb-holder p-3" style="background-image: url('{{ MEDIA_URL }}commission/publiccard/banner/{% if HTML_publiccard.member_basic.user_gender == 'female' %}banner_female.png{% elif HTML_publiccard.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}'); background-size: cover; background-position: center;">
                 <!-- 使用者頭像 -->
-                <img src="{{ MEDIA_URL }}commission/avatar/{{ HTML_publiccard.user_avatar }}" alt="{{HTML_publiccard.user_nickname}}的頭像" class="img-fluid rounded-circle" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                <img src="{{ MEDIA_URL }}commission/publiccard/avatar/{{ HTML_publiccard.user_avatar }}" alt="{{HTML_publiccard.user_nickname}}的頭像" class="img-fluid rounded-circle" style="max-width: 100%; max-height: 100%; object-fit: cover;">
                 <!-- 用戶ID -->
                 <span class="badge {% if HTML_publiccard.card_status == '公開' %}bg-success{% elif HTML_publiccard.card_status == '非公開' %}bg-warning{% else %}bg-secondary{% endif %}">
                     {{ HTML_publiccard.pk }}

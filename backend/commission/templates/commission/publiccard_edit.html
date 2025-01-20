@@ -628,7 +628,7 @@
         {% if ViewKey_DbPublicCardInfo.user_avatar %}
         <img
           class="avatar-img"
-          src="{{ MEDIA_URL }}commission/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}"
+          src="{{ MEDIA_URL }}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}"
           alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像"
         />
         {% endif %}
@@ -649,7 +649,6 @@
         </div>
         <button class="btn app-btn-primary">變更頭像</button>
       </div>
-
       <!-- 暱稱和介紹區域 -->
       <div class="user-info">
         <div class="nickname">
@@ -667,17 +666,14 @@
         </div>
       </div>
     </div>
+
     <!-- 新增一個容器來包住兩個區塊 -->
     <div class="sections-container" style="display: flex; margin-top: -100px">
-      <!-- 作品集和Tag輸入區域 -->
+      <!-- 喜好作品和Tag輸入區域 -->
       <div class="profile-section">
-        <!-- <div class="form-check form-switch mb-3">
-        <input class="form-check-input" type="checkbox" id="settings-switch-1" checked="">
-        <label class="form-check-label" for="settings-switch-1">依帳號設定</label>
-      </div>
-      <div class="mb-3">
-        <button class="btn app-btn-primary">變更頭像</button>      
-      </div> -->
+        <!-- 新增分隔線 -->
+        <!-- <div style="position: absolute; width: 80%; height: 1px; background-color: #dee2e6; left: 50%; transform: translateX(-50%); margin-top: -5px;"></div> -->
+        
         <form class="profile-form">
           <ul class="form-list">
             <li>
@@ -757,7 +753,7 @@
                   class="d-flex justify-content-between align-items-stretch mb-3"
                 >
                   <!-- 左側容器 -->
-                  <div class="me-3" style="width: 70%">
+                  <div class="me-3" style="width: 80%">
                     <label class="form-label">販售項目</label>
                     <div class="d-flex gap-3">  <!-- 使用 flex 容器並排項目並添加間距 -->
                         <input
@@ -766,12 +762,15 @@
                             placeholder="如：頭像、人設、半身像、上色...等"
                             style="flex: 1;" 
                         />
-                        <input
-                            type="text"
-                            class="form-control"
-                            placeholder="輸入價格 NTD"
-                            style="width: 120px;"  
-                        />
+                        <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
+                            <input
+                                type="text"
+                                class="form-control"
+                                placeholder="定價"
+                                style="width: 80px;"  
+                            />
+                            <span>NTD</span>
+                        </div>
                     </div>
                     
                     <label class="form-label mt-3">接單規則、注意事項</label>
