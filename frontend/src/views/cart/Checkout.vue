@@ -155,6 +155,7 @@ export default {
             try {
                 await orderAPI.submitOrder(orderData);
                 alert(`訂單提交成功！`);
+                this.$router.push({ name: "ShoppingCart" });
             } catch (error) {
                 alert(error.message || "提交訂單失敗！");
             } finally {
