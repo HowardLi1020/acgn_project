@@ -136,8 +136,8 @@ export default {
         },
         // 提交訂單
         async submitOrder() {
-            console.log("表單驗證狀態：", this.isFormValid);
-		    console.log("表單數據：", this.userDetails);
+            // console.log("表單驗證狀態：", this.isFormValid);
+		    // console.log("表單數據：", this.userDetails);
             if (!this.isFormValid) {
                 alert("請完整填寫收件資料！");
                 return;
@@ -149,11 +149,11 @@ export default {
                 ...this.userDetails,
                 total_amount: parseFloat(this.totalPrice),
             };
-            console.log("API 基礎 URL：", import.meta.env.VITE_APIURL);
-            console.log("提交的訂單數據：", orderData);
+            // console.log("API 基礎 URL：", import.meta.env.VITE_APIURL);
+            // console.log("提交的訂單數據：", orderData);
 
             try {
-                const response = await orderAPI.submitOrder(orderData);
+                await orderAPI.submitOrder(orderData);
                 alert(`訂單提交成功！`);
             } catch (error) {
                 alert(error.message || "提交訂單失敗！");

@@ -63,8 +63,8 @@ class ShoppingCartView(APIView):
         cart_item.delete()
         return Response({'message':'商品已從購物車移除'}, status=status.HTTP_200_OK)
 
-#訂單功能
-class OrdersView(APIView):
+#用戶端訂單功能
+class UserOrdersView(APIView):
 
     permission_classes = [IsAuthenticatedWithCustomToken]
 
@@ -144,3 +144,9 @@ class OrdersView(APIView):
                 },
                 status= status.HTTP_404_NOT_FOUND
             )
+    
+    #檢視訂單
+    def get(self, request):
+        user_orders = Orders.objects.filter(user=request.user).order_by('-created_at')
+        serializer = OrdersSerializer(user_orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

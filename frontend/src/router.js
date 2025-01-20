@@ -40,6 +40,7 @@ import FruitablesDetailView from "./views/FruitablesDetailView.vue";
 import FruitablesContactView from "./views/FruitablesContactView.vue";
 import FruitablesCartView from "./views/FruitablesCartView.vue";
 import FruitablesCheckoutView from "./views/FruitablesCheckoutView.vue";
+import OrderList from "./views/cart/OrderList.vue";
 
 
 //路由設定 path 比對 URL，比對成功就載入對應的組件
@@ -213,6 +214,12 @@ const routes =[
     path: '/checkout',
     name: 'Checkout',
     component: Checkout,
+},
+
+{
+    path: '/orderlist',
+    name: 'orderlist',
+    component: OrderList,
 },
 
 // 以下為 Pages範例模板 連結

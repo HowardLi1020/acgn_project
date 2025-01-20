@@ -291,6 +291,15 @@ export const orderAPI = {
 			}
 		}
 	},
+
+	async getOrderList() {
+        try {
+            const response = await api.get('/cart_api/order_list/'); // 後端的 API 路徑
+            return response.data; // 返回訂單清單數據
+        } catch (error) {
+            throw new Error(error.response?.data?.message || '無法獲取訂單清單');
+        }
+    },
 };
 
 

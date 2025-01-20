@@ -16,6 +16,9 @@
 			</div>
 		</div>
 		<p v-else class="empty-cart">購物車內沒有商品</p>
+		<div class="cart-summary">
+				<button @click="orderlist" class="checkout-btn">我的訂單</button>
+		</div>
 	</div>
 </template>
 
@@ -78,6 +81,10 @@ export default {
 		checkout() {
 			this.$router.push({ name: "Checkout" });
 		},
+
+		orderlist(){
+			this.$router.push({ name: "orderlist"})
+		}
 	},
 	created() {
 		this.fetchCartItems(); // 初始化時獲取購物車內容
