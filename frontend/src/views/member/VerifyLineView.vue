@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import Swal from 'sweetalert2';
 
 const route = useRoute();
 const router = useRouter();
@@ -24,7 +25,6 @@ const verifyLineLogin = async () => {
     alert(errorMessage.value);
     return;
   }
-  console.log("發送請求到後端:", LINE_URL);
   console.log("請求的 body:", { code, state });
 
   try {
@@ -35,8 +35,6 @@ const verifyLineLogin = async () => {
       },
       body: JSON.stringify({ code, state }),
     });
-
-    console.log("後端響應狀態:", response.status); // 檢查響應狀態
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -53,12 +51,18 @@ const verifyLineLogin = async () => {
     localStorage.setItem('access_token', data.tokens.access);
     localStorage.setItem('refresh_token', data.tokens.refresh);
 
-    
     console.log("資料已同步到 useUserStore:", userStore.user);
 
     // 跳轉到中心頁面，並傳遞 user_id
-    alert("即將跳轉至會員中心，請稍後~");
-    router.push({ name: 'center', params: { user_id: data.user.user_id } });
+    const result = await Swal.fire({
+        title: '即將跳轉至會員中心',
+        text: '提醒您登入後立即修改密碼與手機號，以便後續登入哦~',
+        icon: 'info',
+        confirmButtonText: '確定'
+    })
+    if (result.isConfirmed) {
+      router.push({ name: 'center', params: { user_id: data.user.user_id } });
+    }
   } catch (err) {
     console.error('驗證失敗:', err.message);
     errorMessage.value = `登入失敗: ${err.message}`;

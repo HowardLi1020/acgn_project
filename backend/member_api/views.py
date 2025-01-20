@@ -358,7 +358,6 @@ class LineLoginView(APIView):
 
             token_info = token_response.json()
             access_token = token_info.get("access_token")
-            refresh_token = token_info.get("refresh_token")
             id_token = token_info.get("id_token")
             print("獲取的 Token_info:", token_info)
 
@@ -413,44 +412,64 @@ class LineLoginView(APIView):
             display_name = profile_info.get("displayName")
             picture_url = profile_info.get("pictureUrl")
 
+            if not line_user_id or not display_name or not picture_url:
+                return Response(
+                    {"error": "無法獲取完整的用戶資訊"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             # 將 access_token 進行哈希處理
             hashed_access_token = hashlib.sha256(access_token.encode()).hexdigest()
 
-            # 查找或創建會員資料
-            user, created = MemberBasic.objects.get_or_create(
-                user_email=email,
-                defaults={
-                    "user_name": display_name,
-                    "user_avatar": picture_url,
-                    "vip_status": "0",
-                },
-            )
+            # 將 line_password line_phone 進行隨機處理
+            line_password = make_password(get_random_string(8))
+            line_phone = "09" + str(random.randint(10000000, 99999999))
 
-            # 檢查手機號碼是否存在，若不存在則不進行更新
-            if not user.user_phone:
-                # 這裡可以選擇不更新手機號碼，或者返回提示
-                pass  # 或者根據需求進行其他處理
+            # 開始資料庫事務
+            with transaction.atomic():
+                # 查找或創建會員資料
+                user, created = MemberBasic.objects.get_or_create(
+                    user_email=email,
+                    defaults={
+                        "user_name": display_name,
+                        "user_avatar": picture_url,
+                        "vip_status": "0",
+                        "user_password": line_password,
+                        "user_phone": line_phone,
+                        "user_gender": "prefer_not_to_say",
+                        "created_at": now(),
+                    },
+                )
 
-            # 如果是現有用戶，更新資料
-            if not created:
-                user.user_name = display_name
-                user.user_avatar = picture_url
-                user.vip_status = "0"
-                user.created_at = now()
-                user.updated_at = now()
-                user.save()
+                # 如果是現有用戶，更新資料
+                if not created:
+                    user.user_name = display_name
+                    user.user_avatar = picture_url
+                    user.updated_at = now()
+                    user.save()
 
-            # 更新 MemberLogin 資料
-            MemberLogin.objects.update_or_create(
-                user=user,  # 根據 user 關聯檢查
-                provider="Line",
-                defaults={
-                    "line_user_id": line_user_id,
-                    "access_token": hashed_access_token,
-                    "created_at": now(),
-                    "updated_at": now()
-                },
-            )
+                # 更新 MemberLogin 資料
+                MemberLogin.objects.update_or_create(
+                    user=user,  # 根據 user 關聯檢查
+                    provider="Line",
+                    defaults={
+                        "line_user_id": line_user_id,
+                        "access_token": hashed_access_token,
+                        "created_at": now(),
+                        "updated_at": now()
+                    },
+                )
+
+                # 更新 MemberPrivacy 資料
+                MemberPrivacy.objects.update_or_create(
+                    user=user,  # 根據 user 關聯檢查
+                    defaults={
+                        "email_verified": 1,
+                        "account_verify": 1,
+                        "created_at": now(),
+                        "updated_at": now()
+                    },
+                )
 
             # 返回用戶資料及登入 Token
             serializer = MemberSerializer(user)

@@ -2,7 +2,7 @@
 
 {% block app_css %}
 <style>
-    #img1{
+     #img1{
         width: 260px;
         height: auto;
     }
@@ -64,7 +64,8 @@
         <div class="mb-3">
             <label for="userphoto" class="form-label">頭像：</label>
             <input type="file" class="form-control" name="userphoto" id="file1"/>
-            <img id="img1" src="{{MEDIA_URL}}{{ member.user_avatar }}" alt="">
+            <img  id="img1"src="{% if member.avatar_url %}{{ member.avatar_url }}{% else %}{{ MEDIA_URL }}{{ member.user_avatar }}{% endif %}" alt="">
+            <!-- <img id="img1" src="{{MEDIA_URL}}{{ member.user_avatar }}" alt=""> -->
         </div>
         <button type="submit" class="btn btn-outline-primary" onclick="return confirm('即將修改本次操作，請問是否確定?~')">確認修改</button>
         
