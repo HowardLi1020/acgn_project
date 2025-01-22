@@ -15,7 +15,7 @@
                 <th>收件人</th>
                 <th>總金額</th>
                 <th>付款方式</th>
-                <th>狀態</th>
+                <th>訂單狀態</th>
             </tr>
         </thead>
         <tbody>
@@ -23,13 +23,39 @@
             <tr>
                 <td>{{ order.order_id }}</td>
                 <td>{{ order.recipient }}</td>
-                <td>{{ order.total_amount }}</td>
-                <td>{{ order.payment_method }}</td>
-                <td class="status {{ order.order_status|lower }}">{{ order.order_status }}</td>
+                <td>{{ order.total_amount }} 元</td>
+                <td>
+                    {% if order.payment_method == "CREDIT_CARD" %}
+                        信用卡
+                    {% elif order.payment_method == "BANK_TRANSFER" %}
+                        銀行轉帳
+                    {% elif order.payment_method == "PAYPAL" %}
+                        PayPal
+                    {% else %}
+                        未知
+                    {% endif %}
+                </td>
+                <td class="status {{ order.order_status|lower }}">
+                    {% if order.order_status == "PENDING" %}
+                        待處理
+                    {% elif order.order_status == "PROCESSED" %}
+                        已處理
+                    {% elif order.order_status == "SHIPPED" %}
+                        已發貨
+                    {% elif order.order_status == "CANCELLED" %}
+                        已取消
+                    {% else %}
+                        未知
+                    {% endif %}
+                </td>
+                <!-- <td>
+                    <a href="#" class="btn-edit">編輯</a>
+                    <button " class="btn-delete">刪除</button>
+                </td> -->
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="empty-row">目前沒有訂單。</td>
+                <td colspan="5" class="empty-row">目前沒有任何訂單。</td>
             </tr>
             {% endfor %}
         </tbody>
