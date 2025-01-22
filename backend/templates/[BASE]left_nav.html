@@ -202,8 +202,10 @@
                         </a><!--//nav-link-->
                         <div id="submenu-6" class="collapse submenu submenu-6" data-bs-parent="#menu-accordion">
                             <ul class="submenu-list list-unstyled">
-                                <li class="submenu-item"><a class="submenu-link" href="#">訂單管理</a></li>
-                                <li class="submenu-item"><a class="submenu-link" href="{% url 'promotions:coupon_list' %}">優惠券管理</a></li>
+                                <li class="submenu-item"><a class="submenu-link" href="
+                                    {% url 'cart:orders' %}">訂單管理</a></li>
+                                <li class="submenu-item"><a class="submenu-link" href="
+                                    {% url 'promotions:coupon_list' %}">優惠券管理</a></li>
                             </ul>
                         </div>
                     </li><!--//nav-item-->

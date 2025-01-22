@@ -1,0 +1,140 @@
+{% extends "[BASE]ALL.html" %}
+{% load static %}
+
+{% block app_title %}
+<h1>訂單管理</h1>
+{% endblock %}
+
+{% block app_content %}
+<h2>所有訂單</h2>
+<div class="order-table-container">
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>訂單編號</th>
+                <th>收件人</th>
+                <th>總金額</th>
+                <th>付款方式</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.order_id }}</td>
+                <td>{{ order.recipient }}</td>
+                <td>{{ order.total_amount }}</td>
+                <td>{{ order.payment_method }}</td>
+                <td class="status {{ order.order_status|lower }}">{{ order.order_status }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-row">目前沒有訂單。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block app_css %}
+<style>
+/* 通用樣式 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+/* 標題樣式 */
+h1 {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 28px;
+    color: #007bff;
+}
+
+h2 {
+    font-size: 24px;
+    margin: 20px 0;
+    text-align: left;
+    color: #444;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+}
+
+/* 表格樣式 */
+.order-table-container {
+    margin: 20px auto;
+    max-width: 80%;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.order-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 16px;
+}
+
+.order-table th, .order-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+}
+
+.order-table th {
+    background-color: #007bff;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.order-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.order-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.order-table .empty-row {
+    text-align: center;
+    font-style: italic;
+    color: #666;
+}
+
+/* 狀態樣式 */
+.status {
+    text-transform: capitalize;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.status.pending {
+    background-color: #ffc107;
+    color: #fff;
+}
+
+.status.processed {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.status.shipped {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.status.cancelled {
+    background-color: #dc3545;
+    color: #fff;
+}
+</style>
+{% endblock %}
