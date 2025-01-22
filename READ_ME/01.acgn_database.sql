@@ -336,7 +336,8 @@ CREATE TABLE db_need_info (
     deadline DATETIME,                              -- 截止時間
     last_update DATETIME,                           -- 最後更新
     need_status VARCHAR(10),                        -- 需求狀態
-    
+    public_status BOOLEAN DEFAULT TRUE,             -- 是否於名片頁公開
+
     reviewer_id INT,                                -- 評價人id（關聯資料表：使用者資訊表member_basic)
     reviewer_nickname VARCHAR(50),                  -- 評價人暱稱（關聯資料表：公開名片表db_public_card_info)
     reviewer_avatar VARCHAR(255),                   -- 評價人頭像（關聯資料表：公開名片表db_public_card_info)
@@ -421,9 +422,11 @@ CREATE TABLE db_works_preview (
 CREATE TABLE db_public_card_info (
     user_id INT NOT NULL PRIMARY KEY,                 -- 使用者id（關聯資料表：使用者資訊表member_basic）
     user_nickname VARCHAR(50) NOT NULL,               -- 使用者暱稱（關聯資料表：需求need_info、作品works_info）
-    user_avatar VARCHAR(255) NOT NULL,                -- 使用者大頭（關聯資料表：需求need_info、作品works_info）
-    user_introduction VARCHAR(300) NULL DEFAULT NULL, -- 使用者介紹（關聯資料表：需求need_info、作品works_info）
+    user_avatar VARCHAR(255) DEFAULT NULL,            -- 使用者頭像（關聯資料表：需求need_info、作品works_info）
+    use_default_avatar BOOLEAN DEFAULT TRUE,          -- 是否使用預設頭像
+    user_introduction VARCHAR(300) DEFAULT NULL,      -- 使用者介紹（關聯資料表：需求need_info、作品works_info）
     card_banner VARCHAR(255),                         -- 名片橫幅
+    use_default_banner BOOLEAN DEFAULT TRUE,          -- 是否使用預設橫幅
     card_status VARCHAR(3) DEFAULT '非公開',          -- 名片公開狀態
     involved_works TEXT,                              -- 涉獵作品
     key_tags VARCHAR(255),                            -- 關鍵Tag
@@ -433,10 +436,15 @@ CREATE TABLE db_public_card_info (
     work_original_from VARCHAR(150),                  -- 作品關聯原作（關聯資料表：作品works_info）
     work_price DECIMAL(10),                           -- 作品售價（關聯資料表：作品works_info）
     need_id INT,                                      -- 發起需求id（關聯資料表：需求need_info）
-    need_title VARCHAR(50),                           -- 發起需求標題（關聯資料表：需求need_info）
-    need_original_from VARCHAR(150),                  -- 需求關聯原作（關聯資料表：需求need_info）
-    need_price DECIMAL(10),                           -- 酬金（關聯資料表：需求need_info）
+    -- 嘗試拔掉讓它直接去db_need_info找資料
+    -- need_title VARCHAR(50),                           -- 發起需求標題（關聯資料表：需求need_info）
+    -- need_original_from VARCHAR(150),                  -- 需求關聯原作（關聯資料表：需求need_info）
+    -- need_price DECIMAL(10),                           -- 酬金（關聯資料表：需求need_info）
     deal_count INT,                                   -- 成交計數
+    sell_public_status BOOLEAN DEFAULT TRUE,          -- 價目表 是否公開開關
+    work_list_public_status BOOLEAN DEFAULT TRUE,     -- 公開作品列表 是否公開開關
+    work_done_list_public_status BOOLEAN DEFAULT TRUE,-- 已成交作品列表 是否公開開關
+    need_list_public_status BOOLEAN DEFAULT TRUE,     -- 發起需求列表 是否公開開關
     last_update DATETIME,                             -- 最後更新
     
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE RESTRICT, -- 外鍵 使用者id → member_basic使用者資訊表-使用者id
@@ -445,9 +453,9 @@ CREATE TABLE db_public_card_info (
     FOREIGN KEY (work_original_from) REFERENCES db_works_info(work_original_from) ON DELETE SET NULL, -- 外鍵 作品關聯原作 → 作品資訊表-作品關聯原作
     FOREIGN KEY (work_price) REFERENCES db_works_info(work_price) ON DELETE SET NULL, -- 外鍵 作品售價 → 作品資訊表-作品售價
     FOREIGN KEY (need_id) REFERENCES db_need_info(need_id) ON DELETE SET NULL, -- 外鍵 發起需求id → 需求資訊表-需求案id
-    FOREIGN KEY (need_title) REFERENCES db_need_info(need_title) ON DELETE SET NULL, -- 外鍵 發起需求標題 → 需求資訊表-需求標題
-    FOREIGN KEY (need_original_from) REFERENCES db_need_info(need_original_from) ON DELETE SET NULL, -- 外鍵 需求關聯原作 → 需求資訊表-需求關聯原作
-    FOREIGN KEY (need_price) REFERENCES db_need_info(need_price) ON DELETE SET NULL, -- 外鍵 酬金 → 需求資訊表-酬金
+    -- FOREIGN KEY (need_title) REFERENCES db_need_info(need_title) ON DELETE SET NULL, -- 外鍵 發起需求標題 → 需求資訊表-需求標題
+    -- FOREIGN KEY (need_original_from) REFERENCES db_need_info(need_original_from) ON DELETE SET NULL, -- 外鍵 需求關聯原作 → 需求資訊表-需求關聯原作
+    -- FOREIGN KEY (need_price) REFERENCES db_need_info(need_price) ON DELETE SET NULL, -- 外鍵 酬金 → 需求資訊表-酬金
 
     INDEX idx_user_nickname (user_nickname),
     INDEX idx_user_avatar (user_avatar),
@@ -461,7 +469,8 @@ CREATE TABLE db_public_card_sell (
     sell_title TEXT,                                  -- 販售項目
     sell_description TEXT,                            -- 販售說明
     sell_price INT,                                   -- 售價
-    sell_example_image VARCHAR(255),                  -- 範例圖
+    sell_example_image_1 VARCHAR(255),                -- 範例圖1
+    sell_example_image_2 VARCHAR(255),                -- 範例圖2
     FOREIGN KEY (user_id) REFERENCES db_public_card_info(user_id) ON DELETE CASCADE
 );
 SET FOREIGN_KEY_CHECKS = 1;

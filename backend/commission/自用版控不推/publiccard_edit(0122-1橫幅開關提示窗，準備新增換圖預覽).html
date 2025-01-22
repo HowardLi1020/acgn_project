@@ -743,120 +743,115 @@
         <ul class="content-list">
           <li>
             <div class="d-flex justify-content-between align-items-center">
-              <label class="form-check-label form-label me-2" for="switch-sell"
+              <label class="form-check-label form-label me-2" for="switch-price"
                 >接案價目表</label
               >
               <div class="form-check form-switch">
                 <input
                   class="form-check-input"
                   type="checkbox"
-                  id="switch-sell"
+                  id="switch-price"
                   checked
                 />
               </div>
             </div>
-            <div class="private-message" style="display: none;">
-              <div class="text-muted text-center py-3">使用者未開放資訊</div>
-            </div>
-            <div class="expandable-content" id="content-sell">
-              <div class="public-content">
-                <!-- 價目表的內容 -->
-                <div class="price-content-wrapper">
-                  <!-- 第一行：販售項目和價格輸入 -->
-                  <div
-                    class="d-flex justify-content-between align-items-stretch mb-3"
-                  >
-                    <!-- 左側容器 -->
-                    <div class="me-3" style="width: 80%">
-                      <label class="form-label">販售項目</label>
-                      <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
-                          <input
-                              type="text"
-                              class="form-control"
-                              placeholder="如：頭像、人設、半身像、上色...等"
-                              style="flex: 1;" 
+            <div class="expandable-content show" id="content-price">
+              <!-- 價目表的內容 -->
+              <div class="price-content-wrapper">
+                <!-- 第一行：販售項目和價格輸入 -->
+                <div
+                  class="d-flex justify-content-between align-items-stretch mb-3"
+                >
+                  <!-- 左側容器 -->
+                  <div class="me-3" style="width: 80%">
+                    <label class="form-label">販售項目</label>
+                    <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
+                        <input
+                            type="text"
+                            class="form-control"
+                            placeholder="如：頭像、人設、半身像、上色...等"
+                            style="flex: 1;" 
+                        />
+                        <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
+                            <input
+                                type="text"
+                                class="form-control"
+                                placeholder="定價"
+                                style="width: 80px;"  
+                            />
+                            <span>NTD</span>
+                        </div>
+                    </div>
+                    
+                    <label class="form-label mt-3">接單規則、注意事項</label>
+                    <textarea
+                      class="form-control"
+                      rows="4"
+                      placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
+                    ></textarea>
+                  </div>
+                  <!-- 右側容器 -->
+                  <div style="width: 40%">
+                    <label class="form-label">示意圖(最多兩張)</label>
+                    <div class="d-flex" style="gap: 10px; height: 85%">
+                      <div
+                        class="d-flex align-items-center justify-content-center image-upload-placeholder"
+                        style="
+                          flex: 1;
+                          background-color: #e0e0e0;
+                          border-radius: 5px;
+                          cursor: pointer;
+                        "
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          class="bi bi-plus-circle"
+                          viewBox="0 0 16 16"
+                        >
+                          <path
+                            d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
                           />
-                          <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
-                              <input
-                                  type="text"
-                                  class="form-control"
-                                  placeholder="定價"
-                                  style="width: 80px;"  
-                              />
-                              <span>NTD</span>
-                          </div>
+                          <path
+                            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
+                          />
+                        </svg>
                       </div>
-                      
-                      <label class="form-label mt-3">接單規則、注意事項</label>
-                      <textarea
-                        class="form-control"
-                        rows="4"
-                        placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
-                      ></textarea>
-                    </div>
-                    <!-- 右側容器 -->
-                    <div style="width: 40%">
-                      <label class="form-label">示意圖(最多兩張)</label>
-                      <div class="d-flex" style="gap: 10px; height: 85%">
-                        <div
-                          class="d-flex align-items-center justify-content-center image-upload-placeholder"
-                          style="
-                            flex: 1;
-                            background-color: #e0e0e0;
-                            border-radius: 5px;
-                            cursor: pointer;
-                          "
+                      <div
+                        class="d-flex align-items-center justify-content-center image-upload-placeholder"
+                        style="
+                          flex: 1;
+                          background-color: #e0e0e0;
+                          border-radius: 5px;
+                          cursor: pointer;
+                        "
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          class="bi bi-plus-circle"
+                          viewBox="0 0 16 16"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            fill="currentColor"
-                            class="bi bi-plus-circle"
-                            viewBox="0 0 16 16"
-                          >
-                            <path
-                              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
-                            />
-                            <path
-                              d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
-                            />
-                          </svg>
-                        </div>
-                        <div
-                          class="d-flex align-items-center justify-content-center image-upload-placeholder"
-                          style="
-                            flex: 1;
-                            background-color: #e0e0e0;
-                            border-radius: 5px;
-                            cursor: pointer;
-                          "
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            fill="currentColor"
-                            class="bi bi-plus-circle"
-                            viewBox="0 0 16 16"
-                          >
-                            <path
-                              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
-                            />
-                            <path
-                              d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
-                            />
-                          </svg>
-                        </div>
+                          <path
+                            d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
+                          />
+                          <path
+                            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
+                          />
+                        </svg>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <!-- 第二行：新增按鈕 -->
-                  <div class="d-flex justify-content-end mt-3">
-                    <button class="btn app-btn-secondary me-2">刪除本項</button>
-                    <button class="btn app-btn-primary">新增下一項</button>
-                  </div>
+                <!-- 第二行：新增按鈕 -->
+                <div class="d-flex justify-content-end mt-3">
+                  <button class="btn app-btn-secondary me-2">刪除本項</button>
+                  <button class="btn app-btn-primary">新增下一項</button>
                 </div>
               </div>
             </div>
@@ -866,26 +861,21 @@
             <div class="d-flex justify-content-between align-items-center">
               <label
                 class="form-check-label form-label me-2"
-                for="switch-work-list"
+                for="switch-portfolio"
                 >公開作品列表</label
               >
               <div class="form-check form-switch">
                 <input
                   class="form-check-input"
                   type="checkbox"
-                  id="switch-work-list"
+                  id="switch-portfolio"
                   checked
                 />
               </div>
             </div>
-            <div class="private-message" style="display: none;">
-              <div class="text-muted text-center py-3">使用者未開放資訊</div>
-            </div>
-            <div class="expandable-content" id="content-work-list">
-              <div class="public-content">
-                <!-- 作品列表的內容 -->
-                223
-              </div>
+            <div class="expandable-content show" id="content-portfolio">
+              <!-- 作品列表的內容 -->
+              223
             </div>
           </li>
 
@@ -893,26 +883,21 @@
             <div class="d-flex justify-content-between align-items-center">
               <label
                 class="form-check-label form-label me-2"
-                for="switch-work-done"
+                for="switch-completed"
                 >已成交作品</label
               >
               <div class="form-check form-switch">
                 <input
                   class="form-check-input"
                   type="checkbox"
-                  id="switch-work-done"
+                  id="switch-completed"
                   checked
                 />
               </div>
             </div>
-            <div class="private-message" style="display: none;">
-              <div class="text-muted text-center py-3">使用者未開放資訊</div>
-            </div>
-            <div class="expandable-content" id="content-work-done">
-              <div class="public-content">
-                <!-- 已成交作品的內容 -->
-                323
-              </div>
+            <div class="expandable-content show" id="content-completed">
+              <!-- 已成交作品的內容 -->
+              323
             </div>
           </li>
 
@@ -949,116 +934,109 @@
                 <input
                   class="form-check-input"
                   type="checkbox"
-                  id="switch-need-list"
+                  id="switch-need"
                   checked
                 />
               </div>
             </div>
-            <div class="private-message" style="display: none;">
-              <div class="text-muted text-center py-3">使用者未開放資訊</div>
-            </div>
-            <div class="expandable-content" id="content-need-list">
-              <div class="public-content">
-                <div class="d-flex flex-row flex-wrap gap-3">
-                  {% if ViewKey_DbNeedInfo %} 
-                  {% for HTML_need in ViewKey_DbNeedInfo %}
-                  <div class="need-card" style="flex: 0 0 auto; width: 210px">
-                    <!-- 加入隱藏的偵錯資訊 -->
-                    <div style="display: none;" 
-                         data-debug="true"
-                         data-need-id="{{ HTML_need.need_id }}"
-                         data-public-status="{{ HTML_need.public_status|lower }}">
-                    </div>
-                    
-                    <div
-                      class="need-card-container {% if not HTML_need.public_status %}private{% endif %}"
+            <div class="expandable-content show" id="content-need">
+              <div class="d-flex flex-row flex-wrap gap-3">
+                {% if ViewKey_DbNeedInfo %} 
+                {% for HTML_need in ViewKey_DbNeedInfo %}
+                <div class="need-card" style="flex: 0 0 auto; width: 210px">
+                  <div
+                    class="need-card-container {% if not HTML_need.need_is_public %}private{% endif %}"
+                  >
+                    <div class="need-card-overlay"></div>
+                    <!-- 上層DIV -->
+                    <div class="need-card-header 
+                        {% if HTML_need.need_status == '徵件中' %}status-recruiting
+                        {% elif HTML_need.need_status == '截止' %}status-closed
+                        {% elif HTML_need.need_status == '已成交' %}status-completed
+                        {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
+                      <h5 class="need-card-title">{{ HTML_need.need_title }}</h5>
+                      <span
+                      class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-info {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
                     >
-                      <div class="need-card-overlay"></div>
-                      <!-- 上層DIV -->
-                      <div class="need-card-header 
-                          {% if HTML_need.need_status == '徵件中' %}status-recruiting
-                          {% elif HTML_need.need_status == '截止' %}status-closed
-                          {% elif HTML_need.need_status == '已成交' %}status-completed
-                          {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
-                        <h5 class="need-card-title">{{ HTML_need.need_title }}</h5>
-                        <span
-                        class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-info {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
-                      >
-                        {{HTML_need.need_status}}
-                      </span>
-                      </div>
-                      <!-- 下層DIV -->
-                      <div class="need-card-body
-                          {% if HTML_need.need_status == '徵件中' %}status-recruiting
-                          {% elif HTML_need.need_status == '截止' %}status-closed
-                          {% elif HTML_need.need_status == '已成交' %}status-completed
-                          {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
-                        {% with first_need_image=HTML_need.dbneedimages_set.all|first %} 
-                        {% if first_need_image %}
-                        <div class="need-card-description" style="flex: 0 1 auto">
-                          <p class="need-card-text">
-                            {{ HTML_need.need_description|truncatechars:15 }}
-                          </p>
-                        </div>
-                        <div class="need-card-preview">
-                          <img
-                            src="{{ MEDIA_URL }}commission/needID_img/{{ first_need_image.image_url }}"
-                            alt="需求預覽圖"
-                            style="object-fit: contain; width: 100%; height: 100%;"
-                          />
-                        </div>
-                        {% else %}
-                        <div class="need-card-description" style="flex: 1">
-                          <p class="need-card-text">
-                            {{ HTML_need.need_description|truncatechars:30 }}
-                          </p>
-                        </div>
-                        {% endif %} 
-                        {% endwith %}
-                      </div>
+                      {{HTML_need.need_status}}
+                    </span>
                     </div>
-                    <!-- 公開狀態切換 -->
-                    <div class="need-card-status">
-                      <div class="form-check">
-                        <label
-                          class="form-check-label badge bg-success"
-                          for="status{{ HTML_need.need_id }}_public"
-                        >
-                          公開
-                        </label>
-                        <input
-                          class="form-check-input need-list-radio mx-2"
-                          type="radio"
-                          name="needStatus{{ HTML_need.need_id }}"
-                          id="status{{ HTML_need.need_id }}_public"
-                          onchange="handleVisibilityChange(this, {{ HTML_need.need_id }})"
-                          {% if HTML_need.public_status %}checked{% endif %}
+                    <!-- 下層DIV -->
+                    <div class="need-card-body
+                        {% if HTML_need.need_status == '徵件中' %}status-recruiting
+                        {% elif HTML_need.need_status == '截止' %}status-closed
+                        {% elif HTML_need.need_status == '已成交' %}status-completed
+                        {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
+                      {% with first_need_image=HTML_need.dbneedimages_set.all|first %} 
+                      {% if first_need_image %}
+                      <div class="need-card-description" style="flex: 0 1 auto">
+                        <p class="need-card-text">
+                          {{ HTML_need.need_description|truncatechars:15 }}
+                        </p>
+                      </div>
+                      <div class="need-card-preview">
+                        <img
+                          src="{{ MEDIA_URL }}commission/needID_img/{{ first_need_image.image_url }}"
+                          alt="需求預覽圖"
+                          style="object-fit: contain; width: 100%; height: 100%;"
                         />
                       </div>
-                      <div class="form-check">
-                        <label
-                          class="form-check-label badge bg-secondary"
-                          for="status{{ HTML_need.need_id }}_private"
-                        >
-                          非公開
-                        </label>
-                        <input
-                          class="form-check-input need-list-radio mx-2"
-                          type="radio"
-                          name="needStatus{{ HTML_need.need_id }}"
-                          id="status{{ HTML_need.need_id }}_private"
-                          onchange="handleVisibilityChange(this, {{ HTML_need.need_id }})"
-                          {% if not HTML_need.public_status %}checked{% endif %}
-                        />
+                      {% else %}
+                      <div class="need-card-description" style="flex: 1">
+                        <p class="need-card-text">
+                          {{ HTML_need.need_description|truncatechars:30 }}
+                        </p>
                       </div>
+                      {% endif %} 
+                      {% endwith %}
                     </div>
                   </div>
-                  {% endfor %} {% else %}
-                  <div class="text-muted">使用者未有發起過的需求</div>
-                  {% endif %}
+                  <!-- 公開狀態切換 -->
+                  <div class="need-card-status">
+                    <div class="form-check">
+                      <label
+                        class="form-check-label badge bg-success"
+                        for="status{{ HTML_need.need_id }}_public"
+                      >
+                        公開
+                      </label>
+                      <input
+                        class="form-check-input need-list-radio mx-2"
+                        type="radio"
+                        name="needStatus{{ HTML_need.need_id }}"
+                        id="status{{ HTML_need.need_id }}_public"
+                        onchange="handleVisibilityChange(this, {{ HTML_need.need_id }})"
+                        {%
+                        if
+                        HTML_need.need_is_public
+                        %}checked{%
+                        endif
+                        %}
+                      />
+                    </div>
+                    <div class="form-check">
+                      <label
+                        class="form-check-label badge bg-secondary"
+                        for="status{{ HTML_need.need_id }}_private"
+                      >
+                        非公開
+                      </label>
+                      <input
+                        class="form-check-input need-list-radio mx-2"
+                        type="radio"
+                        name="needStatus{{ HTML_need.need_id }}"
+                        id="status{{ HTML_need.need_id }}_private"
+                        onchange="handleVisibilityChange(this, {{ HTML_need.need_id }})"
+                        {% if not HTML_need.need_is_public %}checked{% endif %}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <!-- 結束水平排列的 div -->
+                {% endfor %} {% else %}
+                <div class="text-muted">使用者未有發起過的需求</div>
+                {% endif %}
               </div>
+              <!-- 結束水平排列的 div -->
             </div>
           </li>
         </ul>
@@ -1084,402 +1062,169 @@
 <!-- 如果應用程式有自己的JAVA Script放這邊 -->
 
 <script>
-// 新增全域變數保存使用者選擇的圖片
-let userSelectedBanner = null;
+  document.addEventListener("DOMContentLoaded", function () {
+    const tagsContainer = document.getElementById("tagsContainer");
+    const tagInput = document.getElementById("tagInput");
+    const addTagBtn = document.getElementById("addTagBtn");
 
-document.addEventListener("DOMContentLoaded", function () {
-  console.log('=== 頁面載入時的狀態檢查 ===');
-  
-  // === 橫幅相關功能初始化 ===
-  // 檢查資料庫值
-  const useDefaultBanner = {{ ViewKey_DbPublicCardInfo.use_default_banner|lower }};
-  const cardBanner = '{{ ViewKey_DbPublicCardInfo.card_banner }}';
-  const hasCustomBanner = cardBanner !== '' && cardBanner !== 'None';  // 修正判斷邏輯
-  
-  console.log('資料庫狀態:', {
-    useDefaultBanner: useDefaultBanner,
-    cardBanner: cardBanner,
-    hasCustomBanner: hasCustomBanner
-  });
+    // 新增標籤函數
+    function addTag() {
+      const tagText = tagInput.value.trim();
+      if (tagText) {
+        // 創建標籤元素
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.innerHTML = `
+                ${tagText}
+                <span class="remove-tag">×</span>
+            `;
 
-  // 初始化開關狀態
-  const switchElement = document.getElementById('settings-switch-1');
-  if (switchElement) {
-    console.log('開關元素狀態:', {
-      exists: true,
-      checked: switchElement.checked,
-      disabled: switchElement.disabled
-    });
-    
-    // 設定初始狀態
-    if (!hasCustomBanner) {
-      switchElement.checked = true;
-      switchElement.disabled = true;
-      
-      // 移除點擊事件（如果存在）
-      const switchContainer = switchElement.parentElement;
-      if (switchContainer) {
-        const newContainer = switchContainer.cloneNode(true);
-        switchContainer.parentNode.replaceChild(newContainer, switchContainer);
-        
-        // 重新綁定開關事件
-        const newSwitch = newContainer.querySelector('input');
-        if (newSwitch) {
-          newSwitch.checked = true;
-          newSwitch.disabled = true;
-        }
+        // 添加刪除功能
+        tag.querySelector(".remove-tag").addEventListener("click", function () {
+          tag.remove();
+        });
+
+        // 添加標籤到容器
+        tagsContainer.appendChild(tag);
+
+        // 清空輸入框
+        tagInput.value = "";
       }
-    } else {
-      switchElement.checked = useDefaultBanner;
-      switchElement.disabled = false;
     }
-  } else {
-    console.log('開關元素不存在');
-  }
 
-  // === 修正其他開關的事件監聽器 ===
+    // 點擊新增按鈕時添加標籤
+    addTagBtn.addEventListener("click", addTag);
+
+    // 按下 Enter 鍵時也可以添加標籤
+    tagInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addTag();
+      }
+    });
+  });
+  // 獲取所有開關
   const switches = document.querySelectorAll(".form-check-input");
+
+  // 為每個開關添加事件監聽器
   switches.forEach((switchEl) => {
     switchEl.addEventListener("change", function () {
+      // 獲取對應的內容區域 ID
       const contentId = "content-" + this.id.split("-")[1];
       const contentEl = document.getElementById(contentId);
-      
-      // 加入檢查
-      if (contentEl) {
-        if (this.checked) {
-          contentEl.classList.add("show");
-        } else {
-          contentEl.classList.remove("show");
-        }
+
+      // 使用 classList 來切換 show 類別
+      if (this.checked) {
+        contentEl.classList.add("show");
+      } else {
+        contentEl.classList.remove("show");
+      }
+    });
+
+    const worksList = document.querySelector(".favorite-works-list");
+    const workInput = document.getElementById("workInput");
+    const addWorkBtn = document.getElementById("addWorkBtn");
+
+    // 新增作品函數
+    function addWork() {
+      const workText = workInput.value.trim();
+      if (workText) {
+        // 創建作品項目
+        const li = document.createElement("li");
+        li.innerHTML = `
+                <span class="work-text">${workText}</span>
+                <span class="remove-work">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                    </svg>
+                </span>
+            `;
+
+        // 添加刪除功能
+        li.querySelector(".remove-work").addEventListener("click", function () {
+          li.remove();
+        });
+
+        // 添加作品到列表
+        worksList.appendChild(li);
+
+        // 清空輸入框
+        workInput.value = "";
+      }
+    }
+
+    // 點擊新增按鈕時添加作品
+    addWorkBtn.addEventListener("click", addWork);
+
+    // 按下 Enter 鍵時也可以添加作品
+    workInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addWork();
       }
     });
   });
 
-  // === 原標籤功能相關代碼 ===
-  const tagsContainer = document.getElementById("tagsContainer");
-  const tagInput = document.getElementById("tagInput");
-  const addTagBtn = document.getElementById("addTagBtn");
-  
-  // 新增標籤函數
-  function addTag() {
-    const tagText = tagInput.value.trim();
-    if (tagText) {
-      // 創建標籤元素
-      const tag = document.createElement("span");
-      tag.className = "tag";
-      tag.innerHTML = `
-              ${tagText}
-              <span class="remove-tag">×</span>
-          `;
-
-      // 添加刪除功能
-      tag.querySelector(".remove-tag").addEventListener("click", function () {
-        tag.remove();
-      });
-
-      // 添加標籤到容器
-      tagsContainer.appendChild(tag);
-
-      // 清空輸入框
-      tagInput.value = "";
+  function toggleContent(contentId) {
+    const content = document.getElementById(contentId);
+    if (content) {
+      content.classList.toggle("show");
     }
   }
 
-  // 點擊新增按鈕時添加標籤
-  addTagBtn.addEventListener("click", addTag);
-
-  // 按下 Enter 鍵時也可以添加標籤
-  tagInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTag();
-    }
-  });
-
-  // === 原作品列表相關代碼 ===
-  const worksList = document.querySelector(".favorite-works-list");
-  const workInput = document.getElementById("workInput");
-  const addWorkBtn = document.getElementById("addWorkBtn");
-  
-  // 新增作品函數
-  function addWork() {
-    const workText = workInput.value.trim();
-    if (workText) {
-      // 創建作品項目
-      const li = document.createElement("li");
-      li.innerHTML = `
-              <span class="work-text">${workText}</span>
-              <span class="remove-work">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                  </svg>
-              </span>
-          `;
-
-      // 添加刪除功能
-      li.querySelector(".remove-work").addEventListener("click", function () {
-        li.remove();
-      });
-
-      // 添加作品到列表
-      worksList.appendChild(li);
-
-      // 清空輸入框
-      workInput.value = "";
-    }
-  }
-
-  // 點擊新增按鈕時添加作品
-  addWorkBtn.addEventListener("click", addWork);
-
-  // 按下 Enter 鍵時也可以添加作品
-  workInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addWork();
-    }
-  });
-
-  // === 原卡片狀態初始化 ===
-  const radios = document.querySelectorAll(".need-list-radio:checked");
-  radios.forEach((radio) => {
-    handleVisibilityChange(radio, radio.id.match(/\d+/)[0]);
-  });
-
-  // 初始化需求卡片的公開狀態
-  const needCards = document.querySelectorAll('.need-card');
-  needCards.forEach(card => {
-    const publicRadio = card.querySelector('input[id$="_public"]');
-    const privateRadio = card.querySelector('input[id$="_private"]');
-    const container = card.querySelector('.need-card-container');
-    
-    if (publicRadio && privateRadio && container) {
-      // 根據選中的 radio 設置初始狀態
-      if (privateRadio.checked) {
-        container.classList.add('private');
-      } else {
-        container.classList.remove('private');
-      }
-    }
-  });
-});
-// === 橫幅相關函數定義 ===
-// 修改 showBannerAlert 函數中的事件觸發部分
-window.showBannerAlert = function() {
-  if (confirm('請先添加自訂橫幅圖片')) {
-    // 建立隱藏的檔案輸入元素
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';  // 只接受圖片檔案
-    
-    // 監聽檔案選擇事件
-    fileInput.onchange = function(e) {
-      if (e.target.files && e.target.files[0]) {
-        // 如果有選擇檔案
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-          // 保存使用者選擇的圖片
-          userSelectedBanner = e.target.result;
-          
-          // 更新橫幅圖片
-          const bannerHolder = document.querySelector('.app-card-thumb-holder');
-          if (bannerHolder) {
-            bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
-          }
-          
-          const switchElement = document.getElementById('settings-switch-1');
-          if (switchElement) {
-            switchElement.disabled = false;
-            switchElement.checked = false;
-            
-            // 替換原有的 div，移除 onclick 事件
-            const oldSwitchContainer = switchElement.parentElement;
-            const newSwitchContainer = document.createElement('div');
-            newSwitchContainer.className = 'form-check form-switch mb-0 me-2';
-            newSwitchContainer.innerHTML = oldSwitchContainer.innerHTML;
-            
-            // 確保新的開關保持正確的狀態
-            const newSwitch = newSwitchContainer.querySelector('input');
-            if (newSwitch) {
-              newSwitch.disabled = false;
-              newSwitch.checked = false;
-            }
-            
-            oldSwitchContainer.parentElement.replaceChild(newSwitchContainer, oldSwitchContainer);
-            
-            // 安全地觸發 change 事件
-            try {
-              const event = new Event('change');
-              switchElement.dispatchEvent(event);
-            } catch (error) {
-              console.log('Change event error:', error);
-            }
-          }
-        };
-        
-        // 讀取圖片檔案
-        reader.readAsDataURL(file);
-      }
-    };
-    
-    // 觸發檔案選擇器
-    fileInput.click();
-  }
-};
-
-// 原 handleBannerToggle 函數，處理開關切換
-window.handleBannerToggle = function(checkbox) {
-  const bannerHolder = document.querySelector('.app-card-thumb-holder');
-  const gender = '{{ ViewKey_DbPublicCardInfo.member_basic.user_gender }}';
-  const mediaUrl = '{{ MEDIA_URL }}';
-  
-  if (checkbox.checked) {
-    // 使用預設橫幅
-    let defaultBanner = 'banner_unknown.png';
-    if (gender === 'female') {
-      defaultBanner = 'banner_female.png';
-    } else if (gender === 'male') {
-      defaultBanner = 'banner_male.png';
-    }
-    bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/${defaultBanner}')`;
-  } else {
-    // 使用自訂橫幅
-    if (userSelectedBanner) {
-      // 如果有新選擇的圖片，使用新圖片
-      bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
+  function handleVisibilityChange(radio, needId) {
+    const container = radio
+      .closest(".need-card")
+      .querySelector(".need-card-container");
+    if (radio.id === `status${needId}_private`) {
+      container.classList.add("private");
     } else {
-      // 如果沒有新選擇的圖片，使用原有的自訂圖片
+      container.classList.remove("private");
+    }
+  }
+
+  // 頁面載入時初始化所有卡片狀態
+  document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll(".need-list-radio:checked");
+    radios.forEach((radio) => {
+      handleVisibilityChange(radio, radio.id.match(/\d+/)[0]);
+    });
+  });
+
+  function handleBannerToggle(checkbox) {
+    const bannerHolder = document.querySelector('.app-card-thumb-holder');
+    const gender = '{{ ViewKey_DbPublicCardInfo.member_basic.user_gender }}';
+    const mediaUrl = '{{ MEDIA_URL }}';
+    
+    if (checkbox.checked) {
+      // 使用預設橫幅
+      let defaultBanner = 'banner_unknown.png';
+      if (gender === 'female') {
+        defaultBanner = 'banner_female.png';
+      } else if (gender === 'male') {
+        defaultBanner = 'banner_male.png';
+      }
+      bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/${defaultBanner}')`;
+    } else {
+      // 使用自訂橫幅
       const customBanner = '{{ ViewKey_DbPublicCardInfo.card_banner }}';
       if (customBanner) {
         bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/${customBanner}')`;
       }
     }
-  }
-};
 
-// === 原 toggleContent 函數，處理內容顯示/隱藏 ===
-window.toggleContent = function(contentId) {
-  const content = document.getElementById(contentId);
-  if (content) {
-    content.classList.toggle("show");
   }
-};
 
-// === 原 handleVisibilityChange 函數，處理卡片可見性 ===
-window.handleVisibilityChange = function(radio, needId) {
-  console.log('狀態變更:', {
-    '需求 ID': needId,
-    '新狀態': radio.id === `status${needId}_public` ? '公開' : '非公開'
+  // 頁面載入時設定開關初始狀態
+  document.addEventListener('DOMContentLoaded', function() {
+    const useDefaultBanner = {{ ViewKey_DbPublicCardInfo.use_default_banner|lower }};
+    document.getElementById('settings-switch-1').checked = useDefaultBanner;
   });
-  
-  const container = radio.closest('.need-card').querySelector('.need-card-container');
-  if (container) {
-    if (radio.id === `status${needId}_private`) {
-      container.classList.add('private');
-    } else {
-      container.classList.remove('private');
-    }
-  }
-};
-
-// 初始化開關狀態並添加事件監聽器
-const switchStates = {
-  'switch-sell': {{ ViewKey_DbPublicCardInfo.sell_public_status|lower }},
-  'switch-work-list': {{ ViewKey_DbPublicCardInfo.work_list_public_status|lower }},
-  'switch-work-done': {{ ViewKey_DbPublicCardInfo.work_done_list_public_status|lower }},
-  'switch-need-list': {{ ViewKey_DbPublicCardInfo.need_list_public_status|lower }}
-};
-
-// 初始化每個開關的狀態
-Object.entries(switchStates).forEach(([switchId, initialState]) => {
-  const switchElement = document.getElementById(switchId);
-  if (switchElement) {
-    // 設置初始狀態
-    switchElement.checked = initialState;
-    
-    // 添加事件監聽器
-    switchElement.addEventListener('change', function(e) {
-      const contentId = `content-${switchId.replace('switch-', '')}`;
-      const contentEl = document.getElementById(contentId);
-      const privateMessage = contentEl.previousElementSibling;
-      
-      if (contentEl) {
-        if (this.checked) {
-          // 開關開啟：顯示公開內容，隱藏私密訊息
-          privateMessage.style.display = 'none';
-          contentEl.classList.add("show");
-        } else {
-          // 開關關閉：顯示私密訊息，隱藏公開內容
-          privateMessage.style.display = 'block';
-          contentEl.classList.remove("show");
-        }
-      }
-    });
-
-    // 初始化內容區域的顯示狀態
-    const contentId = `content-${switchId.replace('switch-', '')}`;
-    const contentEl = document.getElementById(contentId);
-    const privateMessage = contentEl.previousElementSibling;
-    
-    if (contentEl) {
-      if (initialState) {
-        privateMessage.style.display = 'none';
-        contentEl.classList.add("show");
-      } else {
-        privateMessage.style.display = 'block';
-        contentEl.classList.remove("show");
-      }
-    }
-  }
-});
-
-// 檢查所有需求卡片的初始狀態
-const allNeedCards = document.querySelectorAll('.need-card');
-allNeedCards.forEach(card => {
-  const debugInfo = card.querySelector('[data-debug="true"]');
-  if (debugInfo) {
-    const needId = debugInfo.dataset.needId;
-    const dbPublicStatus = debugInfo.dataset.publicStatus === 'true';
-    
-    const publicRadio = card.querySelector(`#status${needId}_public`);
-    const privateRadio = card.querySelector(`#status${needId}_private`);
-    
-    console.log(`需求 ID: ${needId}`, {
-      '資料庫狀態': dbPublicStatus,
-      '公開按鈕狀態': publicRadio ? publicRadio.checked : 'not found',
-      '非公開按鈕狀態': privateRadio ? privateRadio.checked : 'not found'
-    });
-  }
-});
-
-// 初始化需求卡片的公開狀態
-allNeedCards.forEach(card => {
-  const debugInfo = card.querySelector('[data-debug="true"]');
-  if (debugInfo) {
-    const needId = debugInfo.dataset.needId;
-    const dbPublicStatus = debugInfo.dataset.publicStatus === 'true';
-    
-    const publicRadio = card.querySelector(`#status${needId}_public`);
-    const privateRadio = card.querySelector(`#status${needId}_private`);
-    const container = card.querySelector('.need-card-container');
-    
-    if (publicRadio && privateRadio && container) {
-      // 強制設置為資料庫狀態
-      publicRadio.checked = dbPublicStatus;
-      privateRadio.checked = !dbPublicStatus;
-      
-      // 設置卡片視覺狀態
-      if (!dbPublicStatus) {
-        container.classList.add('private');
-      } else {
-        container.classList.remove('private');
-      }
-    }
-  }
-});
+  // 新增提示函數
+  function showBannerAlert() {
+  alert('請先添加自訂橫幅圖片');
+}
 </script>
 
 {% endblock %}

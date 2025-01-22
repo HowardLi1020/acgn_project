@@ -24,7 +24,6 @@ class DbNeedInfo(models.Model):
     deadline = models.DateTimeField(blank=True, null=True)
     last_update = models.DateTimeField(blank=True, null=True)
     need_status = models.CharField(max_length=50, blank=True, null=True)
-    public_status = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -77,19 +76,12 @@ class DbPublicCardInfo(models.Model):
     )
     user_nickname = models.CharField(max_length=50)
     user_avatar = models.CharField(max_length=255)
-    use_default_avatar = models.BooleanField(default=True)
     user_introduction = models.CharField(max_length=300, blank=True, null=True)
     card_banner = models.CharField(max_length=255, blank=True, null=True)
-    use_default_banner = models.BooleanField(default=True)
     card_status = models.CharField(max_length=3, blank=True, null=True)
     involved_works = models.TextField(blank=True, null=True)
     key_tags = models.CharField(max_length=255, blank=True, null=True)
     
-    sell_public_status = models.BooleanField(default=True)
-    work_list_public_status = models.BooleanField(default=True)
-    work_done_list_public_status = models.BooleanField(default=True)
-    need_list_public_status = models.BooleanField(default=True)
-
     # 只保留基於 ID 的外鍵關聯
     work = models.ForeignKey(DbWorksInfo, models.DO_NOTHING, blank=True, null=True)
     need = models.ForeignKey(DbNeedInfo, models.DO_NOTHING, blank=True, null=True)

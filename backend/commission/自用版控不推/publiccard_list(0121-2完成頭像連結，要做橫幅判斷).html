@@ -136,9 +136,8 @@
     <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
         <a href="{% url 'commission:Urls_publiccard_edit' HTML_publiccard.pk %}">
         <div class="app-card app-card-doc shadow-sm h-100">
-            <!-- 名片橫幅，若使用者沒進名片編輯頁換過橫幅，則檢查使用者性別替換預設橫幅 -->
-            <div class="app-card-thumb-holder p-3" 
-                 style="background-image: url('{{ MEDIA_URL }}{% if HTML_publiccard.use_default_banner %}commission/publiccard/banner/{% if HTML_publiccard.member_basic.user_gender == 'female' %}banner_female.png{% elif HTML_publiccard.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}{% else %}commission/publiccard/banner/{{ HTML_publiccard.card_banner }}{% endif %}'); background-size: cover; background-position: center;">
+            <!-- 名片橫幅 -->
+            <div class="app-card-thumb-holder p-3" style="background-image: url('{{ MEDIA_URL }}commission/publiccard/banner/{% if HTML_publiccard.member_basic.user_gender == 'female' %}banner_female.png{% elif HTML_publiccard.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}'); background-size: cover; background-position: center;">
                 <!-- 使用者頭像，若使用者沒進名片編輯頁換過頭像，則預設為使用者帳號頭像 -->
                 <img src="{% if HTML_publiccard.use_default_avatar %}{{ MEDIA_URL }}{{ HTML_publiccard.member_basic.user_avatar }}{% else %}{{ MEDIA_URL }}commission/publiccard/avatar/{{ HTML_publiccard.user_avatar }}{% endif %}" 
                      alt="{{HTML_publiccard.user_nickname}}的頭像" 

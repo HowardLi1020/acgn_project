@@ -26,7 +26,14 @@ WHERE
     user_nickname = '阿曼答'
     AND card_status = '非公開';
 
-
+UPDATE db_public_card_info
+SET 
+    sell_public_status = false,
+    work_list_public_status = false,
+    work_done_list_public_status = false,
+    need_list_public_status = false
+WHERE 
+    user_id IN (4, 5, 6);
 
 -- data 先
 -- py manage.py inspectdb shopping db_need_info db_need_images db_works_info works_preview db_public_card_info db_public_card_sell > commission/models.py
