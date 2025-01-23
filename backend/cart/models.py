@@ -59,7 +59,7 @@ class PaymentTransactions(models.Model):
     PAYMENT_METHOD_CHOICES = [
         ('CREDIT_CARD', 'Credit Card'),
         ('BANK_TRANSFER', 'Bank Transfer'),
-        ('PAYPAL', 'PayPal'),
+        ('ECPAY', 'ECPay'),
     ]
 
     PAYMENT_STATUS_CHOICES = [

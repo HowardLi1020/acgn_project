@@ -66,7 +66,7 @@
 		        <option disabled value="">選擇付款方式</option>
 		        <option value="CREDIT_CARD">信用卡</option>
 		        <option value="BANK_TRANSFER">銀行轉帳</option>
-		        <option value="PAYPAL">PayPal</option>
+		        <option value="ECPAY">綠界科技付款</option>
 	        </select>
         </div>
 

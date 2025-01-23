@@ -32,8 +32,8 @@ export default {
 					return '信用卡';
 				case 'BANK_TRANSFER':
 					return '銀行轉帳';
-				case 'PAYPAL':
-					return 'PayPal';
+				case 'ECPAY':
+					return 'ECPay';
 				default:
 					return '未知';
 			}
