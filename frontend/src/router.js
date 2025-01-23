@@ -28,6 +28,7 @@ import ProductDetail from "./views/Store/ProductDetail.vue";
 import CreateProduct from "./views/Store/CreateProduct.vue";
 import MyProduct from "./views/Store/MyProduct.vue";
 import EditProduct from "./views/Store/EditProduct.vue";
+import PurchasedProducts from "./views/Store/PurchasedProducts.vue";
 
 // Cart
 import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
@@ -202,6 +203,11 @@ const routes =[
     path: '/store/edit-product/:productId', // 添加創建商品的路由
     component: EditProduct,
     name: 'EditProduct',
+},
+{
+    path: '/store/purchased-products',
+    name: 'PurchasedProducts',
+    component: PurchasedProducts,
 },
 
 {

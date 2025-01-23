@@ -125,7 +125,7 @@ export const storeAPI = {
 	getSeries: () => getPublic("/store/series/"),
 	getAllProducts: (params) => {
 		const queryString = new URLSearchParams(params).toString();
-		return getPublic(`/store/view_all_products/?${queryString}`);
+		return getPublic(`/store/?${queryString}`);
 	},
 	getProductDetail: (productId) => getPublic(`/store/products/${productId}/`),
 
@@ -217,6 +217,82 @@ export const storeAPI = {
 			},
 		});
 	},
+
+	// 獲取購買紀錄
+	getPurchasedProducts: async () => {
+		try {
+		  const response = await api.get('/store/purchased-products/');
+		  return response;
+		} catch (error) {
+		  console.error('獲取購買紀錄失敗:', error);
+		  throw error;
+		}
+	  },
+
+	// 獲取商品評論
+    getProductReviews: async (productId) => {
+        try {
+            const response = await api.get(`/store/products/${productId}/reviews/`);
+            return response.data;  // 直接返回 data
+        } catch (error) {
+            console.error('獲取評論失敗:', error);
+            return { reviews: [] };  // 發生錯誤時返回空評論列表
+        }
+    },
+
+    // 提交商品評論
+    submitReview: async (productId, reviewData) => {
+        try {
+            const response = await api.post(`/store/products/${productId}/reviews/`, reviewData);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('請先登入');
+            } else if (error.response?.status === 403) {
+                throw new Error('您尚未購買此商品，無法評論');
+            } else if (error.response?.status === 400) {
+                throw new Error(error.response.data.detail || '評論提交失敗');
+            }
+            throw new Error('提交評論時發生錯誤');
+        }
+    },
+
+    // 檢查是否可以評論
+    checkCanReview: async (productId) => {
+        try {
+            const response = await api.get(`/store/products/${productId}/can-review/`);
+            return response.data;  // 直接返回 data
+        } catch (error) {
+            console.error('檢查評論權限失敗:', error);
+            return { can_review: false };
+        }
+    },
+
+	// 更新商品評論
+    updateReview: async (productId, reviewId, reviewData) => {
+        try {
+            const response = await api.put(`/store/products/${productId}/reviews/${reviewId}/`, reviewData);
+            return response.data;
+        } catch (error) {
+            console.error('更新評論失敗:', error);
+            throw error;
+        }
+    },
+	
+	// 刪除評論
+    deleteReview: async (productId, reviewId) => {
+        try {
+            const response = await api.delete(`/store/products/${productId}/reviews/${reviewId}/`);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error('請先登入');
+            } else if (error.response?.status === 403) {
+                throw new Error('您沒有權限刪除此評論');
+            }
+            throw new Error('刪除評論時發生錯誤');
+        }
+    },
 };
 
 // Cart API
