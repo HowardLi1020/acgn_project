@@ -425,8 +425,7 @@
 
   /* 發起過的需求 - 需求小卡樣式 */
   .need-card {
-    width: 240px; 
-    flex: 0 0 auto;
+    width: 200px;
   }
 
   /* 需求小卡容器樣式 */
@@ -537,7 +536,7 @@
 
   /* 需求小卡描述文字樣式 */
   .need-card-text {
-    margin-top: 3px; /* 內文與標題間距 */
+    margin: 0;
     font-size: 14px;
     color: #555;
   }
@@ -583,7 +582,6 @@
     opacity: 0.8;         /* 稍微調整透明度 */
   }
 
-
 </style>
 {% endblock %}
 {% block app_title %}
@@ -604,19 +602,20 @@
     >
       <!-- 右上角按鈕區域 -->
       <div class="banner-controls d-flex align-items-center">
-        <div class="form-check form-switch mb-0 me-2">
-          {% if ViewKey_DbPublicCardInfo.card_banner %}
+        <div class="form-check form-switch mb-0 me-2" {% if not ViewKey_DbPublicCardInfo.card_banner %}onclick="showBannerAlert()"{% endif %}>
           <input
             class="form-check-input"
             type="checkbox"
             id="settings-switch-1"
-            {% if not ViewKey_DbPublicCardInfo.use_default_banner %}checked{% endif %}
+            {% if ViewKey_DbPublicCardInfo.use_default_banner %}checked{% endif %}
+            {% if not ViewKey_DbPublicCardInfo.card_banner %}disabled{% endif %}
             onchange="handleBannerToggle(this)"
           />
-          <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
-          {% endif %}
+          <label class="form-check-label" for="settings-switch-1"
+            >回復預設</label
+          >
         </div>
-        <button class="btn app-btn-primary" onclick="changeBanner(event)">變更橫幅</button>
+        <button class="btn app-btn-primary">變更橫幅</button>
       </div>
       <!-- 最後更新時間 -->
       <div class="last-update">
@@ -647,19 +646,18 @@
 
       <!-- 頭像控制項 -->
       <div class="avatar-controls">
-        <div class="form-check form-switch">
-          {% if ViewKey_DbPublicCardInfo.user_avatar %}
+        <div class="form-check form-switch" {% if not ViewKey_DbPublicCardInfo.user_avatar %}onclick="handleAvatarClick(this)"{% endif %}>
           <input
             class="form-check-input"
             type="checkbox"
             id="settings-switch-2"
-            {% if not ViewKey_DbPublicCardInfo.use_default_avatar %}checked{% endif %}
+            {% if ViewKey_DbPublicCardInfo.use_default_avatar %}checked{% endif %}
+            {% if not ViewKey_DbPublicCardInfo.user_avatar %}disabled{% endif %}
             onchange="handleAvatarToggle(this)"
           />
-          <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
-          {% endif %}
+          <label class="form-check-label" for="settings-switch-2">回復預設</label>
         </div>
-        <button class="btn app-btn-primary" onclick="changeAvatar(event)">變更頭像</button>
+        <button class="btn app-btn-primary">變更頭像</button>
       </div>
       <!-- 暱稱和介紹區域 -->
       <div class="user-info">
@@ -964,7 +962,7 @@
                 <div class="d-flex flex-row flex-wrap gap-3">
                   {% if ViewKey_DbNeedInfo %} 
                   {% for HTML_need in ViewKey_DbNeedInfo %}
-                  <div class="need-card">
+                  <div class="need-card" style="flex: 0 0 auto; width: 210px">
                     <!-- 加入隱藏的偵錯資訊 -->
                     <div style="display: none;" 
                          data-debug="true"
@@ -982,14 +980,7 @@
                           {% elif HTML_need.need_status == '截止' %}status-closed
                           {% elif HTML_need.need_status == '已成交' %}status-completed
                           {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
-                        <div style="display: flex; flex-direction: column;">
-                          <h5 class="need-card-title">{{ HTML_need.need_title }}</h5>
-                          {% if HTML_need.need_original_from %}
-                          <p class="need-card-text small text-muted" style="margin-bottom: 0; font-size: 0.75em; margin: 2px  0 0 6px;">
-                            原作：{{ HTML_need.need_original_from }}
-                          </p>
-                          {% endif %}
-                        </div>
+                        <h5 class="need-card-title">{{ HTML_need.need_title }}</h5>
                         <span
                         class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-info {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
                       >
@@ -997,7 +988,6 @@
                       </span>
                       </div>
                       <!-- 下層DIV -->
-                      <!-- 依徵件狀態決定顯色 -->
                       <div class="need-card-body
                           {% if HTML_need.need_status == '徵件中' %}status-recruiting
                           {% elif HTML_need.need_status == '截止' %}status-closed
@@ -1005,17 +995,11 @@
                           {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
                         {% with first_need_image=HTML_need.dbneedimages_set.all|first %} 
                         {% if first_need_image %}
-                        <!-- 需求說明  -->
-                        <div class="need-card-description" style="flex: 0 1 auto; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                        <div class="need-card-description" style="flex: 0 1 auto">
                           <p class="need-card-text">
-                            {{ HTML_need.need_description|truncatechars:16 }}
-                          </p>
-                          <!-- 更新時間 -->
-                          <p class="need-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
-                            {{ HTML_need.last_update|date:"Y.m.d" }}
+                            {{ HTML_need.need_description|truncatechars:15 }}
                           </p>
                         </div>
-                        <!-- 需求預覽圖 -->
                         <div class="need-card-preview">
                           <img
                             src="{{ MEDIA_URL }}commission/needID_img/{{ first_need_image.image_url }}"
@@ -1024,14 +1008,9 @@
                           />
                         </div>
                         {% else %}
-                        <!-- 需求說明 -->
-                        <div class="need-card-description" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                        <div class="need-card-description" style="flex: 1">
                           <p class="need-card-text">
                             {{ HTML_need.need_description|truncatechars:30 }}
-                          </p>
-                          <!-- 更新時間 -->
-                          <p class="need-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
-                            {{ HTML_need.last_update|date:"Y.m.d" }}
                           </p>
                         </div>
                         {% endif %} 
@@ -1151,39 +1130,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
     } else {
-      switchElement.checked = !useDefaultBanner;
+      switchElement.checked = useDefaultBanner;
       switchElement.disabled = false;
     }
   } else {
     console.log('開關元素不存在');
-  }
-
-  // === 頭像相關功能初始化 ===
-  const useDefaultAvatar = {{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
-  const userAvatar = '{{ ViewKey_DbPublicCardInfo.user_avatar }}';
-  const hasCustomAvatar = userAvatar !== '' && userAvatar !== 'None';
-
-  const avatarSwitch = document.getElementById('settings-switch-2');
-  if (avatarSwitch) {
-    if (!hasCustomAvatar) {
-      avatarSwitch.checked = true;
-      avatarSwitch.disabled = true;
-
-      const switchContainer = avatarSwitch.parentElement;
-      if (switchContainer) {
-        const newContainer = switchContainer.cloneNode(true);
-        switchContainer.parentNode.replaceChild(newContainer, switchContainer);
-
-        const newSwitch = newContainer.querySelector('input');
-        if (newSwitch) {
-          newSwitch.checked = true;
-          newSwitch.disabled = true;
-        }
-      }
-    } else {
-      avatarSwitch.checked = !useDefaultAvatar;
-      avatarSwitch.disabled = false;
-    }
   }
 
   // === 修正其他開關的事件監聽器 ===
@@ -1379,21 +1330,33 @@ window.showBannerAlert = function() {
   }
 };
 
-// 處理橫幅開關切換
+// 原 handleBannerToggle 函數，處理開關切換
 window.handleBannerToggle = function(checkbox) {
   const bannerHolder = document.querySelector('.app-card-thumb-holder');
+  const gender = '{{ ViewKey_DbPublicCardInfo.member_basic.user_gender }}';
   const mediaUrl = '{{ MEDIA_URL }}';
   
   if (checkbox.checked) {
+    // 使用預設橫幅
+    let defaultBanner = 'banner_unknown.png';
+    if (gender === 'female') {
+      defaultBanner = 'banner_female.png';
+    } else if (gender === 'male') {
+      defaultBanner = 'banner_male.png';
+    }
+    bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/${defaultBanner}')`;
+  } else {
     // 使用自訂橫幅
     if (userSelectedBanner) {
+      // 如果有新選擇的圖片，使用新圖片
       bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
     } else {
-      bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/{{ ViewKey_DbPublicCardInfo.card_banner }}')`;
+      // 如果沒有新選擇的圖片，使用原有的自訂圖片
+      const customBanner = '{{ ViewKey_DbPublicCardInfo.card_banner }}';
+      if (customBanner) {
+        bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/${customBanner}')`;
+      }
     }
-  } else {
-    // 使用預設橫幅
-    bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/{% if ViewKey_DbPublicCardInfo.member_basic.user_gender == 'female' %}banner_female.png{% elif ViewKey_DbPublicCardInfo.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}')`;
   }
 };
 
@@ -1554,7 +1517,7 @@ function showAvatarAlert() {
         const switchElement = document.getElementById('settings-switch-2');
         if (switchElement) {
           switchElement.disabled = false;
-          switchElement.checked = !{{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
+          switchElement.checked = false;
           
           // 替換原有的 div，移除 onclick 事件
           const oldSwitchContainer = switchElement.parentElement;
@@ -1566,7 +1529,7 @@ function showAvatarAlert() {
           const newSwitch = newSwitchContainer.querySelector('input');
           if (newSwitch) {
             newSwitch.disabled = false;
-            newSwitch.checked = !{{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
+            newSwitch.checked = false;
           }
           
           oldSwitchContainer.parentElement.replaceChild(newSwitchContainer, oldSwitchContainer);
@@ -1586,115 +1549,65 @@ window.handleAvatarToggle = function(checkbox) {
   const mediaUrl = '{{ MEDIA_URL }}';
   
   if (checkbox.checked) {
-    // 使用自訂頭像
-    if (userSelectedAvatar) {
-      avatarImg.src = userSelectedAvatar;
-    } else {
-      avatarImg.src = `${mediaUrl}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}`;
-    }
-  } else {
     // 使用預設頭像
     avatarImg.src = `${mediaUrl}{{ ViewKey_DbPublicCardInfo.member_basic.user_avatar }}`;
+  } else {
+    // 使用自訂頭像
+    if (userSelectedAvatar) {
+      // 如果有新選擇的圖片，使用新圖片
+      avatarImg.src = userSelectedAvatar;
+    } else {
+      // 如果沒有新選擇的圖片，使用原有的自訂圖片
+      const customAvatar = '{{ ViewKey_DbPublicCardInfo.user_avatar }}';
+      if (customAvatar) {
+        avatarImg.src = `${mediaUrl}commission/publiccard/avatar/${customAvatar}`;
+      }
+    }
   }
 };
 
-// 變更橫幅
-window.changeBanner = function(event) {
-  event.preventDefault();
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
+// 頁面載入時設定頭像開關初始狀態
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('=== 頁面載入時頭像開關狀態檢查 ===');
 
-  fileInput.onchange = function(e) {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
+  const useDefaultAvatar = {{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
+  const userAvatar = '{{ ViewKey_DbPublicCardInfo.user_avatar }}';
+  const hasCustomAvatar = userAvatar !== '' && userAvatar !== 'None';
 
-      reader.onload = function(e) {
-        userSelectedBanner = e.target.result;
-        const bannerHolder = document.querySelector('.app-card-thumb-holder');
-        if (bannerHolder) {
-          bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
-        }
+  console.log('資料庫狀態 (頭像):', {
+    useDefaultAvatar: useDefaultAvatar,
+    userAvatar: userAvatar,
+    hasCustomAvatar: hasCustomAvatar
+  });
 
-        // 顯示並更新橫幅開關
-        const switchContainer = document.querySelector('.banner-controls .form-check');
-        if (switchContainer) {
-          if (!switchContainer.querySelector('input')) {
-            // 如果開關不存在，創建新的開關
-            switchContainer.innerHTML = `
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="settings-switch-1"
-                onchange="handleBannerToggle(this)"
-                checked
-              />
-              <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
-            `;
-          } else {
-            // 如果開關已存在，更新其狀態
-            const switchInput = switchContainer.querySelector('input');
-            switchInput.checked = true;
-          }
-        }
-      };
+  const avatarSwitchElement = document.getElementById('settings-switch-2');
+  if (avatarSwitchElement) {
+    console.log('頭像開關元素狀態 (載入時):', {
+      exists: true,
+      checked: avatarSwitchElement.checked,
+      disabled: avatarSwitchElement.disabled
+    });
 
-      reader.readAsDataURL(file);
+    if (!hasCustomAvatar) {
+      avatarSwitchElement.checked = true;
+      avatarSwitchElement.disabled = true;
+      console.log('設定為禁用狀態 (無自訂頭像)');
+    } else {
+      avatarSwitchElement.checked = useDefaultAvatar;
+      avatarSwitchElement.disabled = false;
+      console.log('設定為啟用狀態 (有自訂頭像)');
     }
-  };
 
-  fileInput.click();
-};
+    console.log('頭像開關元素狀態 (設定後):', {
+      checked: avatarSwitchElement.checked,
+      disabled: avatarSwitchElement.disabled
+    });
+  } else {
+    console.log('頭像開關元素不存在');
+  }
 
-// 變更頭像
-window.changeAvatar = function(event) {
-  event.preventDefault();
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-
-  fileInput.onchange = function(e) {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        userSelectedAvatar = e.target.result;
-        const avatarImg = document.querySelector('.avatar-img');
-        if (avatarImg) {
-          avatarImg.src = userSelectedAvatar;
-        }
-
-        // 顯示並更新頭像開關
-        const switchContainer = document.querySelector('.avatar-controls .form-check');
-        if (switchContainer) {
-          if (!switchContainer.querySelector('input')) {
-            // 如果開關不存在，創建新的開關
-            switchContainer.innerHTML = `
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="settings-switch-2"
-                onchange="handleAvatarToggle(this)"
-                checked
-              />
-              <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
-            `;
-          } else {
-            // 如果開關已存在，更新其狀態
-            const switchInput = switchContainer.querySelector('input');
-            switchInput.checked = true;
-          }
-        }
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
-  fileInput.click();
-};
+  console.log('=== 頭像開關狀態檢查結束 ===');
+});
 </script>
 
 {% endblock %}
