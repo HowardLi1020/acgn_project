@@ -537,7 +537,7 @@
 
   /* 需求小卡描述文字樣式 */
   .need-card-text {
-    margin-top: 3px; /* 內文與標題間距 */
+    margin-top: 5px; /* 內文與標題間距 */
     font-size: 14px;
     color: #555;
   }
@@ -680,7 +680,8 @@
     </div>
 
     <!-- 新增一個容器來包住兩個區塊 -->
-    <div class="sections-container" style="display: flex; margin-top: -100px">
+    <div class="sections-container" style="display: flex; margin-top: -90px">
+      <!-- 左側區域 -->
       <!-- 喜好作品和Tag輸入區域 -->
       <div class="profile-section">
         <!-- 新增分隔線 -->
@@ -689,7 +690,7 @@
         <form class="profile-form">
           <ul class="form-list">
             <li>
-              <label class="form-label mb-2 mt-3"
+              <label class="form-label mb-3 mt-3"
                 >喜好作品 (平台分類/作品名)：</label
               >
               <div class="favorite-works-container">
@@ -714,13 +715,13 @@
             </li>
 
             <li>
-              <label class="form-label mb-2 mt-3"
+              <label class="form-label mb-3 mt-5"
                 >關聯Tag (至少三項增加曝光率)：</label
               >
               <div class="tags-container" id="tagsContainer">
                 <!-- 標籤會在這裡動態生成 -->
               </div>
-              <div class="input-group">
+              <div class="input-group mt-1">
                 <input
                   type="text"
                   class="form-control"
@@ -740,8 +741,8 @@
         </form>
       </div>
 
-      <!-- 右側區域 -->
-      <div class="right-section">
+      <!-- 右側區域(分隔線區分兩側) -->
+      <div class="right-section" style="border-left: 1px solid #dee2e6;">
         <ul class="content-list">
           <li>
             <div class="d-flex justify-content-between align-items-center">
@@ -1261,7 +1262,7 @@ document.addEventListener("DOMContentLoaded", function () {
               <span class="remove-work">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                       <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                   </svg>
               </span>
           `;

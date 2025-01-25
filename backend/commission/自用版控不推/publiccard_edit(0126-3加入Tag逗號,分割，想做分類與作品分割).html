@@ -347,15 +347,14 @@
   .favorite-works-list {
     list-style: none;
     padding: 0;
-    /* margin: 0 0 10px 0; */
+    margin: 0 0 10px 0;
   }
 
   /* 喜好作品清單生成 */
   .favorite-works-list li {
     display: flex;
     align-items: flex-start; /* 改為靠上對齊，避免長文字時垃圾桶位置異常 */
-    /* margin-top: 5px; */
-    margin-bottom: 7px;
+    margin-bottom: 5px;
     padding: 5px 10px;
     background-color: #f3f3f3; /* 喜好作品清單背景色 */
     border-radius: 4px;
@@ -691,11 +690,8 @@
         <form class="profile-form">
           <ul class="form-list">
             <li>
-              <!-- 未來展望：區分平台分類/作品名 (如：NS/寶可夢朱紫、手遊/FGO) -->
               <label class="form-label mb-3 mt-3"
-                >喜好作品
-                <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
-              </label
+                >喜好作品 (平台分類/作品名)：</label
               >
               <div class="favorite-works-container">
                 <!-- 喜好作品清單會在這裡動態生成 -->
@@ -706,7 +702,7 @@
                   type="text"
                   class="form-control"
                   id="workInput"
-                  placeholder="如：寶可夢朱紫,鬼滅之刃..."
+                  placeholder="如：NS/寶可夢朱紫、手遊/FGO"
                 />
                 <button
                   type="button"
@@ -720,9 +716,7 @@
 
             <li>
               <label class="form-label mb-3 mt-5"
-                >屬性Tag
-                <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
-              </label
+                >關聯Tag (至少三項增加曝光率)：</label
               >
               <div class="tags-container" id="tagsContainer">
                 <!-- 標籤會在這裡動態生成 -->
@@ -732,7 +726,7 @@
                   type="text"
                   class="form-control"
                   id="tagInput"
-                  placeholder="如：獸控,夢向,BL,犬派,自耕農..."
+                  placeholder="以半形,逗號分隔"
                 />
                 <button
                   type="button"
@@ -1267,28 +1261,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const workText = workInput.value.trim();
     if (workText) {
       // 創建作品項目
-      const works = workText.split(',').map(work => work.trim()).filter(work => work);
-      
-      works.forEach(workText => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-                <span class="work-text">${workText}</span>
-                <span class="remove-work">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                    </svg>
-                </span>
-            `;
+      const li = document.createElement("li");
+      li.innerHTML = `
+              <span class="work-text">${workText}</span>
+              <span class="remove-work">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                  </svg>
+              </span>
+          `;
 
-        // 添加刪除功能
-        li.querySelector(".remove-work").addEventListener("click", function () {
-          li.remove();
-        });
-
-        // 添加作品到列表
-        worksList.appendChild(li);
+      // 添加刪除功能
+      li.querySelector(".remove-work").addEventListener("click", function () {
+        li.remove();
       });
+
+      // 添加作品到列表
+      worksList.appendChild(li);
+
       // 清空輸入框
       workInput.value = "";
     }
