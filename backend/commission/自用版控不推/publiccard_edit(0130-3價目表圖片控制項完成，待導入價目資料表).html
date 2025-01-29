@@ -321,7 +321,7 @@
     margin-right: 10px;
   }
 
-  /* 開關展開內容區域 */
+  /* 展開內容區域 */
   .expandable-content {
     max-height: 0;
     overflow: hidden;
@@ -329,9 +329,9 @@
     padding-left: 1.5em;
   }
 
-  /* 開關展開時的狀態 */
+  /* 展開時的狀態 */
   .expandable-content.show {
-    max-height: 1000px; /* 設置一個足夠大的高度，但不要太大以免影響動畫效果 */
+    max-height: none;
     transition: max-height 0.5s ease-in;
   }
 
@@ -827,199 +827,104 @@
             <div class="expandable-content" id="content-sell">
               <div class="public-content">
                 <!-- 價目表的內容 -->
-                {% if ViewKey_DbPublicCardSell %}
-                    {% for sell_item in ViewKey_DbPublicCardSell %}
-                        <div class="price-content-wrapper mb-3">
-                            <!-- 第一行：販售項目和價格輸入 -->
-                            <div
-                                class="d-flex justify-content-between align-items-stretch mb-3"
-                            >
-                                <!-- 左側容器 -->
-                                <div class="me-3" style="width: 80%">
-                                    <label class="form-label">販售項目</label>
-                                    <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            placeholder="如：頭像、人設、半身像、上色...等"
-                                            style="flex: 1;"
-                                            value="{{ sell_item.sell_title }}"
-                                        />
-                                        <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                placeholder="定價"
-                                                style="width: 80px;"
-                                                value="{{ sell_item.sell_price }}"
-                                            />
-                                            <span>NTD</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <label class="form-label mt-3">接單規則、注意事項</label>
-                                    <textarea
-                                        class="form-control"
-                                        rows="4"
-                                        placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
-                                    >{{ sell_item.sell_description }}</textarea>
-                                </div>
-                                <!-- 右側容器 -->
-                                <div style="width: 40%">
-                                    <label class="form-label">示意圖(最多兩張)</label>
-                                    
-                                    <!-- 圖片預覽容器 -->
-                                    <div class="d-flex" style="gap: 10px; height: 85%">
-                                        {% if sell_item.sell_example_image_1 %}
-                                            <div class="d-flex align-items-center justify-content-center image-preview-wrapper" 
-                                                style="flex: 1; border-radius: 5px; overflow: hidden;"
-                                                data-image-id="1">
-                                                <img src="{{ MEDIA_URL }}commission/price_img/{{ sell_item.sell_example_image_1 }}" 
-                                                    alt="價目表示意圖 1"
-                                                    style="width: 100%; height: 100%; object-fit: cover;">
-                                                <!-- 添加控制按鈕容器 -->
-                                                <div class="icon-container">
-                                                    <button type="button" class="icon-button" title="檢視原圖">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                                                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11M13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/>
-                                                            <path d="M10.344 11.742q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1 6.5 6.5 0 0 1-1.398 1.4z"/>
-                                                            <path fill-rule="evenodd" d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="icon-button replace-image" title="更換圖片">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                                                            <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
-                                                            <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="icon-button delete-image" title="刪除">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                                                            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                        {% if sell_item.sell_example_image_2 %}
-                                            <div class="d-flex align-items-center justify-content-center image-preview-wrapper" 
-                                                style="flex: 1; border-radius: 5px; overflow: hidden;"
-                                                data-image-id="2">
-                                                <img src="{{ MEDIA_URL }}commission/price_img/{{ sell_item.sell_example_image_2 }}" 
-                                                    alt="價目表示意圖 2"
-                                                    style="width: 100%; height: 100%; object-fit: cover;">
-                                                <!-- 添加控制按鈕容器 -->
-                                                <div class="icon-container">
-                                                    <button type="button" class="icon-button" title="檢視原圖">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                                                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11M13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/>
-                                                            <path d="M10.344 11.742q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1 6.5 6.5 0 0 1-1.398 1.4z"/>
-                                                            <path fill-rule="evenodd" d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="icon-button replace-image" title="更換圖片">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                                                            <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
-                                                            <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" class="icon-button delete-image" title="刪除">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                                                            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                        {% if not sell_item.sell_example_image_1 or not sell_item.sell_example_image_2 %}
-                                            <!-- 當沒有示意圖時顯示兩個上傳佔位符 -->
-                                            {% for i in "12"|slice:sell_item.sell_example_image_1|length %}
-                                                <div class="d-flex align-items-center justify-content-center image-upload-placeholder"
-                                                    style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;"
-                                                    onclick="triggerFileInput(this)">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                                                        class="bi bi-plus-circle" viewBox="0 0 16 16">
-                                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                                                    </svg>
-                                                </div>
-                                            {% endfor %}
-                                        {% endif %}
-                                    </div>
-                                    <!-- 隱藏的檔案上傳輸入框 -->
-                                    <input type="file" id="price-image-upload" style="display: none;" accept="image/*">
-                                </div>
-                            </div>
-                            <!-- 第二行：新增按鈕 -->
-                            <div class="d-flex justify-content-end mt-3">
-                                <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
-                                <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="price-content-wrapper mb-3">
-                        <!-- 第一行：販售項目和價格輸入 -->
-                        <div
-                            class="d-flex justify-content-between align-items-stretch mb-3"
-                        >
-                            <!-- 左側容器 -->
-                            <div class="me-3" style="width: 80%">
-                                <label class="form-label">販售項目</label>
-                                <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        placeholder="如：頭像、人設、半身像、上色...等"
-                                        style="flex: 1;"
-                                    />
-                                    <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            placeholder="定價"
-                                            style="width: 80px;"
-                                        />
-                                        <span>NTD</span>
-                                    </div>
-                                </div>
-                                
-                                <label class="form-label mt-3">接單規則、注意事項</label>
-                                <textarea
-                                    class="form-control"
-                                    rows="4"
-                                    placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
-                                ></textarea>
-                            </div>
-                            <!-- 右側容器 -->
-                            <div style="width: 40%">
-                                <label class="form-label">示意圖(最多兩張)</label>
-                                
-                                <!-- 圖片預覽容器 -->
-                                <div class="d-flex" style="gap: 10px; height: 85%">
-                                    <!-- 當沒有示意圖時顯示兩個上傳佔位符 -->
-                                    {% for i in "12" %}
-                                        <div class="d-flex align-items-center justify-content-center image-upload-placeholder"
-                                            style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;"
-                                            onclick="triggerFileInput(this)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                                                class="bi bi-plus-circle" viewBox="0 0 16 16">
-                                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                                            </svg>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- 隱藏的檔案上傳輸入框 -->
-                                <input type="file" id="price-image-upload" style="display: none;" accept="image/*">
-                            </div>
-                        </div>
-                        <!-- 第二行：新增按鈕 -->
-                        <div class="d-flex justify-content-end mt-3">
-                            <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
-                            <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
-                        </div>
+                <div class="price-content-wrapper mb-2">
+                  <!-- 第一行：販售項目和價格輸入 -->
+                  <div
+                    class="d-flex justify-content-between align-items-stretch mb-3"
+                  >
+                    <!-- 左側容器 -->
+                    <div class="me-3" style="width: 80%">
+                      <label class="form-label">販售項目</label>
+                      <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
+                          <input
+                              type="text"
+                              class="form-control"
+                              placeholder="如：頭像、人設、半身像、上色...等"
+                              style="flex: 1;" 
+                          />
+                          <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
+                              <input
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="定價"
+                                  style="width: 80px;"  
+                              />
+                              <span>NTD</span>
+                          </div>
+                      </div>
+                      
+                      <label class="form-label mt-3">接單規則、注意事項</label>
+                      <textarea
+                        class="form-control"
+                        rows="4"
+                        placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
+                      ></textarea>
                     </div>
-                {% endif %}
+                    <!-- 右側容器 -->
+                    <div style="width: 40%">
+                      <label class="form-label">示意圖(最多兩張)</label>
+                      
+                      <!-- 圖片預覽容器 -->
+                      <div class="d-flex" style="gap: 10px; height: 85%">
+                        {% if ViewKey_DbPriceImages %} 
+                        {% for image in ViewKey_DbPriceImages %}
+                          <div class="d-flex align-items-center justify-content-center image-preview-wrapper" 
+                               style="flex: 1; border-radius: 5px; overflow: hidden;"
+                               data-image-id="{{ image.id }}">
+                            <img src="{{ MEDIA_URL }}commission/price_img/{{ image.image_url }}" 
+                                 alt="價目表示意圖 {{ forloop.counter }}"
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                            <!-- 添加控制按鈕容器 -->
+                            <div class="icon-container">
+                              <button type="button" class="icon-button" title="檢視原圖">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                  <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11M13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/>
+                                  <path d="M10.344 11.742q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1 6.5 6.5 0 0 1-1.398 1.4z"/>
+                                  <path fill-rule="evenodd" d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5"/>
+                                </svg>
+                              </button>
+                              <button type="button" class="icon-button replace-image" title="更換圖片">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                  <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                                  <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
+                                </svg>
+                              </button>
+                              <button type="button" class="icon-button delete-image" title="刪除">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                  <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        {% endfor %}
+                        {% else %}
+                          <!-- 當沒有示意圖時顯示兩個上傳佔位符 -->
+                          {% for i in "12" %}
+                            <div class="d-flex align-items-center justify-content-center image-upload-placeholder"
+                                 style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;"
+                                 onclick="triggerFileInput(this)">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                   class="bi bi-plus-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                              </svg>
+                            </div>
+                          {% endfor %}
+                        {% endif %}
+                      </div>
+
+                      <!-- 隱藏的檔案上傳輸入框 -->
+                      <input type="file" id="price-image-upload" style="display: none;" accept="image/*">
+                    </div>
+                  </div>
+
+                  <!-- 第二行：新增按鈕 -->
+                  <div class="d-flex justify-content-end mt-3">
+                    <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
+                    <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </li>
 

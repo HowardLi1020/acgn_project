@@ -240,29 +240,20 @@
         <p></p>
         <h6>需求示意圖預覽</h6>
 
-        <!-- 檢查是否有示意圖資料 -->
-        {% if ViewKey_DbNeedEdit_sketches %} {# 從後端獲取的示意圖資料集 #}
-          <!-- 建立彈性容器用於顯示圖片預覽 -->
+        {% if ViewKey_DbNeedEdit_sketches %}
           <div class="d-flex flex-wrap justify-content-start mt-3" id="image-preview-container">
 
-            <!-- 遍歷所有示意圖並顯示 -->
-            {% for sketches in ViewKey_DbNeedEdit_sketches %} {# 迭代每張示意圖 #}
-              <!-- 建立圖片預覽包裝容器 -->
+            {% for sketches in ViewKey_DbNeedEdit_sketches %}
               <div class="d-flex align-items-center justify-content-center image-preview-wrapper" style="width: calc(50% - 10px); margin-right: 10px; margin-bottom: 10px;">
-                <!-- 顯示示意圖 -->
                 <img src="{{ MEDIA_URL }}commission/needID_img/{{ sketches.image_url }}" alt="需求示意圖 {{ sketches.step }}" style="width: 100%; height: auto; object-fit: cover; border-radius: 5px;">
               </div>
             {% endfor %}
 
-            <!-- 如果示意圖數量少於5張，顯示上傳佔位符 -->
-            {% if ViewKey_DbNeedEdit_sketches|length < 5 %} {# 檢查是否還可以上傳更多圖片 #}
+            {% if ViewKey_DbNeedEdit_sketches|length < 5 %}
 
-              <!-- 根據已有圖片數量顯示剩餘可上傳數量的佔位符 -->
-              {% for i in "12345"|slice:ViewKey_DbNeedEdit_sketches.count %} {# 動態生成剩餘空位 #}
+              {% for i in "12345"|slice:ViewKey_DbNeedEdit_sketches.count %}
 
-                <!-- 建立圖片上傳佔位符 -->
                 <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="width: calc(33.33% - 10px); height: 100px; background-color: #e0e0e0; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;">
-                  <!-- 顯示加號圖示 -->
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
@@ -274,18 +265,13 @@
 
           </div>
         {% else %}
-          <!-- 當沒有示意圖時顯示提示文字 -->
           <p>目前沒有示意圖</p>
 
-          <!-- 建立空的圖片預覽容器 -->
           <div class="d-flex flex-wrap justify-content-start mt-3" id="image-preview-container">
 
-            <!-- 顯示5個上傳佔位符 -->
-            {% for i in "12345" %} {# 生成5個上傳位置 #}
-              <!-- 建立圖片上傳佔位符 -->
+            {% for i in "12345" %}
               <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="width: calc(33.33% - 10px); height: 100px; background-color: #e0e0e0; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;">
 
-                <!-- 顯示加號圖示 -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
 
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
@@ -298,12 +284,11 @@
 
           </div>
         {% endif %}
-        <!-- 隱藏的檔案上傳輸入框 -->
         <input type="file" id="image-upload-input" style="display: none;" accept="image/*" multiple>
 
       </div>
 
-      <!-- <div class="flex-grow-1"></div> -->
+      <div class="flex-grow-1"></div>
     </div>
     
     <div class="app-card shadow-sm p-4 mt-auto rounded-3 needer-info-card">

@@ -411,12 +411,8 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
         'dbneedimages_set'  # 預加載關聯的圖片
     ).order_by('-publish_time')  # 使用 publish_time 進行排序
     
-    # 獲取該用戶的價目表資料
-    view_db_publiccard_sell = DbPublicCardSell.objects.filter(user=view_db_publiccard_info)
-    
     context = {
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
         'ViewKey_DbNeedInfo': view_db_need_info,
-        'ViewKey_DbPublicCardSell': view_db_publiccard_sell, # 將價目表資料傳遞到模板
     }
     return render(request, 'commission/publiccard_edit.html', context)

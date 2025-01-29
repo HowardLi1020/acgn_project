@@ -202,6 +202,37 @@ INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, use_defaul
 (1019, '圖標工匠', '1019_avatar.png', false, 'APP設計師圖標，專注於創造簡潔的符號視覺。', 'banner_unknown.png', true, '非公開', '2024-09-19 09:30:00'),
 (1020, '展覽夢設計師', '1020_avatar.png', false, '空間設計師，精於藝術展覽空間規劃。', 'banner_female.png', false, '公開', '2024-09-19 11:45:00');
 
+-- 5-3-1 公開名片價目表
+INSERT INTO db_public_card_sell 
+(user_id, sell_title, sell_description, sell_price, sell_example_image_1, sell_example_image_2)
+VALUES
+(1017, '可愛風Q版頭像', '✨專長：可愛風格、動物、萌系人物
+⭐工期：7-10個工作天
+⭐修改次數：2次（大幅修改）
+⭐急單加價：+50%（工期3-4天）
+❌不接：獵奇、血腥題材', 
+2500, 
+'example_qversion_1.jpg', 
+'example_qversion_2.jpg'),
+
+(1017, '精緻全身立繪', '✨專長：動漫風格、遊戲立繪、原創角色
+⭐工期：14-21個工作天
+⭐修改次數：3次（含草稿階段）
+⭐急單加價：+80%（工期7-10天）
+❌不接：成人向、暴力內容', 
+8500, 
+'example_fullbody_1.jpg', 
+'example_fullbody_2.jpg'),
+
+(1017, '半身像上色委託', '✨專長：細膩上色、光影表現、各種風格配色
+⭐工期：5-7個工作天
+⭐僅接受線稿委託
+⭐修改次數：1次（顏色調整）
+⭐急單加價：+30%（工期2-3天）
+❌不接：未經授權的商業用途', 
+3200, 
+'example_coloring_1.jpg', 
+'example_coloring_2.jpg');
 SET FOREIGN_KEY_CHECKS = 1;
 
 --
