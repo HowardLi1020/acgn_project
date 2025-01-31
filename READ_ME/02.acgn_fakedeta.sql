@@ -201,12 +201,18 @@ INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, use_defaul
 (1018, '夢境建築師', '1018_avatar.png', false, '心理學家，正在開發一款幫助人們記錄和分析夢境的應用程序。', 'banner_male.png', false, '公開', '2024-09-18 17:00:00'),
 (1019, '圖標工匠', '1019_avatar.png', false, 'APP設計師圖標，專注於創造簡潔的符號視覺。', 'banner_unknown.png', true, '非公開', '2024-09-19 09:30:00'),
 (1020, '展覽夢設計師', '1020_avatar.png', false, '空間設計師，精於藝術展覽空間規劃。', 'banner_female.png', false, '公開', '2024-09-19 11:45:00');
+UPDATE db_public_card_info -- 為 user_id 1017 新增喜好作品、屬性Tag
+SET 
+    involved_acgn = '進擊的巨人,SPY×FAMILY,鏈鋸人',
+    key_tags = '腐向,奇幻風格,厚塗,日系畫風'
+WHERE 
+    user_id = 1017;
 
 -- 5-3-1 公開名片價目表
 INSERT INTO db_public_card_sell 
-(user_id, sell_title, sell_description, sell_price, sell_example_image_1, sell_example_image_2)
+(user_id, sell_step, sell_title, sell_description, sell_price, sell_example_image_1, sell_example_image_2)
 VALUES
-(1017, '可愛風Q版頭像', '✨專長：可愛風格、動物、萌系人物
+(1017, 1, '可愛風Q版頭像', '✨專長：可愛風格、動物、萌系人物
 ⭐工期：7-10個工作天
 ⭐修改次數：2次（大幅修改）
 ⭐急單加價：+50%（工期3-4天）
@@ -215,7 +221,7 @@ VALUES
 'example_qversion_1.jpg', 
 'example_qversion_2.jpg'),
 
-(1017, '精緻全身立繪', '✨專長：動漫風格、遊戲立繪、原創角色
+(1017, 2, '精緻全身立繪', '✨專長：動漫風格、遊戲立繪、原創角色
 ⭐工期：14-21個工作天
 ⭐修改次數：3次（含草稿階段）
 ⭐急單加價：+80%（工期7-10天）
@@ -224,7 +230,7 @@ VALUES
 'example_fullbody_1.jpg', 
 'example_fullbody_2.jpg'),
 
-(1017, '半身像上色委託', '✨專長：細膩上色、光影表現、各種風格配色
+(1017, 3, '半身像上色委託', '✨專長：細膩上色、光影表現、各種風格配色
 ⭐工期：5-7個工作天
 ⭐僅接受線稿委託
 ⭐修改次數：1次（顏色調整）

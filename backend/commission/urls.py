@@ -12,5 +12,10 @@ urlpatterns = [
     path('need/delete/<int:view_fn_need_id>/', views.ViewFn_need_delete, name='Urls_need_delete'),
     path('publiccard_list/', views.ViewFn_publiccard_list, name='Urls_publiccard_list'),
     path('publiccard/edit/<int:view_fn_publiccard_id>/', views.ViewFn_publiccard_edit, name='Urls_publiccard_edit'),
+    
+    path('publiccard/edit/<int:view_fn_publiccard_id>/[all]publiccard_edit/', views.ViewFn_publiccard_edit, name='[all]publiccard_edit'), #[測試用]名片編輯-剝皮主頁
+    path('publiccard/edit/<int:view_fn_publiccard_id>/sell_list/', views.ViewFn_publiccard_edit, name='sell_list'), #[測試用]名片編輯-價目表
+    path('publiccard/edit/<int:view_fn_publiccard_id>/favorite_acgn/', views.ViewFn_publiccard_edit, name='favorite_acgn'), #[測試用]名片編輯-喜好作品
+    path('publiccard/edit/<int:view_fn_publiccard_id>/tag/', views.ViewFn_publiccard_edit, name='tag'), #[測試用]名片編輯-屬性Tag
     # path('usercard/edit/<int:view_fn_usercard_id>/', views.ViewFn_usercard_edit, name='Urls_usercard_edit'),
 ]

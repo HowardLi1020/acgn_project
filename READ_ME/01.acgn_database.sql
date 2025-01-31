@@ -428,7 +428,7 @@ CREATE TABLE db_public_card_info (
     card_banner VARCHAR(255),                         -- 名片橫幅
     use_default_banner BOOLEAN DEFAULT TRUE,          -- 是否使用預設橫幅
     card_status VARCHAR(3) DEFAULT '非公開',          -- 名片公開狀態
-    involved_works TEXT,                              -- 涉獵作品
+    involved_acgn TEXT,                              -- 涉獵作品
     key_tags VARCHAR(255),                            -- 關鍵Tag
 
     work_id INT,                                      -- 公開/已成交作品id（關聯資料表：作品works_info）
@@ -466,6 +466,7 @@ CREATE TABLE db_public_card_info (
 CREATE TABLE db_public_card_sell (
     sell_list_id INT AUTO_INCREMENT PRIMARY KEY,      -- 項目流水號
     user_id INT,                                      -- 使用者id
+    sell_step INT,                                    -- 項目排序
     sell_title TEXT,                                  -- 販售項目
     sell_description TEXT,                            -- 販售說明
     sell_price INT,                                   -- 售價

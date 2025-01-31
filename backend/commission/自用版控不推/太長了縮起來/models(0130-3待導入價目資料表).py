@@ -82,7 +82,7 @@ class DbPublicCardInfo(models.Model):
     card_banner = models.CharField(max_length=255, blank=True, null=True)
     use_default_banner = models.BooleanField(default=True)
     card_status = models.CharField(max_length=3, blank=True, null=True)
-    involved_acgn = models.TextField(blank=True, null=True)
+    involved_works = models.TextField(blank=True, null=True)
     key_tags = models.CharField(max_length=255, blank=True, null=True)
     
     sell_public_status = models.BooleanField(default=True)
@@ -105,7 +105,6 @@ class DbPublicCardInfo(models.Model):
 class DbPublicCardSell(models.Model):
     sell_list_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(DbPublicCardInfo, models.DO_NOTHING, blank=True, null=True)
-    sell_step = models.IntegerField(blank=True, null=True)
     sell_title = models.TextField(blank=True, null=True)
     sell_description = models.TextField(blank=True, null=True)
     sell_price = models.IntegerField(blank=True, null=True)

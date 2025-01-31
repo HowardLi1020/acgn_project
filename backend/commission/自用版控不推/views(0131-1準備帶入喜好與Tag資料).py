@@ -12,7 +12,6 @@ import os
 from pathlib import Path
 import json
 from django.conf import settings
-from django.views.decorators.cache import never_cache
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -402,7 +401,6 @@ def ViewFn_publiccard_list(request):
     }
     return render(request, 'commission/publiccard_list.html', context)
 
-@never_cache
 def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, pk=view_fn_publiccard_id)
     
@@ -416,17 +414,9 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     # 獲取該用戶的價目表資料
     view_db_publiccard_sell = DbPublicCardSell.objects.filter(user=view_db_publiccard_info)
     
-    # 動態判斷模板路徑
-    url_name = request.resolver_match.url_name
-    if url_name != 'Urls_publiccard_edit':
-        # 如果不是主編輯頁面，則使用測試目錄下的對應模板
-        template_name = f'commission/publiccard_edit_test/{url_name}.html'
-    else:
-        template_name = 'commission/publiccard_edit.html'
-
     context = {
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
         'ViewKey_DbNeedInfo': view_db_need_info,
-        'ViewKey_DbPublicCardSell': view_db_publiccard_sell,
+        'ViewKey_DbPublicCardSell': view_db_publiccard_sell, # 將價目表資料傳遞到模板
     }
-    return render(request, template_name, context)
+    return render(request, 'commission/publiccard_edit.html', context)

@@ -114,7 +114,7 @@
     transition: 0.4s;
   }
 
-  /* 新增喜好作品和屬性Tag輸入區域的樣式 */
+  /* 新增喜好作品和Tag輸入區域的樣式 */
   .profile-section {
     /* margin-top: -100px; 調整與頭像的距離，數字越小越上方 */
     width: 28%; /* 設置寬度為畫面的1/3 */
@@ -131,13 +131,13 @@
     width: 100%;
   }
 
-  /* 屬性Tag容器樣式 */
+  /* 標籤容器樣式 */
   .tags-container {
     display: flex;
     flex-wrap: wrap;
   }
 
-  /* 屬性Tag標籤樣式 */
+  /* 標籤樣式 */
   .tag {
     background-color: #e9ecef;
     border-radius: 20px;
@@ -147,23 +147,9 @@
     align-items: center;
     margin-right: 5px; /* 控制水平間距 */
     margin-bottom: 10px; /* 保持垂直間距 */
-    position: relative; /* 讓偽元素可以相對於 tag 定位 */
-    padding-left: 1.5em; /* 為指示符號留出空間 */
   }
 
-  /* 屬性Tag標籤指示符號 */
-  .tag::before {
-    content: "⋮"; /* 使用三個點作為指示符號 */
-    position: absolute;
-    left: 0.5em; /* 調整指示符號的位置 */
-    top: 50%;
-    transform: translateY(-50%);
-    color: #aaa; /* 指示符號的顏色 */
-    font-size: 1.2em; /* 指示符號的大小 */
-    cursor: move; /* 滑鼠移上去時顯示移動游標 */
-  }
-
-  /* 屬性Tag刪除按鈕樣式 */
+  /* 刪除按鈕樣式 */
   .tag .remove-tag {
     margin-left: 8px;
     cursor: pointer;
@@ -185,7 +171,7 @@
     margin-right: 0; /* 移除右側邊距 */
   }
 
-  /* 喜好作品、屬性Tag輸入框的新增按鈕樣式 */
+  /* 新增按鈕樣式 */
   .add-tag-btn {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
@@ -345,7 +331,7 @@
 
   /* 開關展開時的狀態 */
   .expandable-content.show {
-    max-height: 5000px; /* 設置一個足夠大的高度，但不要太大以免影響動畫效果 */
+    max-height: 1000px; /* 設置一個足夠大的高度，但不要太大以免影響動畫效果 */
     transition: max-height 0.5s ease-in;
   }
 
@@ -375,20 +361,14 @@
     border-radius: 4px;
     word-break: break-all; /* 允許在任何字符間換行 */
     word-wrap: break-word; /* 確保長單詞也會換行 */
-    position: relative; /* 讓偽元素可以相對於 li 定位 */
-    padding-left: 1.5em; /* 為指示符號留出空間 */
   }
 
-  /* 喜好作品清單指示符號 */
-  .favorite-acgn-list li::before {
-    content: "⋮"; /* 使用三個點作為指示符號 */
-    position: absolute;
-    left: 0.5em; /* 調整指示符號的位置 */
-    top: 50%;
-    transform: translateY(-50%);
-    color: #aaa; /* 指示符號的顏色 */
-    font-size: 1.2em; /* 指示符號的大小 */
-    cursor: move; /* 滑鼠移上去時顯示移動游標 */
+  /* 喜好作品清單生成 */
+  .favorite-acgn-list li:before {
+    /* content: "-"; */
+    margin-right: 8px;
+    color: #666;
+    flex-shrink: 0; /* 防止符號被壓縮 */
   }
 
   /* 喜好作品清單-文字 */
@@ -658,103 +638,14 @@
     max-height: 90%;
     object-fit: contain;
   }
-    /* 左欄喜好作品、屬性Tag拖曳排序相關樣式 */
-    .sortable-ghost {
-    opacity: 0.5;
-    background: #f8f9fa;
-  }
-  .sortable-chosen {
-    cursor: move;
-    cursor: -webkit-grabbing;
-  }
-  .sortable-drag {
-    opacity: 1 !important;
-    transform: rotate(3deg);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  }
-
-  /* 排序按鈕樣式 */
-  .order-controls {
-    margin-right: auto;
-  }
-  .move-up, .move-down {
-    padding: 0.25rem 0.5rem;
-    margin-right: 0.5rem;
-    border: 1px solid #dee2e6; /* 加上邊框 */
-    border-radius: 0.25rem; /* 加上圓角 */
-    background-color: #fff; /* 設定背景色 */
-    color: #495057; /* 設定文字顏色 */
-    cursor: pointer; /* 設定滑鼠游標 */
-  }
-  .move-up:disabled, .move-down:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    border: 1px solid #dee2e6; /* 加上邊框 */
-    background-color: #e9ecef; /* 禁用時的背景色 */
-    color: #79828a; /* 禁用時的文字顏色 */
-  }
-  .move-up:disabled svg, .move-down:disabled svg {
-    fill: #6c757d;
-  }
-
-  /* 價目表拖曳相關樣式 */
-  .price-content-wrapper {
-    position: relative;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 15px;
-  }
-
-  .drag-handle {
-    position: absolute;
-    left: -25px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: move;
-    padding: 5px;
-    color: #6c757d;
-    opacity: 0.5;
-    transition: opacity 0.2s;
-  }
-
-  .drag-handle:hover {
-    opacity: 1;
-  }
-
-  .price-item-ghost {
-    opacity: 0.5;
-    background: #f8f9fa;
-  }
-
-  .price-item-chosen {
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-
-  .price-item-drag {
-    opacity: 1;
-    background: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-  }
-
-  /* 調整容器左邊距，為拖曳把手留出空間 */
-  .price-content-container {
-    padding-left: 25px;
-  }
 </style>
 {% endblock %}
 {% block app_title %}
 <!-- 直接打文字即可替換各自應用程式的標題 -->
 名片資訊編輯 (使用者ID：{{ ViewKey_DbPublicCardInfo.pk }}) 
-
 {% endblock %} 
 {% block app_content %}
 <!-- 白底編輯區 -->
- <span style="position:absolute;top: 55px;">分割測試區塊：</span>
- <a href="{% url 'commission:[all]publiccard_edit' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">剝皮主頁</a>
- <a href="{% url 'commission:sell_list' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">價目表</a>
- <a href="{% url 'commission:favorite_acgn' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">喜好作品</a>
- <a href="{% url 'commission:tag' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">屬性Tag</a>
 <div
   class="app-card app-card-settings shadow-sm p-4 mb-4 d-flex flex-column"
   style="flex-grow: 1"
@@ -864,7 +755,7 @@
               >
               <div class="favorite-acgn-container">
                 <!-- 喜好作品清單會在這裡動態生成 -->
-                <ul class="favorite-acgn-list" id="favoriteAcgnList"></ul>
+                <ul class="favorite-acgn-list"></ul>
               </div>
               <div class="input-group">
                 <input
@@ -936,18 +827,12 @@
               <div class="public-content">
                 <!-- 價目表的內容 -->
                 {% if ViewKey_DbPublicCardSell %}
-                    <!-- 如果 ViewKey_DbPublicCardSell 存在（表示使用者已設定價目表） -->
                     {% for sell_item in ViewKey_DbPublicCardSell %}
-                        <!-- 迴圈遍歷每一個價目表項目 -->
-                        <div class="price-content-wrapper mb-3" data-sell-id="{{ sell_item.id }}" data-original-step="{{ sell_item.sell_step }}">
-                            <!-- 添加拖曳指示器 -->
-                            <div class="drag-handle">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-                                </svg>
-                            </div>
-                            <!-- 原有的價目表內容 -->
-                            <div class="d-flex justify-content-between align-items-stretch mb-3">
+                        <div class="price-content-wrapper mb-3">
+                            <!-- 第一行：販售項目和價格輸入 -->
+                            <div
+                                class="d-flex justify-content-between align-items-stretch mb-3"
+                            >
                                 <!-- 左側容器 -->
                                 <div class="me-3" style="width: 80%">
                                     <label class="form-label">販售項目</label>
@@ -985,7 +870,6 @@
                                     <!-- 圖片預覽容器 -->
                                     <div class="d-flex" style="gap: 10px; height: 85%">
                                         {% if sell_item.sell_example_image_1 %}
-                                            <!-- 如果 sell_item.sell_example_image_1 存在（表示有第一張示意圖） -->
                                             <div class="d-flex align-items-center justify-content-center image-preview-wrapper" 
                                                 style="flex: 1; border-radius: 5px; overflow: hidden;"
                                                 data-image-id="1">
@@ -1016,7 +900,6 @@
                                             </div>
                                         {% endif %}
                                         {% if sell_item.sell_example_image_2 %}
-                                            <!-- 如果 sell_item.sell_example_image_2 存在（表示有第二張示意圖） -->
                                             <div class="d-flex align-items-center justify-content-center image-preview-wrapper" 
                                                 style="flex: 1; border-radius: 5px; overflow: hidden;"
                                                 data-image-id="2">
@@ -1047,10 +930,8 @@
                                             </div>
                                         {% endif %}
                                         {% if not sell_item.sell_example_image_1 or not sell_item.sell_example_image_2 %}
-                                            <!-- 如果 sell_item.sell_example_image_1 或 sell_item.sell_example_image_2 不存在（表示沒有示意圖） -->
                                             <!-- 當沒有示意圖時顯示兩個上傳佔位符 -->
                                             {% for i in "12"|slice:sell_item.sell_example_image_1|length %}
-                                                <!-- 迴圈產生佔位符，最多兩個 -->
                                                 <div class="d-flex align-items-center justify-content-center image-upload-placeholder"
                                                     style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;"
                                                     onclick="triggerFileInput(this)">
@@ -1068,38 +949,18 @@
                                 </div>
                             </div>
                             <!-- 第二行：新增按鈕 -->
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <div class="order-controls">
-                                    <button class="btn btn-sm btn-outline-secondary move-up" onclick="movePriceItem(this, 'up', event)" disabled>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
-                                        </svg>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary move-down" onclick="movePriceItem(this, 'down', event)" disabled>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                                <div>
-                                    <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
-                                    <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
-                                </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
+                                <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
                             </div>
                         </div>
                     {% endfor %}
-                    
                 {% else %}
-                    <!-- 如果 ViewKey_DbPublicCardSell 不存在（表示使用者未設定價目表） -->
-                    <div class="price-content-wrapper mb-3" data-sell-id="{{ sell_item.id }}" data-original-step="{{ sell_item.sell_step }}">
-                        <!-- 添加拖曳指示器 -->
-                        <div class="drag-handle">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-                            </svg>
-                        </div>
-                        <!-- 原有的價目表內容 -->
-                        <div class="d-flex justify-content-between align-items-stretch mb-3">
+                    <div class="price-content-wrapper mb-3">
+                        <!-- 第一行：販售項目和價格輸入 -->
+                        <div
+                            class="d-flex justify-content-between align-items-stretch mb-3"
+                        >
                             <!-- 左側容器 -->
                             <div class="me-3" style="width: 80%">
                                 <label class="form-label">販售項目</label>
@@ -1136,7 +997,6 @@
                                 <div class="d-flex" style="gap: 10px; height: 85%">
                                     <!-- 當沒有示意圖時顯示兩個上傳佔位符 -->
                                     {% for i in "12" %}
-                                        <!-- 迴圈產生兩個佔位符 -->
                                         <div class="d-flex align-items-center justify-content-center image-upload-placeholder"
                                             style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;"
                                             onclick="triggerFileInput(this)">
@@ -1153,23 +1013,9 @@
                             </div>
                         </div>
                         <!-- 第二行：新增按鈕 -->
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="order-controls">
-                                <button class="btn btn-sm btn-outline-secondary move-up" onclick="movePriceItem(this, 'up', event)" disabled>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
-                                        <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
-                                    </svg>
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary move-down" onclick="movePriceItem(this, 'down', event)" disabled>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
-                                        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div>
-                                <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
-                                <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
-                            </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button class="btn app-btn-secondary me-2" onclick="deletePriceItem(this, event)">刪除本項</button>
+                            <button class="btn app-btn-primary" onclick="addPriceItem(event)">新增下一項</button>
                         </div>
                     </div>
                 {% endif %}
@@ -1416,12 +1262,8 @@
 {% endblock %} 
 {% block app_script %}
 <!-- 如果應用程式有自己的JAVA Script放這邊 -->
-</script>
 
-<!-- 新增 Sortable.js 拖曳排序功能 -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-
 // 新增全域變數保存使用者選擇的圖片
 let userSelectedBanner = null;
 
@@ -1521,7 +1363,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // === Tag標籤功能相關代碼 ===
+  // === 原標籤功能相關代碼 ===
   const tagsContainer = document.getElementById("tagsContainer");
   const tagInput = document.getElementById("tagInput");
   const addTagBtn = document.getElementById("addTagBtn");
@@ -2102,7 +1944,6 @@ window.addPriceItem = function(event) {
         // 將新項目插入到現有項目之後
         priceContentWrapper.parentNode.insertBefore(newPriceItem, priceContentWrapper.nextSibling);
     }
-    updateOrderButtonsState(); // 新增這行
 };
 
 // 刪除價目表項目
@@ -2168,7 +2009,6 @@ window.deletePriceItem = function(button, event) {
             }
         }
     }
-    updateOrderButtonsState(); // 新增這行
 };
 //[價目表]檔案上傳
 // 觸發檔案選擇
@@ -2358,118 +2198,6 @@ function updatePlaceholders() {
     container.appendChild(placeholder);
   }
 }
-
-// 新增價目表排序功能
-window.movePriceItem = function(button, direction, event) {
-  event.preventDefault();
-  const itemWrapper = button.closest('.price-content-wrapper');
-  if (!itemWrapper) return;
-
-  if (direction === 'up') {
-    const prevItem = itemWrapper.previousElementSibling;
-    if (prevItem) {
-      itemWrapper.parentNode.insertBefore(itemWrapper, prevItem);
-    }
-  } else {
-    const nextItem = itemWrapper.nextElementSibling;
-    if (nextItem) {
-      itemWrapper.parentNode.insertBefore(nextItem, itemWrapper);
-    }
-  }
-  updateOrderButtonsState();
-};
-
-// 更新價目表排序按鈕狀態
-window.updateOrderButtonsState = function() {
-  const priceItems = document.querySelectorAll('.price-content-wrapper');
-  priceItems.forEach((item, index) => {
-    const upButton = item.querySelector('.move-up');
-    const downButton = item.querySelector('.move-down');
-    
-    upButton.disabled = index === 0;
-    downButton.disabled = index === priceItems.length - 1;
-  });
-};
-
-// 初始化時更新按鈕狀態
-document.addEventListener("DOMContentLoaded", function() {
-  updateOrderButtonsState();
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  // 初始化喜好作品清單拖曳排序
-  const acgnList = document.getElementById('favoriteAcgnList');
-  new Sortable(acgnList, {
-    animation: 150,
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-    dragClass: 'sortable-drag',
-    onUpdate: function(evt) {
-      console.log('項目順序已變更:', evt.oldIndex, '->', evt.newIndex);
-    }
-  });
-
-  // 初始化標籤容器拖曳排序
-  const tagsContainer = document.getElementById('tagsContainer');
-  new Sortable(tagsContainer, {
-    animation: 150,
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-    dragClass: 'sortable-drag',
-    draggable: '.tag',  // 指定可拖曳元素
-    onUpdate: function(evt) {
-      console.log('標籤順序已變更:', evt.oldIndex, '->', evt.newIndex);
-    }
-  });
-
-  // 防止刪除按鈕觸發拖曳動作
-  document.querySelectorAll('.remove-tag, .remove-acgn').forEach(button => {
-    button.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
-    });
-  });
-
-  // 初始化價目表拖曳功能
-  const priceContainer = document.querySelector('.price-content-container');
-  if (priceContainer) {
-      new Sortable(priceContainer, {
-          animation: 150,
-          handle: '.drag-handle', // 只能通過拖曳把手進行拖曳
-          ghostClass: 'price-item-ghost',
-          chosenClass: 'price-item-chosen',
-          dragClass: 'price-item-drag',
-          onEnd: function(evt) {
-              // 更新所有價目表項目的順序
-              const items = priceContainer.querySelectorAll('.price-content-wrapper');
-              items.forEach((item, index) => {
-                  item.setAttribute('data-current-step', index + 1);
-              });
-          }
-      });
-  }
-
-  // 在表單提交時收集並更新順序數據
-  document.querySelector('form').addEventListener('submit', function(e) {
-      const orderData = [];
-      document.querySelectorAll('.price-content-wrapper').forEach((item) => {
-          orderData.push({
-              id: item.dataset.sellId,
-              step: item.dataset.currentStep || item.dataset.originalStep
-          });
-      });
-      
-      // 將排序數據添加到隱藏的輸入欄位
-      let orderInput = document.getElementById('price-order-data');
-      if (!orderInput) {
-          orderInput = document.createElement('input');
-          orderInput.type = 'hidden';
-          orderInput.name = 'price_order_data';
-          orderInput.id = 'price-order-data';
-          this.appendChild(orderInput);
-      }
-      orderInput.value = JSON.stringify(orderData);
-  });
-});
 </script>
 
 {% endblock %}
