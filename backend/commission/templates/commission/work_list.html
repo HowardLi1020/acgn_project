@@ -150,7 +150,7 @@
 {% block app_content %}
 <div class="row g-3 mb-4 align-items-center justify-content-between">
   <div class="col-auto">
-    <h1 class="app-page-title mb-0">需求總表</h1>
+    <h1 class="app-page-title mb-0">接案總表</h1>
   </div>
   <div class="col-auto">
     <div class="page-utilities">
@@ -161,11 +161,11 @@
           <select class="form-select w-auto" id="searchSelect">
             <option value="option-1" {% if search_column == 'option-1' %}selected{% endif %}>全部</option>
             <option value="title" {% if search_column == 'title' %}selected{% endif %}>標題</option>
-            <option value="category" {% if search_column == 'category' %}selected{% endif %}>需求種類</option>
-            <option value="description" {% if search_column == 'description' %}selected{% endif %}>需求內容</option>
-            <option value="needer" {% if search_column == 'needer' %}selected{% endif %}>委託人</option>
+            <option value="category" {% if search_column == 'category' %}selected{% endif %}>販賣項目</option>
+            <option value="description" {% if search_column == 'description' %}selected{% endif %}>作品說明</option>
+            <option value="worker" {% if search_column == 'worker' %}selected{% endif %}>作者</option>
             <option value="originalFrom" {% if search_column == 'originalFrom' %}selected{% endif %}>關聯原作</option>
-            <option value="price" {% if search_column == 'price' %}selected{% endif %}>酬金</option>
+            <option value="price" {% if search_column == 'price' %}selected{% endif %}>售價</option>
             <option value="publishTime" {% if search_column == 'publishTime' %}selected{% endif %}>發布時間</option>
             <option value="deadline" {% if search_column == 'deadline' %}selected{% endif %}>到期日</option>
             <option value="status" {% if search_column == 'status' %}selected{% endif %}>案件狀態</option>
@@ -200,8 +200,8 @@
         </div>
         <!--//col-->
 
-        <!-- 新增需求按鈕 -->
-        <!-- 想想「新增需求」應該是綁使用者帳號在新增的，管理者自行新增沒有綁使用者也沒有意義 -->
+        <!-- 新增接案按鈕 -->
+        <!-- 想想「新增接案」應該是綁使用者帳號在新增的，管理者自行新增沒有綁使用者也沒有意義 -->
         <!-- <div class="col-auto">
           <a class="btn app-btn-primary" href="#">
             <svg
@@ -216,7 +216,7 @@
                 d="M2.5 0q-.25 0-.487.048l.194.98A1.5 1.5 0 0 1 2.5 1h.458V0q0-.151.029-.293zM13.5 0h-.458v1h.458q.151 0 .293.029l.98-.194Q13.75 0 13.5 0m2.079 1.11a2.5 2.5 0 0 0-.69-.689l-.556.831q.248.167.415.415l.83-.556zM1.11.421a2.5 2.5 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415l.556-.83zm16 2.5q0-.25-.048-.487l-.98.194q.027.141.028.293v.458h1V2.5q0-.151.029-.293zM.048 2.013A2.5 2.5 0 0 0 0 2.5v.458h1V2.5q0-.151.029-.293zM0 3.875v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.458q0 .25.048.487l.98-.194A1.5 1.5 0 0 1 1 13.5v-.458zm16 .458v-.458q0 .151-.029.293l-.981.194Q16 13.75 16 13.5M.421 14.89c.183.272.417.506.69.689l.556-.831a1.5 1.5 0 0 1-.415-.415zm14.469.689c.272-.183.506-.417.69-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373Q2.25 16 2.5 16h.458v-1H2.5q-.151 0-.293-.029zM13.5 16q.25 0 .487-.048l-.194-.98A1.5 1.5 0 0 1 13.5 15h-.458v1zm-9.625 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.834-1v1h.916v-1zm1.833 1h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"
               />
             </svg>
-            新增需求
+            新增接案
           </a>
         </div> -->
       </div>
@@ -241,14 +241,14 @@
   <a
     class="flex-sm-fill text-sm-center nav-link"
     id="orders-paid-tab"
-    data-status="徵件中"
-    >徵件中</a
+    data-status="公開販售"
+    >公開販售</a
   >
   <a
     class="flex-sm-fill text-sm-center nav-link"
     id="orders-pending-tab"
-    data-status="截止"
-    >截止</a
+    data-status="投稿審查"
+    >投稿審查</a
   >
   <a
     class="flex-sm-fill text-sm-center nav-link"
@@ -259,8 +259,8 @@
   <a
     class="flex-sm-fill text-sm-center nav-link"
     id="orders-cancelled-tab"
-    data-status="取消徵件"
-    >取消徵件</a
+    data-status="取消販售"
+    >取消販售</a
   >
 </nav>
 <!-- 這裡做勾選控制項篩選要隱藏/顯示的欄位項目 -->
@@ -291,7 +291,7 @@
   </div>
   <div class="form-check form-check-inline">
     <input class="form-check-input" type="checkbox" id="showCategory" checked />
-    <label class="form-check-label" for="showCategory">需求種類</label>
+    <label class="form-check-label" for="showCategory">販賣項目</label>
   </div>
   <div class="form-check form-check-inline">
     <input
@@ -300,11 +300,11 @@
       id="showDescription"
       checked
     />
-    <label class="form-check-label" for="showDescription">需求內容</label>
+    <label class="form-check-label" for="showDescription">作品說明</label>
   </div>
   <div class="form-check form-check-inline">
-    <input class="form-check-input" type="checkbox" id="showNeeder" checked />
-    <label class="form-check-label" for="showNeeder">委託人</label>
+    <input class="form-check-input" type="checkbox" id="showWorker" checked />
+    <label class="form-check-label" for="showWorker">作者</label>
   </div>
   <div class="form-check form-check-inline">
     <input
@@ -317,7 +317,7 @@
   </div>
   <div class="form-check form-check-inline">
     <input class="form-check-input" type="checkbox" id="showPrice" checked />
-    <label class="form-check-label" for="showPrice">酬金</label>
+    <label class="form-check-label" for="showPrice">售價</label>
   </div>
   <div class="form-check form-check-inline">
     <input
@@ -363,18 +363,18 @@
                 <th class="cell" data-column="id">ID</th>
                 <th class="cell" data-column="title" draggable="true">標題</th>
                 <th class="cell" data-column="category" draggable="true">
-                  需求種類
+                  販賣項目
                 </th>
                 <th class="cell" data-column="description" draggable="true">
-                  需求內容
+                  作品說明
                 </th>
-                <th class="cell" data-column="needer" draggable="true">
-                  委託人
+                <th class="cell" data-column="worker" draggable="true">
+                  作者
                 </th>
                 <th class="cell" data-column="originalFrom" draggable="true">
                   關聯原作
                 </th>
-                <th class="cell" data-column="price" draggable="true">酬金</th>
+                <th class="cell" data-column="price" draggable="true">售價</th>
                 <th class="cell" data-column="publishTime" draggable="true">
                   發布時間
                 </th>
@@ -391,62 +391,62 @@
               </tr>
             </thead>
             <tbody>
-              {% for HTML_need in page_obj %}
+              {% for HTML_work in page_obj %}
               <tr>
-                <td class="cell" data-column="id">{{HTML_need.need_id}}</td>
+                <td class="cell" data-column="id">{{HTML_work.work_id}}</td>
                 <td class="cell" data-column="title">
-                  {{HTML_need.need_title}}
+                  {{HTML_work.work_title}}
                 </td>
                 <td class="cell" data-column="category">
-                  {{HTML_need.need_category}}
+                  {{HTML_work.work_category}}
                 </td>
                 <td class="cell" data-column="description">
-                  {{HTML_need.need_description|truncatechars:35}}
+                  {{HTML_work.work_description|truncatechars:35}}
                 </td>
-                <td class="cell" data-column="needer">
-                  {{HTML_need.public_card.user_nickname}}
+                <td class="cell" data-column="worker">
+                  {{HTML_work.public_card.user_nickname}}
                 </td>
                 <td class="cell" data-column="originalFrom">
-                  {{HTML_need.need_original_from}}
+                  {{HTML_work.work_original_from}}
                 </td>
                 <td class="cell" data-column="price">
-                  ${{HTML_need.need_price}}
+                  ${{HTML_work.work_price}}
                 </td>
                 <td class="cell" data-column="publishTime">
                   <span class="cell-data"
-                    >{{ HTML_need.publish_time|date:"y-m-d" }}</span
+                    >{{ HTML_work.publish_time|date:"y-m-d" }}</span
                   >
                   <span class="note"
-                    >{{ HTML_need.publish_time|time:"g:i A" }}</span
+                    >{{ HTML_work.publish_time|time:"g:i A" }}</span
                   >
                 </td>
                 <td class="cell" data-column="deadline">
                   <span class="cell-data"
-                    >{{ HTML_need.deadline|date:"y-m-d" }}</span
+                    >{{ HTML_work.deadline|date:"y-m-d" }}</span
                   >
                   <span class="note"
-                    >{{ HTML_need.deadline|time:"g:i A" }}</span
+                    >{{ HTML_work.deadline|time:"g:i A" }}</span
                   >
                 </td>
                 <td class="cell" data-column="status">
                   <span
-                    class="badge {% if HTML_need.need_status == '徵件中' %}bg-success {% elif HTML_need.need_status == '截止' %}bg-danger {% elif HTML_need.need_status == '已成交' %}bg-info {% elif HTML_need.need_status == '取消徵件' %}bg-secondary {% endif %}"
+                    class="badge {% if HTML_work.work_status == '公開販售' %}bg-success {% elif HTML_work.work_status == '投稿審查' %}bg-danger {% elif HTML_work.work_status == '已成交' %}bg-info {% elif HTML_work.work_status == '取消販售' %}bg-secondary {% endif %}"
                   >
-                    {{HTML_need.need_status}}
+                    {{HTML_work.work_status}}
                   </span>
                 </td>
                 <td class="cell" data-column="lastUpdate">
                   <span class="cell-data"
-                    >{{ HTML_need.last_update|date:"y-m-d" }}</span
+                    >{{ HTML_work.last_update|date:"y-m-d" }}</span
                   >
                   <span class="note"
-                    >{{ HTML_need.last_update|time:"g:i A" }}</span
+                    >{{ HTML_work.last_update|time:"g:i A" }}</span
                   >
                 </td>
                 <!-- 編輯鈕 -->
                 <td class="cell">
                   <a
-                    href="{% url 'commission:Urls_need_edit' HTML_need.need_id %}"
+                    href="{% url 'commission:Urls_work_edit' HTML_work.work_id %}"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -466,7 +466,7 @@
                     </svg>
                   </a>&nbsp;
                   <!-- 刪除鈕 -->
-                  <a href="{% url 'commission:Urls_need_delete' HTML_need.need_id %}" class="text-danger" onclick="return confirm('您即將要刪除「ID:{{HTML_need.need_id}} {{HTML_need.need_title}}」?')">
+                  <a href="{% url 'commission:Urls_work_delete' HTML_work.work_id %}" class="text-danger" onclick="return confirm('您即將要刪除「ID:{{HTML_work.work_id}} {{HTML_work.work_title}}」?')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
                       <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
                     </svg>
@@ -583,7 +583,7 @@ function updateStatusTabs(status) {
 
 
       const defaultColumnOrder = [
-          'title', 'category', 'description', 'needer', 'originalFrom',
+          'title', 'category', 'description', 'worker', 'originalFrom',
           'price', 'publishTime', 'deadline', 'status', 'lastUpdate'
       ];
 
@@ -591,7 +591,7 @@ function updateStatusTabs(status) {
           showTitle: true,
           showCategory: true,
           showDescription: true,
-          showNeeder: true,
+          showWorker: true,
           showOriginalFrom: true,
           showPrice: true,
           showPublishTime: true,

@@ -8,7 +8,7 @@ drop table db_need_info;
 -- drop table db_works_info;
 -- drop table db_works_preview;
 drop table db_public_card_info;
--- drop table db_public_card_sell;
+drop table db_public_card_sell;
 
 SELECT * FROM shopping.member_basic;
 SELECT * FROM shopping.db_need_info;
@@ -29,11 +29,11 @@ WHERE
 UPDATE db_public_card_info
 SET 
     sell_public_status = false,
-    work_list_public_status = false,
-    work_done_list_public_status = false,
+    work_list_public_status = 1,
+    work_done_list_public_status = 1,
     need_list_public_status = false
 WHERE 
-    user_id IN (4, 5, 6);
+    user_id IN (4);
 
 -- data 先
 -- py manage.py inspectdb shopping db_need_info db_need_images db_works_info works_preview db_public_card_info db_public_card_sell > commission/models.py

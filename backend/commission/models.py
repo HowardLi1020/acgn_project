@@ -41,31 +41,69 @@ class DbNeedImages(models.Model):
         db_table = 'db_need_images'
 
 
-class DbWorksInfo(models.Model):
-    author_id = models.IntegerField()
-    author_nickname = models.CharField(max_length=50)
-    author_avatar = models.CharField(max_length=255, blank=True, null=True)
-    author_introduction = models.CharField(max_length=300, blank=True, null=True)
+class DbWorkInfo(models.Model):
+    # author_id = models.IntegerField()
+    # author_nickname = models.CharField(max_length=50)
+    # author_avatar = models.CharField(max_length=255, blank=True, null=True)
+    # author_introduction = models.CharField(max_length=300, blank=True, null=True)
+    # work_id = models.AutoField(primary_key=True)
+    # work_title = models.CharField(max_length=50, blank=True, null=True)
+    # work_original_from = models.CharField(max_length=150, blank=True, null=True)
+    # work_description = models.TextField(blank=True, null=True)
+    # usage_restrictions = models.TextField(blank=True, null=True)
+    # sale_items = models.TextField(blank=True, null=True)
+    # tags = models.CharField(max_length=100, blank=True, null=True)
+    # work_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
+    # original_file = models.CharField(max_length=255, blank=True, null=True)
+    # submission_history = models.TextField(blank=True, null=True)
+    # work_thumbnail = models.CharField(max_length=255, blank=True, null=True)
+    # work_preview = models.CharField(max_length=255, blank=True, null=True)
+    # publish_time = models.DateTimeField(blank=True, null=True)
+    # deadline = models.DateTimeField(blank=True, null=True)
+    # last_update = models.DateTimeField(blank=True, null=True)
+    # work_status = models.CharField(max_length=50, blank=True, null=True)
+    worker_id = models.IntegerField()
     work_id = models.AutoField(primary_key=True)
     work_title = models.CharField(max_length=50, blank=True, null=True)
+    work_category = models.CharField(max_length=50, blank=True, null=True)
     work_original_from = models.CharField(max_length=150, blank=True, null=True)
     work_description = models.TextField(blank=True, null=True)
-    usage_restrictions = models.TextField(blank=True, null=True)
-    sale_items = models.TextField(blank=True, null=True)
-    tags = models.CharField(max_length=100, blank=True, null=True)
     work_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
-    original_file = models.CharField(max_length=255, blank=True, null=True)
-    submission_history = models.TextField(blank=True, null=True)
-    work_thumbnail = models.CharField(max_length=255, blank=True, null=True)
-    work_preview = models.CharField(max_length=255, blank=True, null=True)
+    usage_restrictions = models.TextField(blank=True, null=True)
+    tags = models.CharField(max_length=100, blank=True, null=True)
+    original_file = models.BooleanField(default=False)
     publish_time = models.DateTimeField(blank=True, null=True)
     deadline = models.DateTimeField(blank=True, null=True)
     last_update = models.DateTimeField(blank=True, null=True)
     work_status = models.CharField(max_length=50, blank=True, null=True)
+    public_status = models.BooleanField(default=True)
+    case_by_need = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'db_works_info'
+        db_table = 'db_work_info'
+
+
+class DbWorkImages(models.Model):
+    image_id = models.AutoField(primary_key=True)
+    work = models.ForeignKey('DbWorkInfo', models.DO_NOTHING, blank=True, null=True)
+    step = models.IntegerField(blank=True, null=True)
+    image_url = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'db_work_images'
+
+
+class DbWorkOriginalFile(models.Model):
+    original_file_id = models.AutoField(primary_key=True)
+    work = models.ForeignKey('DbWorkInfo', models.DO_NOTHING, blank=True, null=True)
+    step = models.IntegerField(blank=True, null=True)
+    original_file_url = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'db_work_original_file'
 
 
 class DbPublicCardInfo(models.Model):
@@ -91,7 +129,7 @@ class DbPublicCardInfo(models.Model):
     need_list_public_status = models.BooleanField(default=True)
 
     # 只保留基於 ID 的外鍵關聯
-    work = models.ForeignKey(DbWorksInfo, models.DO_NOTHING, blank=True, null=True)
+    work = models.ForeignKey(DbWorkInfo, models.DO_NOTHING, blank=True, null=True)
     need = models.ForeignKey(DbNeedInfo, models.DO_NOTHING, blank=True, null=True)
     
     deal_count = models.IntegerField(blank=True, null=True)

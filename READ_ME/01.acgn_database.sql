@@ -367,8 +367,8 @@ CREATE TABLE db_need_images (
 );
 
 -- 5-2 作品資訊表
-CREATE TABLE db_works_info (
-    author_id INT NOT NULL,                         -- 作者id（關聯資料表：使用者資訊表member_basic）
+CREATE TABLE db_work_info (
+    worker_id INT NOT NULL,                         -- 作者id（關聯資料表：使用者資訊表member_basic）
     -- 嘗試拔掉讓它直接去db_public_card_info找資料
     -- author_nickname VARCHAR(50),                    -- 作者暱稱（關聯資料表：公開名片表db_public_card_info）
     -- author_avatar VARCHAR(255),                     -- 作者大頭（關聯資料表：公開名片表db_public_card_info）
@@ -376,19 +376,19 @@ CREATE TABLE db_works_info (
 
     work_id INT AUTO_INCREMENT PRIMARY KEY,         -- 作品id
     work_title VARCHAR(50),                         -- 作品標題
+    work_category VARCHAR(50),                      -- 販賣項目
     work_original_from VARCHAR(150),                -- 作品關聯原作
     work_description TEXT,                          -- 作品說明
-    usage_restrictions TEXT,                        -- 使用限制
-    sale_items TEXT,                                -- 販賣項目
-    tags VARCHAR(100),                              -- Tag
     work_price DECIMAL(10),                         -- 作品售價
-    original_file VARCHAR(255),                     -- 作品原始檔上傳
-    submission_history TEXT,                         -- 投稿歷史
-    work_thumbnail VARCHAR(255),                     -- 作品縮圖
+    usage_restrictions TEXT,                        -- 使用限制
+    tags VARCHAR(100),                              -- Tag
+    original_file BOOLEAN DEFAULT FALSE,            -- 原始檔解鎖
     publish_time DATETIME,                          -- 發布時間
     deadline DATETIME,                              -- 截止時間
     last_update DATETIME,                           -- 最後更新
     work_status VARCHAR(10),                        -- 作品狀態
+    public_status BOOLEAN DEFAULT TRUE,             -- 是否於名片頁公開
+    case_by_need INT,                               -- 投稿需求案id
 
     reviewer_id INT,                                -- 評價人id（關聯資料表：使用者資訊表member_basic）
     reviewer_nickname VARCHAR(50),                  -- 評價人暱稱（關聯資料表：公開名片表db_public_card_info）
@@ -398,7 +398,7 @@ CREATE TABLE db_works_info (
     review_time DATETIME,                           -- 評價時間
     review_status VARCHAR(10),                      -- 評價狀態（未評價、已評價、尚未開放）
     
-    FOREIGN KEY (author_id) REFERENCES member_basic(user_id) ON DELETE RESTRICT, -- 外鍵 作者id → member_basic使用者資訊表-使用者id
+    FOREIGN KEY (worker_id) REFERENCES member_basic(user_id) ON DELETE RESTRICT, -- 外鍵 作者id → member_basic使用者資訊表-使用者id
     -- 嘗試拔掉讓它直接去db_public_card_info找資料
     -- FOREIGN KEY (author_nickname) REFERENCES db_public_card_info(user_nickname) ON DELETE SET NULL, -- 外鍵 作者暱稱 → 公開名片表-使用者暱稱
     -- FOREIGN KEY (author_avatar) REFERENCES db_public_card_info(user_avatar) ON DELETE SET NULL, -- 外鍵 作者大頭 → 公開名片表-使用者大頭
@@ -410,31 +410,40 @@ CREATE TABLE db_works_info (
 );
 
 -- 5-2-1 作品預覽圖
-CREATE TABLE db_works_preview (
-    preview_id INT AUTO_INCREMENT PRIMARY KEY,      -- 預覽圖上傳流水號
+CREATE TABLE db_work_images (
+    image_id INT AUTO_INCREMENT PRIMARY KEY,      -- 預覽圖上傳流水號
     work_id INT,                                    -- 作品id
     step INT,                                       -- 第幾張圖
-    preview_url VARCHAR(255),                       -- 圖檔名
-    FOREIGN KEY (work_id) REFERENCES db_works_info(work_id) ON DELETE CASCADE
+    image_url VARCHAR(255),                       -- 圖檔名
+    FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE CASCADE
+);
+
+-- 5-2-2 作品原始檔
+CREATE TABLE db_work_original_file (
+    original_file_id INT AUTO_INCREMENT PRIMARY KEY,-- 原始檔上傳流水號
+    work_id INT,                                    -- 作品id
+    step INT,                                       -- 第幾個檔
+    original_file_url VARCHAR(255),                 -- 原始檔名
+    FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE CASCADE
 );
 
 -- 5-3 公開名片表
 CREATE TABLE db_public_card_info (
     user_id INT NOT NULL PRIMARY KEY,                 -- 使用者id（關聯資料表：使用者資訊表member_basic）
-    user_nickname VARCHAR(50) NOT NULL,               -- 使用者暱稱（關聯資料表：需求need_info、作品works_info）
-    user_avatar VARCHAR(255) DEFAULT NULL,            -- 使用者頭像（關聯資料表：需求need_info、作品works_info）
+    user_nickname VARCHAR(50) NOT NULL,               -- 使用者暱稱（關聯資料表：需求need_info、作品work_info）
+    user_avatar VARCHAR(255) DEFAULT NULL,            -- 使用者頭像（關聯資料表：需求need_info、作品work_info）
     use_default_avatar BOOLEAN DEFAULT TRUE,          -- 是否使用預設頭像
-    user_introduction VARCHAR(300) DEFAULT NULL,      -- 使用者介紹（關聯資料表：需求need_info、作品works_info）
+    user_introduction VARCHAR(300) DEFAULT NULL,      -- 使用者介紹（關聯資料表：需求need_info、作品work_info）
     card_banner VARCHAR(255),                         -- 名片橫幅
     use_default_banner BOOLEAN DEFAULT TRUE,          -- 是否使用預設橫幅
     card_status VARCHAR(3) DEFAULT '非公開',          -- 名片公開狀態
     involved_acgn TEXT,                              -- 涉獵作品
     key_tags VARCHAR(255),                            -- 關鍵Tag
 
-    work_id INT,                                      -- 公開/已成交作品id（關聯資料表：作品works_info）
-    work_title VARCHAR(50),                           -- 作品標題（關聯資料表：作品works_info）
-    work_original_from VARCHAR(150),                  -- 作品關聯原作（關聯資料表：作品works_info）
-    work_price DECIMAL(10),                           -- 作品售價（關聯資料表：作品works_info）
+    work_id INT,                                      -- 公開/已成交作品id（關聯資料表：作品work_info）
+    work_title VARCHAR(50),                           -- 作品標題（關聯資料表：作品work_info）
+    work_original_from VARCHAR(150),                  -- 作品關聯原作（關聯資料表：作品work_info）
+    work_price DECIMAL(10),                           -- 作品售價（關聯資料表：作品work_info）
     need_id INT,                                      -- 發起需求id（關聯資料表：需求need_info）
     -- 嘗試拔掉讓它直接去db_need_info找資料
     -- need_title VARCHAR(50),                           -- 發起需求標題（關聯資料表：需求need_info）
@@ -448,10 +457,10 @@ CREATE TABLE db_public_card_info (
     last_update DATETIME,                             -- 最後更新
     
     FOREIGN KEY (user_id) REFERENCES member_basic(user_id) ON DELETE RESTRICT, -- 外鍵 使用者id → member_basic使用者資訊表-使用者id
-    FOREIGN KEY (work_id) REFERENCES db_works_info(work_id) ON DELETE SET NULL, -- 外鍵 公開/已成交作品id → 作品資訊表-作品id
-    FOREIGN KEY (work_title) REFERENCES db_works_info(work_title) ON DELETE SET NULL, -- 外鍵 作品標題 → 作品資訊表-作品標題
-    FOREIGN KEY (work_original_from) REFERENCES db_works_info(work_original_from) ON DELETE SET NULL, -- 外鍵 作品關聯原作 → 作品資訊表-作品關聯原作
-    FOREIGN KEY (work_price) REFERENCES db_works_info(work_price) ON DELETE SET NULL, -- 外鍵 作品售價 → 作品資訊表-作品售價
+    FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE SET NULL, -- 外鍵 公開/已成交作品id → 作品資訊表-作品id
+    FOREIGN KEY (work_title) REFERENCES db_work_info(work_title) ON DELETE SET NULL, -- 外鍵 作品標題 → 作品資訊表-作品標題
+    FOREIGN KEY (work_original_from) REFERENCES db_work_info(work_original_from) ON DELETE SET NULL, -- 外鍵 作品關聯原作 → 作品資訊表-作品關聯原作
+    FOREIGN KEY (work_price) REFERENCES db_work_info(work_price) ON DELETE SET NULL, -- 外鍵 作品售價 → 作品資訊表-作品售價
     FOREIGN KEY (need_id) REFERENCES db_need_info(need_id) ON DELETE SET NULL, -- 外鍵 發起需求id → 需求資訊表-需求案id
     -- FOREIGN KEY (need_title) REFERENCES db_need_info(need_title) ON DELETE SET NULL, -- 外鍵 發起需求標題 → 需求資訊表-需求標題
     -- FOREIGN KEY (need_original_from) REFERENCES db_need_info(need_original_from) ON DELETE SET NULL, -- 外鍵 需求關聯原作 → 需求資訊表-需求關聯原作

@@ -342,9 +342,390 @@ def ViewFn_need_delete(request, view_fn_need_id):
     
     return HttpResponseRedirect(referer_url)
 
+def ViewFn_work_list(request):
+    # 資料提取與顯示
+    view_db_work_info = DbWorkInfo.objects.all()  # 保持為 QuerySet
+    
+    # 獲取所有需要的 public card 資訊
+    public_cards = {
+        card.member_basic_id: card 
+        for card in DbPublicCardInfo.objects.all()
+    }
+    
+    # 排序功能
+    sort_column = request.GET.get('sort', 'id')  # 預設為 ID
+    sort_order = request.GET.get('order', 'desc')  # 預設為降序
+    
+    # 映射前端欄位名稱到資料庫欄位名稱
+    column_map = {
+        'id': 'work_id',
+        'title': 'work_title',
+        'category': 'work_category',
+        'description': 'work_description',
+        'worker': 'worker_id', 
+        'originalFrom': 'work_original_from',
+        'price': 'work_price',
+        'publishTime': 'publish_time',
+        'deadline': 'deadline',
+        'status': 'work_status',
+        'lastUpdate': 'last_update'
+    }
+    
+    # 應用排序
+    sort_field = column_map.get(sort_column, 'work_id')
+    if sort_order == 'asc':
+        view_db_work_info = view_db_work_info.order_by(sort_field)
+    else:
+        view_db_work_info = view_db_work_info.order_by(f'-{sort_field}')
+    
+    # 搜尋功能
+    search_term = request.GET.get('search', '')
+    search_column = request.GET.get('column', 'option-1')
+    status_filter = request.GET.get('status', 'all')
+    
+    # 搜尋邏輯
+    if search_term:
+        if search_column == 'option-1':
+            # 先找出符合用戶暱稱的 worker_ids
+            matching_worker_ids = [
+                card.member_basic_id 
+                for card in public_cards.values() 
+                if search_term.lower() in card.user_nickname.lower()
+            ]
+            
+            # 修改搜尋條件，加入對 worker_id 的檢查
+            view_db_work_info = view_db_work_info.filter(
+                Q(work_title__icontains=search_term) |
+                Q(work_category__icontains=search_term) |
+                Q(work_description__icontains=search_term) |
+                Q(work_original_from__icontains=search_term) |
+                Q(work_price__icontains=search_term) |
+                Q(publish_time__icontains=search_term) |
+                Q(deadline__icontains=search_term) |
+                Q(work_status__icontains=search_term) |
+                Q(last_update__icontains=search_term) |
+                Q(worker_id__in=matching_worker_ids)  # 加入這行
+            )
+        elif search_column == 'worker':  # 如果特別選擇搜尋委託人
+            matching_worker_ids = [
+                card.member_basic_id 
+                for card in public_cards.values() 
+                if search_term.lower() in card.user_nickname.lower()
+            ]
+            view_db_work_info = view_db_work_info.filter(worker_id__in=matching_worker_ids)
+        else:
+            column = column_map.get(search_column.replace('option-', ''))
+            if column:
+                view_db_work_info = view_db_work_info.filter(**{f"{column}__icontains": search_term})
+
+    # 篩選功能
+    if status_filter != 'all':
+        view_db_work_info = view_db_work_info.filter(work_status=status_filter)
+
+    # 在這裡轉換為列表並添加 public_card
+    view_db_work_info = list(view_db_work_info)
+    for work in view_db_work_info:
+        work.public_card = public_cards.get(work.worker_id)
+
+    paginator = Paginator(view_db_work_info, 7)  # 每頁顯示7條記錄
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_term': search_term,
+        'search_column': search_column,
+        'status_filter': status_filter,
+        'sort_column': sort_column,
+        'sort_order': sort_order,
+        'is_sorted': 'sort' in request.GET
+    }
+    
+    return render(request, 'commission/work_list.html', context)
+
+
+@require_http_methods(["GET", "POST"])
+def ViewFn_work_edit(request, view_fn_work_id):
+    # 待修BUG：
+    # ．分次加入圖檔時，只有最後一次加的圖才被寫入資料庫
+
+    # ．(已解決)上傳未滿5張圖時，會重複上傳
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                view_db_work_info_id = get_object_or_404(DbWorkInfo, work_id=view_fn_work_id)
+                
+                # 處理刪除圖片
+                if 'deleted_images' in request.POST:
+                    deleted_images = json.loads(request.POST['deleted_images'])
+
+                    for image_name in deleted_images:
+                        # 刪除資料庫記錄
+                        DbWorkImages.objects.filter(
+                            work_id=view_fn_work_id,
+                            image_url=image_name
+                        ).delete()
+
+                        
+
+                        # 刪除實際檔案
+                        file_path = os.path.join('commission', 'workID_img', image_name)
+                        if default_storage.exists(file_path):
+                            default_storage.delete(file_path)
+                    
+
+                    # 重新排序剩餘圖片
+                    remaining_images = DbWorkImages.objects.filter(
+                        work_id=view_fn_work_id
+                    ).order_by('step')
+                    
+
+                    # 更新每張圖片的序號和檔名
+                    for new_step, image in enumerate(remaining_images, 1):
+                        # 取得舊檔名的副檔名
+                        old_extension = Path(image.image_url).suffix
+                        # 產生新檔名
+                        new_filename = f"{view_fn_work_id}_sketch{new_step}{old_extension}"
+                        
+
+                        # 如果檔名需要更改
+                        if image.image_url != new_filename:
+                            # 重命名實際檔案
+                            old_path = os.path.join('commission', 'workID_img', image.image_url)
+                            new_path = os.path.join('commission', 'workID_img', new_filename)
+                            
+
+                            if default_storage.exists(old_path):
+                                # 讀取舊檔案內容
+                                with default_storage.open(old_path, 'rb') as old_file:
+                                    # 儲存為新檔案
+                                    default_storage.save(new_path, old_file)
+                                # 刪除舊檔案
+                                default_storage.delete(old_path)
+                            
+                            # 更新資料庫記錄
+                            image.image_url = new_filename
+                        
+                        # 更新序號
+                        image.step = new_step
+                        image.save()
+
+                # 更新文字欄位
+                if 'work_title' in request.POST:
+                    view_db_work_info_id.work_title = request.POST['work_title']
+                if 'work_category' in request.POST:
+                    view_db_work_info_id.work_category = request.POST['work_category']
+
+                if 'work_description' in request.POST:
+                    view_db_work_info_id.work_description = request.POST['work_description']
+                if 'work_original_from' in request.POST:
+                    view_db_work_info_id.work_original_from = request.POST['work_original_from']
+                if 'work_price' in request.POST:
+
+                    view_db_work_info_id.work_price = request.POST['work_price']
+                if 'deadline' in request.POST:
+                    view_db_work_info_id.deadline = request.POST['deadline']
+                # 調試輸出
+
+                # print("POST data:", request.POST)
+                # print("Original status:", view_db_work_info_id.work_status)
+                
+
+                if 'work_status' in request.POST:
+                    # 獲取 work_status 的第一個值（因為 radio 按鈕應該只有一個值），不知道什麼原因 'work_status'會接收到多個值
+
+
+                    view_db_work_info_id.work_status = request.POST.getlist('work_status')[0].strip()
+                    # view_db_work_info_id.work_status = request.POST['work_status']                    
+
+                # 更新 case_by_need 欄位
+                if 'case_by_need' in request.POST:
+                    # 檢查輸入的需求案ID是否存在
+                    need_id = request.POST['case_by_need']
+                    if need_id:  # 如果有輸入值
+                        try:
+                            # 嘗試查找對應的需求案
+                            need_exists = DbNeedInfo.objects.filter(need_id=need_id).exists()
+                            if need_exists:
+                                view_db_work_info_id.case_by_need = need_id
+                            else:
+                                view_db_work_info_id.case_by_need = None
+                        except ValueError:
+                            # 如果輸入的不是有效的數字，設為 None
+                            view_db_work_info_id.case_by_need = None
+                    else:
+                        # 如果輸入為空，設為 None
+                        view_db_work_info_id.case_by_need = None
+
+                # 處理圖片上傳
+                if 'work_ex_image' in request.FILES:
+                    uploaded_files = request.FILES.getlist('work_ex_image')
+
+
+                    # 獲取現有的圖片記錄
+                    existing_images = DbWorkImages.objects.filter(work_id=view_fn_work_id).order_by('step')
+                    current_step = existing_images.count()
+                    
+
+                    if current_step >= 5:
+                        # 當已有5張圖片時，依序替換
+                        for index, file in enumerate(uploaded_files):
+                            if index < 5:
+                                # 找到要替換的圖片記錄
+                                image_record = existing_images[index]
+                                
+                                # 刪除舊檔案
+                                old_file_path = os.path.join('commission', 'workID_img', image_record.image_url)
+                                if default_storage.exists(old_file_path):
+                                    default_storage.delete(old_file_path)
+                                
+
+                                # 使用新文件的副檔名
+                                new_extension = Path(file.name).suffix
+                                new_filename = f"{view_fn_work_id}_sketch{image_record.step}{new_extension}"
+                                
+
+                                # 儲存新檔案
+                                file_path = os.path.join('commission', 'workID_img', new_filename)
+                                default_storage.save(file_path, file)
+                                
+
+                                # 更新資料庫記錄
+                                image_record.image_url = new_filename
+                                image_record.save()
+                    else:
+                        # 只處理前5張上傳的文件
+                        files_to_process = uploaded_files[:5 - current_step]
+
+                        # 處理新上傳的檔案
+                        for index, file in enumerate(files_to_process, start=current_step + 1):
+                            # 新增圖片
+                            new_extension = Path(file.name).suffix
+                            new_filename = f"{view_fn_work_id}_sketch{index}{new_extension}"
+                            image_record = DbWorkImages(
+                                work_id=view_db_work_info_id.work_id,
+                                step=index,
+                                image_url=new_filename
+                            )
+
+                            image_record.save()
+                            
+                            # 儲存新檔案
+                            file_path = os.path.join('commission', 'workID_img', new_filename)
+                            default_storage.save(file_path, file)
+
+
+                # 處理替換的圖片
+                if 'replaced_images' in request.POST:
+                    replaced_images = json.loads(request.POST['replaced_images'])
+                    for replacement in replaced_images:
+                        original_filename = replacement['original']
+                        new_file = request.FILES[f'replacement_file_{replacement["index"]}']
+                        
+                        # 找到要替換的圖片記錄
+                        image_record = DbWorkImages.objects.get(
+                            work_id=view_fn_work_id,
+                            image_url=original_filename
+                        )
+                        
+
+                        # 刪除舊檔案
+                        old_file_path = os.path.join('commission', 'workID_img', original_filename)
+                        if default_storage.exists(old_file_path):
+                            default_storage.delete(old_file_path)
+                        
+
+                        # 使用新文件的副檔名
+                        new_extension = Path(new_file.name).suffix
+                        new_filename = f"{view_fn_work_id}_sketch{image_record.step}{new_extension}"
+                        
+
+                        # 儲存新檔案
+                        file_path = os.path.join('commission', 'workID_img', new_filename)
+                        default_storage.save(file_path, new_file)
+                        
+
+                        # 更新資料庫記錄
+                        image_record.image_url = new_filename
+                        image_record.save()
+                    print("New status:", request.POST['work_status'])
+                # 更新 last_update
+                view_db_work_info_id.last_update = timezone.now()
+                view_db_work_info_id.save()
+                
+
+                # 驗證保存後的狀態
+                updated_work = DbWorkInfo.objects.get(work_id=view_fn_work_id)
+                print("Saved status:", updated_work.work_status)
+                
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': '更新成功',
+                    'last_update': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'work_status': updated_work.work_status,  # 在回應中也包含更新後的狀態
+                    'case_by_need': view_db_work_info_id.case_by_need  # 在回應中包含更新後的需求案ID
+                })
+            
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
+    # GET 請求的處理
+    view_db_work_info_id = get_object_or_404(DbWorkInfo, work_id=view_fn_work_id)
+    
+
+    # 獲取對應的 PublicCardInfo
+    view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, member_basic_id=view_db_work_info_id.worker_id)
+    
+
+    # 將截止時間轉換為當前時區
+    if view_db_work_info_id.deadline:
+        view_db_work_info_id.deadline = timezone.localtime(view_db_work_info_id.deadline)
+    
+
+    view_db_work_sketches = DbWorkImages.objects.filter(work_id=view_fn_work_id).order_by('step')
+    
+
+    # 計算剩餘的灰色加號DIV數量
+    remaining_placeholders = max(0, 5 - view_db_work_sketches.count())
+
+
+    context = {
+        'ViewKey_DbWorkInfo_work_id': view_db_work_info_id,
+        'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
+        'ViewKey_DbWorkEdit_sketches': view_db_work_sketches,
+        'remaining_placeholders': range(remaining_placeholders),
+    }
+
+
+    return render(request, 'commission/work_edit.html', context)
+
+# 作品頁-投稿需求案選擇功能用API端點
+def ViewFn_need_info_api(request):
+    need_info = DbNeedInfo.objects.all().values(
+        'need_id', 
+        'need_title', 
+        'need_category', 
+        'need_original_from'
+    )
+    return JsonResponse(list(need_info), safe=False)
+
+
+def ViewFn_work_delete(request, view_fn_work_id):
+    view_db_work_info = get_object_or_404(DbWorkInfo, pk=view_fn_work_id)
+    view_db_work_info.delete()
+    
+    return HttpResponseRedirect(reverse('commission:Urls_work_list'))
+
+
 def ViewFn_publiccard_list(request):
     view_db_publiccard_info = DbPublicCardInfo.objects.all()
     
+
     # 獲取排序參數
     sort_by = request.GET.get('sort', 'last_update')  # 預設按最後更新排序
     sort_direction = request.GET.get('direction', 'desc')  # 預設降序
@@ -430,3 +811,5 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
         'ViewKey_DbPublicCardSell': view_db_publiccard_sell,
     }
     return render(request, template_name, context)
+
+
