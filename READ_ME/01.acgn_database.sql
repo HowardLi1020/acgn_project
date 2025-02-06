@@ -220,7 +220,7 @@ CREATE TABLE orders (
     coupon_discount DECIMAL(10, 2) DEFAULT NULL,
     payment_status VARCHAR(9) DEFAULT NULL,
     shipping_status VARCHAR(10) DEFAULT NULL,
-    payment_method VARCHAR(16) NOT NULL,
+    payment_method VARCHAR(16) DEFAULT NULL,
     order_status VARCHAR(15) NOT NULL DEFAULT 'PENDING',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
