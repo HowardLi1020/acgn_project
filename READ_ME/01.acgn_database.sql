@@ -409,21 +409,21 @@ CREATE TABLE db_work_info (
     INDEX idx_work_price (work_price)
 );
 
--- 5-2-1 作品預覽圖
+-- 5-2-1 作品原始檔
+CREATE TABLE db_work_original_file (
+    original_file_id INT AUTO_INCREMENT PRIMARY KEY,-- 原始檔上傳流水號
+    work_id INT,                                    -- 作品id
+    --step INT,                                        第幾個檔
+    original_file_url VARCHAR(255),                 -- 原始檔名
+    FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE CASCADE
+);
+
+-- 5-2-2 作品預覽圖
 CREATE TABLE db_work_images (
     image_id INT AUTO_INCREMENT PRIMARY KEY,      -- 預覽圖上傳流水號
     work_id INT,                                    -- 作品id
     step INT,                                       -- 第幾張圖
     image_url VARCHAR(255),                       -- 圖檔名
-    FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE CASCADE
-);
-
--- 5-2-2 作品原始檔
-CREATE TABLE db_work_original_file (
-    original_file_id INT AUTO_INCREMENT PRIMARY KEY,-- 原始檔上傳流水號
-    work_id INT,                                    -- 作品id
-    step INT,                                       -- 第幾個檔
-    original_file_url VARCHAR(255),                 -- 原始檔名
     FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE CASCADE
 );
 

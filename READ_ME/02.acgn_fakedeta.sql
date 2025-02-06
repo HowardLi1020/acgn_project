@@ -117,6 +117,12 @@ INSERT INTO db_work_info (worker_id, work_title, work_category, work_original_fr
 (1019, '機甲設計圖', '機械設計', '原創', '科幻風格機甲設計，含武器系統和變形機制設計圖', 18000, '版權買斷需另議，基礎版本僅供參考', '機甲,科幻,機械,設計圖', '2024-01-22 11:50:00', '2024-03-22 23:59:59', '2024-01-22 11:50:00', '公開販售', true),
 (1020, '和風妖怪插畫', '插畫', '原創', '日式風格妖怪主題插畫，適合製作成掛軸或桌布', 7500, '允許非商業用途使用，需標註作者', '和風,妖怪,浮世繪,東方', '2024-01-16 12:40:00', '2024-02-16 23:59:59', '2024-01-29 16:15:00', '投稿審查', true);
 
+-- 5-2-1 作品原始檔
+INSERT INTO db_work_original_file (work_id, original_file_url) VALUES
+(10, 'document_preview_archive.ico'),(10, '統計數據202308中文版.pdf'),(10, '極簡風meme.zip');
+
+
+
 -- 5-3 公開名片表導入會員資料
 INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, user_introduction)
 SELECT 

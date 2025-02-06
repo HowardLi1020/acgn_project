@@ -20,6 +20,7 @@ urlpatterns = [
     path('work/delete/<int:view_fn_work_id>/', views.ViewFn_work_delete, name='Urls_work_delete'),
     path('api/need-info/', views.ViewFn_need_info_api, name='Urls_need_info_api'), # 投稿需求案選擇功能用API端點
     
+    
     # 名片頁
     path('publiccard_list/', views.ViewFn_publiccard_list, name='Urls_publiccard_list'),
     path('publiccard/edit/<int:view_fn_publiccard_id>/', views.ViewFn_publiccard_edit, name='Urls_publiccard_edit'),

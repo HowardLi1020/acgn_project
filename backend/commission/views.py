@@ -443,7 +443,7 @@ def ViewFn_work_list(request):
     
     return render(request, 'commission/work_list.html', context)
 
-
+@never_cache
 @require_http_methods(["GET", "POST"])
 def ViewFn_work_edit(request, view_fn_work_id):
     # 待修BUG：
@@ -690,15 +690,21 @@ def ViewFn_work_edit(request, view_fn_work_id):
     view_db_work_sketches = DbWorkImages.objects.filter(work_id=view_fn_work_id).order_by('step')
     
 
+    # 查詢原始檔案
+    original_files = DbWorkOriginalFile.objects.filter(work_id=view_fn_work_id).values('work_id', 'original_file_url')
+
+    # 將 original_files 轉換為 JSON 格式
+    original_files_json = json.dumps(list(original_files))
+
     # 計算剩餘的灰色加號DIV數量
     remaining_placeholders = max(0, 5 - view_db_work_sketches.count())
-
 
     context = {
         'ViewKey_DbWorkInfo_work_id': view_db_work_info_id,
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
         'ViewKey_DbWorkEdit_sketches': view_db_work_sketches,
         'remaining_placeholders': range(remaining_placeholders),
+        'original_files_json': original_files_json,
     }
 
 

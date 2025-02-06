@@ -98,7 +98,7 @@ class DbWorkImages(models.Model):
 class DbWorkOriginalFile(models.Model):
     original_file_id = models.AutoField(primary_key=True)
     work = models.ForeignKey('DbWorkInfo', models.DO_NOTHING, blank=True, null=True)
-    step = models.IntegerField(blank=True, null=True)
+    # step = models.IntegerField(blank=True, null=True)
     original_file_url = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
