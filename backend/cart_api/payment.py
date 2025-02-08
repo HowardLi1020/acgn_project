@@ -24,7 +24,7 @@ class ECPayPaymentView(APIView):
 
         # 設定 ECPay 付款參數
         order_params = {
-            "MerchantTradeNo": f"{order.order_id}_{int(datetime.datetime.now().timestamp())}",
+            "MerchantTradeNo": f"{order.order_id}{int(datetime.datetime.now().timestamp())}",
             "MerchantTradeDate": order.order_date.strftime("%Y/%m/%d %H:%M:%S"),
             "PaymentType": "aio",
             "TotalAmount": str(int(order.total_amount)),

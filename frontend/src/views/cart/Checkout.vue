@@ -73,6 +73,9 @@
                 {{ loading ? "提交中..." : "提交訂單" }}
             </button>
         </div>
+
+        <!-- 隱藏的 ECPay 表單容器 -->
+        <div ref="formContainer" style="display: none"></div>
     </div>
 </template>
 
@@ -84,9 +87,7 @@ export default {
     components: {
         OrderItem,
     },
-    setup() {
-        const orderId = ref(localStorage.getItem("current_order_id"));
-    },
+
     data() {
         return {
             cartItems: [], // 儲存購物車內容
@@ -99,6 +100,7 @@ export default {
                 postal_code: "",
             },
             loading: false,
+            orderId: null, // 存儲 order_id
         };
     },
     computed: {
@@ -129,10 +131,9 @@ export default {
                 alert("無法加載購物車內容，請稍後再試！");
             }
         },
-        // 提交訂單
+
+        // 提交訂單並跳轉至 ECPsay
         async submitOrder() {
-            // console.log("表單驗證狀態：", this.isFormValid);
-		    // console.log("表單數據：", this.userDetails);
             if (!this.isFormValid) {
                 alert("請完整填寫收件資料！");
                 return;
@@ -144,14 +145,42 @@ export default {
                 ...this.userDetails,
                 total_amount: parseFloat(this.totalPrice),
             };
-            // console.log("API 基礎 URL：", import.meta.env.VITE_APIURL);
-            // console.log("提交的訂單數據：", orderData);
 
             try {
+                // 1️⃣ 提交訂單並獲取 `order_id`
                 const response = await orderAPI.submitOrder(orderData);
-                localStorage.setItem("current_order_id", response.order_id);
-                alert(`訂單提交成功！`);
-                this.$router.push({ name: "payconfirm" });
+                if (response && response.order_id) {
+                    this.orderId = response.order_id;
+                    console.log("訂單提交成功，order_id:", this.orderId);
+
+                    // 2️⃣ 取得 ECPay 付款 HTML 表單
+                    const paymentResponse = await orderAPI.payOrder(
+                        this.orderId
+                    );
+                    console.log("取得綠界付款 HTML 表單:", paymentResponse);
+
+                    if (paymentResponse.payment_form) {
+                        // 3️⃣ **解析 `payment_form`，但不執行 inline script**
+                        this.$refs.formContainer.innerHTML =
+                            paymentResponse.payment_form;
+
+                        // 4️⃣ **手動執行 `submit()`**
+                        setTimeout(() => {
+                            const formElement =
+                                this.$refs.formContainer.querySelector("form");
+                            if (formElement) {
+                                console.log("提交綠界付款表單...");
+                                formElement.submit();
+                            } else {
+                                throw new Error("找不到綠界付款表單");
+                            }
+                        }, 500); // **等待 DOM 渲染完成**
+                    } else {
+                        throw new Error("無法取得付款連結");
+                    }
+                } else {
+                    throw new Error("API 回應不包含 order_id");
+                }
             } catch (error) {
                 alert(error.message || "提交訂單失敗！");
             } finally {
@@ -160,7 +189,7 @@ export default {
         },
     },
     created() {
-        this.fetchCartItems(); // 初始化時獲取購物車內容
+        this.fetchCartItems();
     },
 };
 </script>
@@ -233,14 +262,7 @@ export default {
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: border-color 0.3s ease;
-}
-
-.user-details input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: inset 0 1px 3px rgba(0, 123, 255, 0.3);
 }
 
 .submit-section {
@@ -255,29 +277,11 @@ export default {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.checkout-btn:hover {
-    background-color: #0056b3;
 }
 
 .checkout-btn:disabled {
     background-color: #e4e4e4;
     color: #aaa;
     cursor: not-allowed;
-}
-.payment-method {
-    margin-top: 10px;
-}
-.payment-method label {
-    display: block;
-    margin-bottom: 10px;
-    font-size: 16px;
-    color: #333;
-    cursor: pointer;
-}
-.payment-method input[type="radio"] {
-    margin-right: 10px;
 }
 </style>
