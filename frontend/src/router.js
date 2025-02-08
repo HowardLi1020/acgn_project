@@ -33,6 +33,8 @@ import PurchasedProducts from "./views/Store/PurchasedProducts.vue";
 // Cart
 import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
 import Checkout from "./views/cart/Checkout.vue";
+import OrderList from "./views/cart/OrderList.vue";
+import PayConfirm from "./views/cart/PayConfirm.vue";
 
 // 導入 Pages範例模板
 import FruitablesHomeView from "./views/FruitablesHomeView.vue";
@@ -41,7 +43,7 @@ import FruitablesDetailView from "./views/FruitablesDetailView.vue";
 import FruitablesContactView from "./views/FruitablesContactView.vue";
 import FruitablesCartView from "./views/FruitablesCartView.vue";
 import FruitablesCheckoutView from "./views/FruitablesCheckoutView.vue";
-import OrderList from "./views/cart/OrderList.vue";
+
 
 
 //路由設定 path 比對 URL，比對成功就載入對應的組件
@@ -226,6 +228,12 @@ const routes =[
     path: '/orderlist',
     name: 'orderlist',
     component: OrderList,
+},
+
+{
+    path: '/payconfirm',
+    name: 'payconfirm',
+    component: PayConfirm,
 },
 
 // 以下為 Pages範例模板 連結

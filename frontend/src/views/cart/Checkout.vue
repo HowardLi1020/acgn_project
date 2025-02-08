@@ -61,13 +61,6 @@
                 placeholder="郵遞區號"
                 required
             />
-            <h3>付款方式</h3>
-            <select v-model="userDetails.payment_method" required>
-		        <option disabled value="">選擇付款方式</option>
-		        <option value="CREDIT_CARD">信用卡</option>
-		        <option value="BANK_TRANSFER">銀行轉帳</option>
-		        <option value="ECPAY">綠界科技付款</option>
-	        </select>
         </div>
 
         <!-- 提交按鈕 -->
@@ -120,8 +113,7 @@ export default {
                 this.userDetails.city &&
                 this.userDetails.region &&
                 this.userDetails.detailed_address &&
-                this.userDetails.postal_code &&
-                this.userDetails.payment_method
+                this.userDetails.postal_code
             );
         },
     },
@@ -155,7 +147,7 @@ export default {
             try {
                 await orderAPI.submitOrder(orderData);
                 alert(`訂單提交成功！`);
-                this.$router.push({ name: "ShoppingCart" });
+                this.$router.push({ name: "PayConfirm" });
             } catch (error) {
                 alert(error.message || "提交訂單失敗！");
             } finally {

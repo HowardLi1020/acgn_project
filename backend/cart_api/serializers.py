@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cart.models import ShoppingCartItems, Orders, OrderItems
+from cart.models import ShoppingCartItems, Orders, OrderItems, PaymentTransactions
 from products.models import ProductImages
 
 class ShoppingCartItemsSerializer(serializers.ModelSerializer):
@@ -33,3 +33,10 @@ class OrderItemsSerializer(serializers.ModelSerializer):
             'product_id', 'product_name' , 'price', 'quantity', 'subtotal'
         ]
         read_only_fields = ['subtotal']
+
+class PaymentTransactionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentTransactions
+        fields = [
+            'payment_id', 'payment_method', 'payment_status', 'payment_date', 'payment_amount', 'transaction_id'
+        ]
