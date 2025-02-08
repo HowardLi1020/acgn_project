@@ -120,6 +120,7 @@ class UserOrdersView(APIView):
         return Response(
             {
                 "message": "訂單建立成功",
+                "order_id": order.order_id,
                 "data": serializer.data,
             },
             status=status.HTTP_201_CREATED,

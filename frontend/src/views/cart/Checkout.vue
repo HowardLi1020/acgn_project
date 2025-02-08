@@ -84,6 +84,9 @@ export default {
     components: {
         OrderItem,
     },
+    setup() {
+        const orderId = ref(localStorage.getItem("current_order_id"));
+    },
     data() {
         return {
             cartItems: [], // 儲存購物車內容
@@ -145,9 +148,10 @@ export default {
             // console.log("提交的訂單數據：", orderData);
 
             try {
-                await orderAPI.submitOrder(orderData);
+                const response = await orderAPI.submitOrder(orderData);
+                localStorage.setItem("current_order_id", response.order_id);
                 alert(`訂單提交成功！`);
-                this.$router.push({ name: "PayConfirm" });
+                this.$router.push({ name: "payconfirm" });
             } catch (error) {
                 alert(error.message || "提交訂單失敗！");
             } finally {
