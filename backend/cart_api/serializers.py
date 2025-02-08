@@ -19,17 +19,10 @@ class ShoppingCartItemsSerializer(serializers.ModelSerializer):
         return None
 
 class OrdersSerializer(serializers.ModelSerializer):
-    payment_method = serializers.ChoiceField(
-        choices=[
-            ('CREDIT_CARD', 'Credit Card'),
-            ('BANK_TRANSFER', 'Bank Transfer'),
-            ('PAYPAL', 'PayPal')
-        ]
-    )
     class Meta:
         model = Orders
         fields = [
-            'order_id', 'recipient', 'recipient_phone', 'city', 'region', 'detailed_address', 'postal_code',  'payment_method', 'order_status', 'total_amount', 'created_at'
+            'order_id', 'recipient', 'recipient_phone', 'city', 'region', 'detailed_address', 'postal_code', 'order_status', 'total_amount', 'created_at'
         ]
 
 class OrderItemsSerializer(serializers.ModelSerializer):
