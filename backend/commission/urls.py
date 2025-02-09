@@ -18,8 +18,8 @@ urlpatterns = [
     # path('work/edit/', views.ViewFn_work_edit, name='Urls_work_edit'),
     path('work/edit/<int:view_fn_work_id>/', views.ViewFn_work_edit, name='Urls_work_edit'),
     path('work/delete/<int:view_fn_work_id>/', views.ViewFn_work_delete, name='Urls_work_delete'),
-    path('api/need-info/', views.ViewFn_need_info_api, name='Urls_need_info_api'), # 投稿需求案選擇功能用API端點
-    
+    path('api/image-info/', views.ViewFn_image_info_api, name='Urls_image_info_api'), # 原始檔圖片DPI資訊API端點
+    path('api/need-info/', views.ViewFn_need_info_api, name='Urls_need_info_api'), # 選擇投稿需求案id之API端點
     
     # 名片頁
     path('publiccard_list/', views.ViewFn_publiccard_list, name='Urls_publiccard_list'),
@@ -32,5 +32,5 @@ urlpatterns = [
     path('publiccard/edit/<int:view_fn_publiccard_id>/tag/', views.ViewFn_publiccard_edit, name='tag'), #[測試用]名片編輯-屬性Tag
     path('publiccard/edit/<int:view_fn_publiccard_id>/need/', views.ViewFn_publiccard_edit, name='need'), #[測試用]名片編輯-需求小卡
     # path('usercard/edit/<int:view_fn_usercard_id>/', views.ViewFn_usercard_edit, name='Urls_usercard_edit'),
-    
+
 ]

@@ -1056,13 +1056,7 @@ if (totalItems <= 3) {
   flexContainer.className = 'd-flex flex-wrap gap-3';
   fileInfo.appendChild(flexContainer);
 
-// ===== 處理已存在的原始檔案 =====
-// 原始檔上傳-處理檔名排除顯示唯一值的函數
-function getDisplayFileName(fullFileName) {
-    // 使用正則表達式移除時間戳記部分
-    return fullFileName.replace(/^\d+_/, '');
-}
-
+  // ===== 處理已存在的原始檔案 =====
   // 先依照 original_file_id 排序
   const sortedOriginalFiles = originalFiles.sort((a, b) => a.original_file_id - b.original_file_id);
   
@@ -1088,7 +1082,7 @@ function getDisplayFileName(fullFileName) {
           <div class="d-flex align-items-start justify-content-between mb-1 position-relative">
             <div class="d-flex align-items-start flex-grow-1 pe-4">
               ${getFileIcon(blob.type, file.original_file_url)} <!-- 使用動態圖示函數，並傳入檔名 -->
-              <span class="text-break file-name">${getDisplayFileName(file.original_file_url)}</span>
+              <span class="text-break file-name">${file.original_file_url}</span>
             </div>
             <button type="button" class="btn btn-link text-danger p-0 delete-file position-absolute top-0 end-0" style="line-height: 1;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
