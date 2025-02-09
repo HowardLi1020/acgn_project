@@ -193,9 +193,7 @@
             </div> -->
             <div class="mb-3">
               <label for="setting-input-7" class="form-label">作品原始檔上傳</label>
-              <input type="file" class="form-control" id="setting-input-7" name="original_files" accept="*" multiple>
-              <!-- 新增隱藏欄位用於追蹤被刪除的原始檔案 -->
-              <input type="hidden" name="deleted_original_files" id="deleted-original-files">
+              <input type="file" class="form-control" id="setting-input-7" name="work_original_file" accept="*" multiple>
               <div id="fileInfo" class="mt-2" style="font-size: 0.9em; color: #666;">
                 <!-- 檔案資訊將在這裡動態顯示 -->
               </div>
@@ -204,28 +202,7 @@
               <label for="setting-input-5" class="form-label">作品預覽圖(最多5張)</label>
               <input type="file" class="form-control" id="setting-input-5" name="work_ex_image" accept="image/*" multiple>
             </div>
-            <div class="mb-3">
-              <label for="setting-input-11" class="form-label">投稿需求案id</label>
-              <div class="position-relative d-flex align-items-center gap-3">
-                <input type="text" class="form-control" id="setting-input-11" name="case_by_need" value="{{ ViewKey_DbWorkInfo_work_id.case_by_need }}" maxlength="150" autocomplete="off" style="width: 20%; min-width: 150px;">
-                <span id="needTitleDisplay">載入中...</span>
-                <div id="needInfoPopup" class="position-absolute bg-white shadow rounded p-3" style="display: none; width: 100%; max-height: 300px; overflow-y: auto; z-index: 1000; top: 100%; left: 0;">
-                  <table class="table table-hover">
-                    <thead>
-                      <tr>
-                        <th style="width: 50px"></th>
-                        <th>需求案ID</th>
-                        <th>標題</th>
-                        <th>分類</th>
-                        <th>原作</th>
-                      </tr>
-                    </thead>
-                    <tbody id="needInfoTableBody">
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            <div class="mb-3 d-flex align-items-center mt-3">
+            <div class="mb-3 d-flex align-items-center">
                 <label for="setting-input-8" class="form-label me-3 mb-0">案件狀態</label>
                 <div id="setting-input-8" class="d-flex">
                   <div class="form-check me-3">
@@ -253,7 +230,28 @@
                     </label>
                   </div>
                 </div>
-              </div>              
+              </div>
+              <div class="mb-3">
+                <label for="setting-input-11" class="form-label">投稿需求案id</label>
+                <div class="position-relative d-flex align-items-center gap-3">
+                  <input type="text" class="form-control" id="setting-input-11" name="case_by_need" value="{{ ViewKey_DbWorkInfo_work_id.case_by_need }}" maxlength="150" autocomplete="off" style="width: 20%; min-width: 150px;">
+                  <span id="needTitleDisplay">載入中...</span>
+                  <div id="needInfoPopup" class="position-absolute bg-white shadow rounded p-3" style="display: none; width: 100%; max-height: 300px; overflow-y: auto; z-index: 1000; top: 100%; left: 0;">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th style="width: 50px"></th>
+                          <th>需求案ID</th>
+                          <th>標題</th>
+                          <th>分類</th>
+                          <th>原作</th>
+                        </tr>
+                      </thead>
+                      <tbody id="needInfoTableBody">
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
               <div class="d-flex justify-content-end mt-3">
                 <a href="#" id="cancelButton" class="btn app-btn-secondary me-2">返回上層</a>
@@ -593,14 +591,8 @@ const remainingSlots = 5 - allSelectedFiles.length;
       });
     });
     
-    // 將從原始檔選擇的圖片檔經右側預覽顯示後加到 allSelectedFiles 陣列中以寫入資料庫
-    const originalFiles = document.getElementById('setting-input-7').files;
-    Array.from(originalFiles).forEach(file => {
-      allSelectedFiles.push(file);
-    });
-    
     // 檢查是否有實際的變更
-    const hasRealChanges = changedFields.size > 0 || deletedOriginalFiles.length > 0;
+    const hasRealChanges = changedFields.size > 0 || (imageDeleted || newImageChanges.size > 0);
 
     // 修改表單提交處理
     if (hasRealChanges) {
@@ -1049,8 +1041,7 @@ if (totalItems <= 3) {
   // 新增：從後端獲取已存在的原始檔案資料
   const originalFiles = JSON.parse('{{ original_files_json|escapejs }}');
   const fileInfo = document.getElementById('fileInfo');
-  const deletedOriginalFiles = []; // 將變數定義移到這裡
-
+  
   // 創建 flex 容器(與上傳檔案顯示方式一致)
   const flexContainer = document.createElement('div');
   flexContainer.className = 'd-flex flex-wrap gap-3';
@@ -1140,15 +1131,6 @@ if (totalItems <= 3) {
         deleteButton.addEventListener('click', function() {
           // 移除檔案資訊顯示
           fileDetails.remove();
-          
-          // 將檔案名稱加入到被刪除檔案的陣列中
-          deletedOriginalFiles.push(file.original_file_url);
-          
-          // 更新隱藏欄位的值
-          document.getElementById('deleted-original-files').value = JSON.stringify(deletedOriginalFiles);
-          
-          // 標記表單有變更
-          changedFields.add('original_files');
           
           // 只有當所有新上傳的檔案都被刪除時，才清空新上傳區域
           const remainingNewFiles = flexContainer.querySelectorAll('[data-is-new-upload="true"]');

@@ -528,10 +528,9 @@ def add_watermark(image_file, watermark_text="UPLOAD IN\nACGN PROJECT", position
 def ViewFn_work_edit(request, view_fn_work_id):
     # 待修BUG：
     # ．分次加入圖檔時，只有最後一次加的圖才被寫入資料庫
-    # ．從原始檔上傳的圖片還無法於模板控制刪除或替換再傳入views
+
     # ．(已解決)上傳未滿5張圖時，會重複上傳
     if request.method == 'POST':
-
         try:
             with transaction.atomic():
                 view_db_work_info_id = get_object_or_404(DbWorkInfo, work_id=view_fn_work_id)

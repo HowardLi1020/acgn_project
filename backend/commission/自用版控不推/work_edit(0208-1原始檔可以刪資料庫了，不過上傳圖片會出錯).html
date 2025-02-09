@@ -593,12 +593,6 @@ const remainingSlots = 5 - allSelectedFiles.length;
       });
     });
     
-    // 將從原始檔選擇的圖片檔經右側預覽顯示後加到 allSelectedFiles 陣列中以寫入資料庫
-    const originalFiles = document.getElementById('setting-input-7').files;
-    Array.from(originalFiles).forEach(file => {
-      allSelectedFiles.push(file);
-    });
-    
     // 檢查是否有實際的變更
     const hasRealChanges = changedFields.size > 0 || deletedOriginalFiles.length > 0;
 

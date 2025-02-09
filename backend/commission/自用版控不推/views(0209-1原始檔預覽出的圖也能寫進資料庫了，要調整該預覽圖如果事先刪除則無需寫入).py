@@ -14,9 +14,7 @@ import json
 from django.conf import settings
 from django.views.decorators.cache import never_cache
 import time
-from django.core.files.base import ContentFile
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
-import io
+
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -447,91 +445,14 @@ def ViewFn_work_list(request):
     
     return render(request, 'commission/work_list.html', context)
 
-# 浮水印處理函式
-def add_watermark(image_file, watermark_text="UPLOAD IN\nACGN PROJECT", position=(10, 10), vertical_stretch=2.0):
-    """
-    watermark_text 使用 \n 來分行
-    vertical_stretch 如果需要垂直拉伸，調整此參數(預設1.0為不拉伸)
-    """
-    with Image.open(image_file) as image:
-        image = image.convert("RGBA")
-
-        # 建立浮水印圖層
-        watermark = Image.new("RGBA", image.size, (255, 255, 255, 0))
-        draw = ImageDraw.Draw(watermark)
-
-        # 先初始化 default_font，避免cannot access local variable 'default_font' where it is not associated with a value未定義的問題
-        default_font = None
-        # 設定字型與大小
-        try:
-            # 嘗試載入支援粗體的字型
-            font_path = os.path.join(settings.BASE_DIR, "media", "commission", "workID_img", "COLONNA.TTF")
-            font = ImageFont.truetype(font_path, 100)
-        except Exception as e:
-            print(f"無法載入指定字型，使用預設字型: {str(e)}")
-            default_font = ImageFont.load_default()
-            
-            try:
-                font = ImageFont.truetype("arial", 60)
-            except Exception:
-                font = default_font
-
-        # 計算文字尺寸 (若有換行使用 multiline_textbbox)
-        if "\n" in watermark_text:
-            spacing = 10  # 可調整行間距
-            text_box = draw.multiline_textbbox((0, 0), watermark_text, font=font, spacing=spacing)
-        else:
-            spacing = 0
-            text_box = draw.textbbox((0, 0), watermark_text, font=font)
-        text_width = text_box[2] - text_box[0]
-        text_height = text_box[3] - text_box[1]
-
-        # 依 vertical_stretch 拉伸文字遮罩 (只影響高度)
-        stretched_height = int(text_height * vertical_stretch)
-
-        # 建立文字遮罩 (灰階)
-        text_mask = Image.new("L", (text_width, text_height), 0)
-        mask_draw = ImageDraw.Draw(text_mask)
-        if "\n" in watermark_text:
-            # 使用 align="center" 使每一行文字在遮罩內水平置中對齊
-            mask_draw.multiline_text((0, 0), watermark_text, fill=255, font=font, spacing=spacing, align="center")
-        else:
-            mask_draw.text((0, 0), watermark_text, fill=255, font=font)
-
-        # 垂直拉伸文字遮罩
-        if vertical_stretch != 1: # 避免不必要的縮放
-            text_mask = text_mask.resize((text_width, stretched_height), Image.Resampling.NEAREST) # 使用 NEAREST 保持銳利
-
-        # 計算放置位置，使文字遮罩置中於影像中
-        x = (image.size[0] - text_width) // 2
-        y = (image.size[1] - (stretched_height if vertical_stretch != 1 else text_height)) // 2
-
-        # 建立顏色圖層 (可調整顏色與透明度)
-        color_layer = Image.new("RGBA", text_mask.size, (255, 255, 255, 50))
-        # 將顏色圖層貼到浮水印圖層，使用文字遮罩作為透明度蒙版
-        watermark.paste(color_layer, (x, y), mask=text_mask)
-
-        # 可加旋轉或其他效果（例如45度旋轉）
-        watermark = watermark.rotate(45, expand=True)
-        watermark = watermark.resize(image.size)
-
-        # 合併原始圖片與浮水印圖層
-        watermarked_image = Image.alpha_composite(image, watermark)
-
-        # 輸出處理後的圖片內容
-        output = io.BytesIO()
-        watermarked_image.convert("RGB").save(output, format="JPEG", quality=95)
-        return ContentFile(output.getvalue())
-
 @never_cache
 @require_http_methods(["GET", "POST"])
 def ViewFn_work_edit(request, view_fn_work_id):
     # 待修BUG：
     # ．分次加入圖檔時，只有最後一次加的圖才被寫入資料庫
-    # ．從原始檔上傳的圖片還無法於模板控制刪除或替換再傳入views
+
     # ．(已解決)上傳未滿5張圖時，會重複上傳
     if request.method == 'POST':
-
         try:
             with transaction.atomic():
                 view_db_work_info_id = get_object_or_404(DbWorkInfo, work_id=view_fn_work_id)
@@ -703,9 +624,6 @@ def ViewFn_work_edit(request, view_fn_work_id):
                                     default_storage.delete(old_file_path)
                                 
 
-                                # 加上浮水印
-                                watermarked_file = add_watermark(file)
-
                                 # 使用新文件的副檔名
                                 new_extension = Path(file.name).suffix
                                 new_filename = f"{view_fn_work_id}_sketch{image_record.step}{new_extension}"
@@ -713,7 +631,7 @@ def ViewFn_work_edit(request, view_fn_work_id):
 
                                 # 儲存新檔案
                                 file_path = os.path.join('commission', 'workID_img', new_filename)
-                                default_storage.save(file_path, watermarked_file)
+                                default_storage.save(file_path, file)
                                 
 
                                 # 更新資料庫記錄
@@ -725,27 +643,20 @@ def ViewFn_work_edit(request, view_fn_work_id):
 
                         # 處理新上傳的檔案
                         for index, file in enumerate(files_to_process, start=current_step + 1):
-                            # 加上浮水印
-                            watermarked_file = add_watermark(file)
-                        
-                            # 取得檔案副檔名
+                            # 新增圖片
                             new_extension = Path(file.name).suffix
-                        
-                            # 生成新檔名
                             new_filename = f"{view_fn_work_id}_sketch{index}{new_extension}"
-                        
-                            # 儲存新檔案
-                            file_path = os.path.join('commission', 'workID_img', new_filename)
-                            default_storage.save(file_path, watermarked_file)
-                        
-                            # 更新資料庫
-                            image_record = DbWorkImages.objects.create(
+                            image_record = DbWorkImages(
                                 work_id=view_db_work_info_id.work_id,
                                 step=index,
                                 image_url=new_filename
                             )
 
                             image_record.save()
+                            
+                            # 儲存新檔案
+                            file_path = os.path.join('commission', 'workID_img', new_filename)
+                            default_storage.save(file_path, file)
 
 
                 # 處理替換的圖片
