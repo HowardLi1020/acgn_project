@@ -106,7 +106,7 @@ export default {
 
 .order-info p {
 	margin: 5px 0;
-	font-size: 14px;
+	font-size: 18px;
 	color: #444;
 }
 </style>
