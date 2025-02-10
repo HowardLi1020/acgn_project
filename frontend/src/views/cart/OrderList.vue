@@ -1,78 +1,112 @@
 <template>
-	<div class="order-list">
-		<h1>我的訂單</h1>
+	<div class="order-list-container">
+		<h1 class="page-title">我的訂單</h1>
+		<p v-if="loading" class="loading-text">載入中...</p>
+		<p v-if="error" class="error-text">{{ error }}</p>
+
 		<div v-if="orders.length > 0" class="orders">
-			<div v-for="order in orders" :key="order.id" class="order">
-				<p><strong>訂單編號：</strong>{{ order.order_id }}</p>
-				<p><strong>收件人：</strong>{{ order.recipient }}</p>
-				<p><strong>總金額：</strong>{{ order.total_amount }}</p>
-				<p><strong>付款方式：</strong>{{ formatPaymentMethod(order.payment_method) }}</p>
-				<p><strong>建立時間：</strong>{{ formatDate(order.created_at) }}</p>
+			<div v-for="order in orders" :key="order.order_id" class="order-card">
+				<div class="order-header">
+					<span class="order-id">訂單編號: {{ order.order_id }}</span>
+					<span class="order-date">{{ order.created_at }}</span>
+				</div>
+				<div class="order-info">
+					<p><strong>總金額：</strong> ${{ order.total_amount }}</p>
+					<p>
+						<strong>付款方式：</strong> {{ order.payment_method || "未付款" }}
+					</p>
+					<p>
+						<strong>付款狀態：</strong> {{ order.payment_status || "Pending" }}
+					</p>
+					<p>
+						<strong>訂單狀態：</strong> {{ order.order_status || "待處理" }}
+					</p>
+				</div>
 			</div>
 		</div>
-		<p v-else>目前沒有任何訂單。</p>
+		<p v-else class="empty-text">目前沒有訂單</p>
 	</div>
 </template>
 
 <script>
-import { orderAPI } from "@/utils/api";
+import { ref, onMounted } from "vue";
+import { orderAPI } from "@/utils/api.js";  // ✅ 確保這裡有 import API
 
 export default {
-	name: "OrderList",
-	data() {
-		return {
-			orders: [], // 儲存訂單清單
-		};
-	},
-	methods: {
-		// 格式化付款方式
-		formatPaymentMethod(method) {
-			switch (method) {
-				case 'CREDIT_CARD':
-					return '信用卡';
-				case 'BANK_TRANSFER':
-					return '銀行轉帳';
-				case 'ECPAY':
-					return 'ECPay';
-				default:
-					return '未知';
-			}
-		},
-		// 格式化日期
-		formatDate(date) {
-			return new Date(date).toLocaleString();
-		},
-	},
-	async created() {
-		try {
-			this.orders = await orderAPI.getOrderList(); // 獲取訂單清單
-		} catch (error) {
-			alert(error.message || "無法加載訂單清單！");
-		}
-	},
-};
+  setup() {
+    const orders = ref([]);
+    const loading = ref(true);
+    const error = ref(null);
 
+    const fetchOrders = async () => {
+      try {
+        const response = await orderAPI.getOrderList();  // ✅ API 會回傳 `payment_method` 和 `payment_status`
+        orders.value = response.orders;
+      } catch (err) {
+        console.error("獲取訂單失敗:", err);
+        error.value = "無法加載訂單列表，請稍後再試";
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    onMounted(fetchOrders);
+
+    return { orders, loading, error };
+  },
+};
 </script>
 
 <style scoped>
-.order-list {
+.order-list-container {
 	padding: 20px;
 	max-width: 800px;
-	margin: 0 auto;
-    margin-top: 160px;
-	background-color: #f9f9f9;
-	border-radius: 10px;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	margin: auto;
+	margin-top: 180px;
+	font-family: Arial, sans-serif;
 }
-.orders .order {
+
+.page-title {
+	text-align: center;
+	font-size: 24px;
+	color: #333;
+}
+
+.loading-text,
+.error-text,
+.empty-text {
+	text-align: center;
+	font-size: 16px;
+	color: #777;
+}
+
+.orders {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.order-card {
+	border: 1px solid #ddd;
 	padding: 15px;
-	margin-bottom: 10px;
-	background-color: white;
-	border-radius: 5px;
+	border-radius: 8px;
+	background-color: #fff;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.orders .order p {
-	margin: 5px 0;
+
+.order-header {
+	display: flex;
+	justify-content: space-between;
 	font-size: 16px;
+	color: #555;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 8px;
+	margin-bottom: 10px;
+}
+
+.order-info p {
+	margin: 5px 0;
+	font-size: 14px;
+	color: #444;
 }
 </style>

@@ -24,13 +24,13 @@ class ECPayPaymentView(APIView):
 
         # 設定 ECPay 付款參數
         order_params = {
-            "MerchantTradeNo": f"{order.order_id}{int(datetime.datetime.now().timestamp())}",
+            "MerchantTradeNo": f"{order.order_id}ECPAY",
             "MerchantTradeDate": order.order_date.strftime("%Y/%m/%d %H:%M:%S"),
             "PaymentType": "aio",
             "TotalAmount": str(int(order.total_amount)),
             "TradeDesc": "商品支付",
             "ItemName": "訂單商品",
-            "ReturnURL": "https://396d-1-160-12-173.ngrok-free.app/cart_api/ecpay/callback/",
+            "ReturnURL": "https://32b3-114-24-138-53.ngrok-free.app/cart_api/ecpay/callback/",
             "ClientBackURL": "http://localhost:5173/orderlist",
             "ChoosePayment": "ALL",
             "EncryptType": 1
@@ -50,18 +50,29 @@ class ECPayCallbackView(APIView):
     """ECPay 付款完成後的回調處理"""
 
     permission_classes = [AllowAny]
+
     def post(self, request):
         """ECPay 付款完成後，更新付款資訊"""
-        data = request.data
+        data = request.POST.dict()
+        print("ECpay回傳數據:", data)  # ✅ 確保有收到回應
+
+        if not data:
+            return Response({"error": "未收到 ECPay 回應"}, status=status.HTTP_400_BAD_REQUEST)
+
         merchant_trade_no = data.get("MerchantTradeNo")
         rtn_code = data.get("RtnCode")  # ECPay 付款狀態
         payment_type = data.get("PaymentType")  # 使用者選擇的付款方式
         transaction_id = data.get("TradeNo")  # ECPay 交易編號
+        print("收到的付款方式:", payment_type, "長度:", len(payment_type))
 
-        order_id = merchant_trade_no.split("_")[0]
+        if not merchant_trade_no:
+            return Response({"error": "缺少 MerchantTradeNo"}, status=status.HTTP_400_BAD_REQUEST)
+
+        order_id = merchant_trade_no.replace("ECPAY", "")  # 移除 "ECPAY" 獲取 order_id
+        order_id = int(order_id)  # 確保 order_id 是數字
         order = get_object_or_404(Orders, order_id=order_id)
 
-        #新增付款交易記錄
+        # 新增付款交易記錄
         PaymentTransactions.objects.create(
             order=order,
             payment_status="SUCCESS" if rtn_code == "1" else "FAILED",
@@ -70,8 +81,8 @@ class ECPayCallbackView(APIView):
             payment_amount=order.total_amount,
         )
 
-        #更新訂單狀態
+        # 更新訂單狀態
         order.order_status = "COMPLETED" if rtn_code == "1" else "CANCELLED"
         order.save()
 
-        return Response({"message": "1|OK"}, status=status.HTTP_200_OK)
+        return Response("1|OK", status=status.HTTP_200_OK)  # ✅ ECPay 需要這個回應
