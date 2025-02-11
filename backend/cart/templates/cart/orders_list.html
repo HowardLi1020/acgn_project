@@ -12,50 +12,82 @@
         <thead>
             <tr>
                 <th>訂單編號</th>
+                <th>訂購者</th>
                 <th>收件人</th>
                 <th>總金額</th>
                 <th>付款方式</th>
+                <th>付款狀態</th>
                 <th>訂單狀態</th>
+                <th>訂單日期</th>
             </tr>
         </thead>
         <tbody>
             {% for order in orders %}
             <tr>
                 <td>{{ order.order_id }}</td>
+                <td>{{ order.user.user_name }}</td> <!-- 訂購者 -->
                 <td>{{ order.recipient }}</td>
-                <td>{{ order.total_amount }} 元</td>
+                <td>{{ order.total_amount|floatformat:0 }} 元</td>
                 <td>
-                    {% if order.payment_method == "CREDIT_CARD" %}
-                        信用卡
-                    {% elif order.payment_method == "BANK_TRANSFER" %}
-                        銀行轉帳
-                    {% elif order.payment_method == "ECPAY" %}
-                        綠界科技
-                    {% else %}
-                        未知
-                    {% endif %}
+                    {% with order.payments.first as payment %}
+                        {% if payment and payment.payment_method %}
+                            {{ payment.payment_method }}
+                        {% else %}
+                            未付款
+                        {% endif %}
+                    {% endwith %}
                 </td>
-                <td class="status {{ order.order_status|lower }}">
-                    {% if order.order_status == "PENDING" %}
-                        待處理
-                    {% elif order.order_status == "PROCESSED" %}
-                        已處理
-                    {% elif order.order_status == "SHIPPED" %}
-                        已發貨
-                    {% elif order.order_status == "CANCELLED" %}
-                        已取消
-                    {% else %}
-                        未知
-                    {% endif %}
+                <td>
+                    {% with order.payments.first as payment %}
+                        {% if payment and payment.payment_status %}
+                            <span class="payment-status 
+                                {% if payment.payment_status == 'PENDING' %} pending
+                                {% elif payment.payment_status == 'SUCCESS' %} success
+                                {% elif payment.payment_status == 'FAILED' %} failed
+                                {% elif payment.payment_status == 'REFUNDED' %} refunded
+                                {% else %} unknown {% endif %}">
+                                {% if payment.payment_status == "PENDING" %}
+                                    待付款
+                                {% elif payment.payment_status == "SUCCESS" %}
+                                    已付款
+                                {% elif payment.payment_status == "FAILED" %}
+                                    付款失敗
+                                {% elif payment.payment_status == "REFUNDED" %}
+                                    已退款
+                                {% else %}
+                                    未知
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            未付款
+                        {% endif %}
+                    {% endwith %}
                 </td>
-                <!-- <td>
-                    <a href="#" class="btn-edit">編輯</a>
-                    <button " class="btn-delete">刪除</button>
-                </td> -->
+                <td>
+                    <span class="status 
+                        {% if order.order_status == 'PENDING' %} pending
+                        {% elif order.order_status == 'PROCESSING' %} processing
+                        {% elif order.order_status == 'COMPLETED' %} completed
+                        {% elif order.order_status == 'CANCELLED' %} cancelled
+                        {% else %} unknown {% endif %}">
+                        {% if order.order_status == "PENDING" %}
+                            待處理
+                        {% elif order.order_status == "PROCESSING" %}
+                            處理中
+                        {% elif order.order_status == "COMPLETED" %}
+                            已完成
+                        {% elif order.order_status == "CANCELLED" %}
+                            已取消
+                        {% else %}
+                            未知
+                        {% endif %}
+                    </span>
+                </td>
+                <td>{{ order.order_date|date:"Y-m-d H:i" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="empty-row">目前沒有任何訂單。</td>
+                <td colspan="8" class="empty-row">目前沒有任何訂單。</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -65,102 +97,87 @@
 
 {% block app_css %}
 <style>
-/* 通用樣式 */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f9f9f9;
-    color: #333;
-}
-
-/* 標題樣式 */
-h1 {
-    text-align: center;
-    margin: 20px 0;
-    font-size: 28px;
-    color: #007bff;
-}
-
-h2 {
-    font-size: 24px;
-    margin: 20px 0;
-    text-align: left;
-    color: #444;
-    border-bottom: 2px solid #ccc;
-    padding-bottom: 5px;
-}
-
-/* 表格樣式 */
+/* 訂單表格容器 */
 .order-table-container {
-    margin: 20px auto;
-    max-width: 80%;
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    overflow-x: auto;
 }
 
+/* 訂單表格 */
 .order-table {
     width: 100%;
+    min-width: 900px;
     border-collapse: collapse;
-    text-align: left;
-    font-size: 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background: #fff;
 }
 
+/* 表格標題與內容 */
 .order-table th, .order-table td {
     padding: 12px 15px;
-    border: 1px solid #ddd;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
 }
 
 .order-table th {
-    background-color: #007bff;
-    color: white;
-    text-transform: uppercase;
+    background-color: #f8f9fa;
     font-weight: bold;
 }
 
-.order-table tr:nth-child(even) {
-    background-color: #f9f9f9;
+.order-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 
-.order-table tr:hover {
-    background-color: #f1f1f1;
+.order-table tbody tr:hover {
+    background-color: #e6f7ff;
 }
 
-.order-table .empty-row {
-    text-align: center;
-    font-style: italic;
-    color: #666;
-}
-
-/* 狀態樣式 */
+/* 訂單狀態 */
 .status {
-    text-transform: capitalize;
     font-weight: bold;
-    text-align: center;
-    padding: 8px;
+    padding: 6px 12px;
     border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 32px;
+    text-align: center;
 }
 
-.status.pending {
-    background-color: #ffc107;
-    color: #fff;
+/* 訂單狀態顏色 */
+.status.pending { background-color: #ffcc00; color: #333; }
+.status.processing { background-color: #17a2b8; color: #fff; }
+.status.completed { background-color: #28a745; color: #fff; }
+.status.cancelled { background-color: #dc3545; color: #fff; }
+
+/* 付款狀態 */
+.payment-status {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 32px;
 }
 
-.status.processed {
-    background-color: #17a2b8;
-    color: #fff;
-}
+/* 付款狀態顏色 */
+.payment-status.pending { background-color: #ffcc00; color: #333; }
+.payment-status.success { background-color: #28a745; color: #fff; }
+.payment-status.failed { background-color: #dc3545; color: #fff; }
+.payment-status.refunded { background-color: #6c757d; color: #fff; }
 
-.status.shipped {
-    background-color: #28a745;
-    color: #fff;
-}
+/* 讓表格內的內容垂直置中 */
+td { vertical-align: middle !important; padding: 10px; }
 
-.status.cancelled {
-    background-color: #dc3545;
-    color: #fff;
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .order-table-container { overflow-x: auto; }
+    .order-table { min-width: 800px; }
 }
 </style>
 {% endblock %}

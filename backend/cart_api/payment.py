@@ -30,7 +30,7 @@ class ECPayPaymentView(APIView):
             "TotalAmount": str(int(order.total_amount)),
             "TradeDesc": "商品支付",
             "ItemName": "訂單商品",
-            "ReturnURL": "https://32b3-114-24-138-53.ngrok-free.app/cart_api/ecpay/callback/",
+            "ReturnURL": "https://acd8-114-24-138-53.ngrok-free.app/cart_api/ecpay/callback/",
             "ClientBackURL": "http://localhost:5173/orderlist",
             "ChoosePayment": "ALL",
             "EncryptType": 1
