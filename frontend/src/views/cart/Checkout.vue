@@ -147,24 +147,20 @@ export default {
             };
 
             try {
-                // 1️⃣ 提交訂單並獲取 `order_id`
                 const response = await orderAPI.submitOrder(orderData);
                 if (response && response.order_id) {
                     this.orderId = response.order_id;
                     console.log("訂單提交成功，order_id:", this.orderId);
 
-                    // 2️⃣ 取得 ECPay 付款 HTML 表單
                     const paymentResponse = await orderAPI.payOrder(
                         this.orderId
                     );
                     console.log("取得綠界付款 HTML 表單:", paymentResponse);
 
                     if (paymentResponse.payment_form) {
-                        // 3️⃣ **解析 `payment_form`，但不執行 inline script**
                         this.$refs.formContainer.innerHTML =
                             paymentResponse.payment_form;
 
-                        // 4️⃣ **手動執行 `submit()`**
                         setTimeout(() => {
                             const formElement =
                                 this.$refs.formContainer.querySelector("form");
@@ -174,7 +170,7 @@ export default {
                             } else {
                                 throw new Error("找不到綠界付款表單");
                             }
-                        }, 500); // **等待 DOM 渲染完成**
+                        }, 500);
                     } else {
                         throw new Error("無法取得付款連結");
                     }

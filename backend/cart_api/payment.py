@@ -54,7 +54,7 @@ class ECPayCallbackView(APIView):
     def post(self, request):
         """ECPay 付款完成後，更新付款資訊"""
         data = request.POST.dict()
-        print("ECpay回傳數據:", data)  # ✅ 確保有收到回應
+        print("ECpay回傳數據:", data)
 
         if not data:
             return Response({"error": "未收到 ECPay 回應"}, status=status.HTTP_400_BAD_REQUEST)
@@ -85,4 +85,4 @@ class ECPayCallbackView(APIView):
         order.order_status = "COMPLETED" if rtn_code == "1" else "CANCELLED"
         order.save()
 
-        return Response("1|OK", status=status.HTTP_200_OK)  # ✅ ECPay 需要這個回應
+        return Response("1|OK", status=status.HTTP_200_OK)

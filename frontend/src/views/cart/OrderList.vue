@@ -30,30 +30,30 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { orderAPI } from "@/utils/api.js";  // ✅ 確保這裡有 import API
+import { orderAPI } from "@/utils/api.js";
 
 export default {
-  setup() {
-    const orders = ref([]);
-    const loading = ref(true);
-    const error = ref(null);
+	setup() {
+		const orders = ref([]);
+		const loading = ref(true);
+		const error = ref(null);
 
-    const fetchOrders = async () => {
-      try {
-        const response = await orderAPI.getOrderList();  // ✅ API 會回傳 `payment_method` 和 `payment_status`
-        orders.value = response.orders;
-      } catch (err) {
-        console.error("獲取訂單失敗:", err);
-        error.value = "無法加載訂單列表，請稍後再試";
-      } finally {
-        loading.value = false;
-      }
-    };
+		const fetchOrders = async () => {
+			try {
+				const response = await orderAPI.getOrderList();
+				orders.value = response.orders;
+			} catch (err) {
+				console.error("獲取訂單失敗:", err);
+				error.value = "無法加載訂單列表，請稍後再試";
+			} finally {
+				loading.value = false;
+			}
+		};
 
-    onMounted(fetchOrders);
+		onMounted(fetchOrders);
 
-    return { orders, loading, error };
-  },
+		return { orders, loading, error };
+	},
 };
 </script>
 
