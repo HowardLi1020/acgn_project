@@ -63,7 +63,7 @@ class ECPayCallbackView(APIView):
         rtn_code = data.get("RtnCode")  # ECPay 付款狀態
         payment_type = data.get("PaymentType")  # 使用者選擇的付款方式
         transaction_id = data.get("TradeNo")  # ECPay 交易編號
-        print("收到的付款方式:", payment_type, "長度:", len(payment_type))
+        print("收到的付款方式:", payment_type)
 
         if not merchant_trade_no:
             return Response({"error": "缺少 MerchantTradeNo"}, status=status.HTTP_400_BAD_REQUEST)
