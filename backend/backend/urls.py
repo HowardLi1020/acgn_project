@@ -31,6 +31,8 @@ urlpatterns = [
     path('store/', include('products.urls')),
     path('store_backend/', include('products_backend.urls')),
 
+    #http://127.0.0.1:8000/cart/ 
+    path('cart/', include('cart.urls')),
 
     #http://127.0.0.1:8000/cart_api/ 
     path('cart_api/', include('cart_api.urls')),

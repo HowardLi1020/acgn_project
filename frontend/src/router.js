@@ -28,10 +28,12 @@ import ProductDetail from "./views/Store/ProductDetail.vue";
 import CreateProduct from "./views/Store/CreateProduct.vue";
 import MyProduct from "./views/Store/MyProduct.vue";
 import EditProduct from "./views/Store/EditProduct.vue";
+import PurchasedProducts from "./views/Store/PurchasedProducts.vue";
 
 // Cart
 import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
 import Checkout from "./views/cart/Checkout.vue";
+import OrderList from "./views/cart/OrderList.vue";
 
 // 導入 Pages範例模板
 import FruitablesHomeView from "./views/FruitablesHomeView.vue";
@@ -40,6 +42,7 @@ import FruitablesDetailView from "./views/FruitablesDetailView.vue";
 import FruitablesContactView from "./views/FruitablesContactView.vue";
 import FruitablesCartView from "./views/FruitablesCartView.vue";
 import FruitablesCheckoutView from "./views/FruitablesCheckoutView.vue";
+
 
 
 //路由設定 path 比對 URL，比對成功就載入對應的組件
@@ -202,6 +205,11 @@ const routes =[
     component: EditProduct,
     name: 'EditProduct',
 },
+{
+    path: '/store/purchased-products',
+    name: 'PurchasedProducts',
+    component: PurchasedProducts,
+},
 
 {
     path: '/shoppingcart',
@@ -213,6 +221,12 @@ const routes =[
     path: '/checkout',
     name: 'Checkout',
     component: Checkout,
+},
+
+{
+    path: '/orderlist',
+    name: 'orderlist',
+    component: OrderList,
 },
 
 // 以下為 Pages範例模板 連結

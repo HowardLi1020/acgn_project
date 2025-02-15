@@ -3,12 +3,11 @@ from django.utils.timezone import now
 
 
 class Orders(models.Model):
-    ORDER_STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('PROCESSING', 'Processing'),
-        ('SHIPPED', 'Shipped'),
-        ('COMPLETED', 'Completed'),
-        ('CANCELLED', 'Cancelled'),
+    ORDER_STATUS = [
+        ('PENDING', '待付款'),
+        ('PROCESSING', '付款中'),
+        ('COMPLETED', '已付款'),
+        ('CANCELLED', '已取消'),
     ]
 
     order_id = models.AutoField(primary_key=True)
@@ -23,10 +22,7 @@ class Orders(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     coupon_code = models.CharField(max_length=50, blank=True, null=True)
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    payment_status = models.CharField(max_length=9, blank=True, null=True)
-    shipping_status = models.CharField(max_length=10, blank=True, null=True)
-    payment_method = models.CharField(max_length=16)
-    order_status = models.CharField(max_length=15, choices=ORDER_STATUS_CHOICES, default='PENDING')
+    order_status = models.CharField(max_length=15, choices=ORDER_STATUS, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -56,28 +52,23 @@ class ShoppingCartItems(models.Model):
         db_table = 'shopping_cart_items'
 
 class PaymentTransactions(models.Model):
-    PAYMENT_METHOD_CHOICES = [
-        ('CREDIT_CARD', 'Credit Card'),
-        ('BANK_TRANSFER', 'Bank Transfer'),
-        ('PAYPAL', 'PayPal'),
-    ]
-
     PAYMENT_STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('SUCCESS', 'Success'),
         ('FAILED', 'Failed'),
+        ('REFUNDED', 'Refunded'),
     ]
 
     payment_id = models.AutoField(primary_key=True)
-    order = models.ForeignKey('cart.Orders', on_delete=models.CASCADE, related_name='payments')
-    payment_method = models.CharField(max_length=16, choices=PAYMENT_METHOD_CHOICES)
+    order = models.ForeignKey(Orders, on_delete=models.CASCADE, related_name='payments')
+    payment_method = models.CharField(max_length=50, blank=True, null=True)
     payment_status = models.CharField(max_length=9, choices=PAYMENT_STATUS_CHOICES)
     payment_date = models.DateTimeField(auto_now_add=True)
     payment_amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
-
     class Meta:
         db_table = 'payment_transactions'
+
 
 class ShippingDetails(models.Model):
     SHIPPING_STATUS_CHOICES = [

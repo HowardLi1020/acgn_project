@@ -13,11 +13,11 @@ const route = useRoute();
 const product = ref({});
 const loading = ref(true);
 const error = ref(null);
-const apiUrl = import.meta.env.VITE_APIURL; // 使用環境變量
+const apiUrl = import.meta.env.VITE_APIURL;
 const currentImageIndex = ref(0);
 const quantity = ref(1);
 
-// 获取商品信息
+// 獲取商品訊息
 const fetchProduct = async () => {
     try {
         loading.value = true;
@@ -93,7 +93,7 @@ const buyNow = async () => {
 };
 
 
-// 获取当前主图 URL 的函数
+// 獲取當前主圖 URL 的函數
 const getMainImageUrl = () => {
     console.log('apiUrl:', apiUrl); // 檢查 API URL
     console.log('product images:', product.value?.images); // 檢查圖片數據
@@ -107,7 +107,7 @@ const getMainImageUrl = () => {
     return '/placeholder.png';
 };
 
-// 切换主图的函数
+// 切换主圖的函數
 const switchMainImage = (index) => {
     currentImageIndex.value = index; // 更新當前圖片索引
 };
@@ -209,11 +209,11 @@ onMounted(async () => {
             <h2>商品描述</h2>
             <p>{{ product.description_text }}</p>
         </div>
-
-        <ProductReviews
-            v-if="product && product.product_id"
-            :product-id="String(product.product_id)"
+        <!-- 商品評論區域 -->
+        <ProductReviews 
+            :productId="route.params.id"
         />
+        <!-- 商品推薦區域 -->
         <ProductRecommendations
             v-if="product && product.product_id"
             :product-id="String(product.product_id)"

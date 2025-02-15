@@ -40,6 +40,18 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
 class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductReviews
-        fields = ['id', 'rating', 'comment', 'created_at', 'user']  # 根據需要調整字段
+        fields = ['review_id', 'rating', 'review_text', 'review_date', 'user', 'user_name', 'is_owner']
+
+    def get_user_name(self, obj):
+        return obj.user.user_nickname or obj.user.user_name
+
+    def get_is_owner(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.user_id == request.user.id
+        return False

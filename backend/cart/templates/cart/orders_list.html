@@ -1,0 +1,183 @@
+{% extends "[BASE]ALL.html" %}
+{% load static %}
+
+{% block app_title %}
+<h1>訂單管理</h1>
+{% endblock %}
+
+{% block app_content %}
+<h2>所有訂單</h2>
+<div class="order-table-container">
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>訂單編號</th>
+                <th>訂購者</th>
+                <th>收件人</th>
+                <th>總金額</th>
+                <th>付款方式</th>
+                <th>付款狀態</th>
+                <th>訂單狀態</th>
+                <th>訂單日期</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.order_id }}</td>
+                <td>{{ order.user.user_name }}</td> <!-- 訂購者 -->
+                <td>{{ order.recipient }}</td>
+                <td>{{ order.total_amount|floatformat:0 }} 元</td>
+                <td>
+                    {% with order.payments.first as payment %}
+                        {% if payment and payment.payment_method %}
+                            {{ payment.payment_method }}
+                        {% else %}
+                            未付款
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    {% with order.payments.first as payment %}
+                        {% if payment and payment.payment_status %}
+                            <span class="payment-status 
+                                {% if payment.payment_status == 'PENDING' %} pending
+                                {% elif payment.payment_status == 'SUCCESS' %} success
+                                {% elif payment.payment_status == 'FAILED' %} failed
+                                {% elif payment.payment_status == 'REFUNDED' %} refunded
+                                {% else %} unknown {% endif %}">
+                                {% if payment.payment_status == "PENDING" %}
+                                    待付款
+                                {% elif payment.payment_status == "SUCCESS" %}
+                                    已付款
+                                {% elif payment.payment_status == "FAILED" %}
+                                    付款失敗
+                                {% elif payment.payment_status == "REFUNDED" %}
+                                    已退款
+                                {% else %}
+                                    未知
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            未付款
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    <span class="status 
+                        {% if order.order_status == 'PENDING' %} pending
+                        {% elif order.order_status == 'PROCESSING' %} processing
+                        {% elif order.order_status == 'COMPLETED' %} completed
+                        {% elif order.order_status == 'CANCELLED' %} cancelled
+                        {% else %} unknown {% endif %}">
+                        {% if order.order_status == "PENDING" %}
+                            待處理
+                        {% elif order.order_status == "PROCESSING" %}
+                            處理中
+                        {% elif order.order_status == "COMPLETED" %}
+                            已完成
+                        {% elif order.order_status == "CANCELLED" %}
+                            已取消
+                        {% else %}
+                            未知
+                        {% endif %}
+                    </span>
+                </td>
+                <td>{{ order.order_date|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="empty-row">目前沒有任何訂單。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block app_css %}
+<style>
+/* 訂單表格容器 */
+.order-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* 訂單表格 */
+.order-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background: #fff;
+}
+
+/* 表格標題與內容 */
+.order-table th, .order-table td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+.order-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.order-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.order-table tbody tr:hover {
+    background-color: #e6f7ff;
+}
+
+/* 訂單狀態 */
+.status {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 32px;
+    text-align: center;
+}
+
+/* 訂單狀態顏色 */
+.status.pending { background-color: #ffcc00; color: #333; }
+.status.processing { background-color: #17a2b8; color: #fff; }
+.status.completed { background-color: #28a745; color: #fff; }
+.status.cancelled { background-color: #dc3545; color: #fff; }
+
+/* 付款狀態 */
+.payment-status {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 32px;
+}
+
+/* 付款狀態顏色 */
+.payment-status.pending { background-color: #ffcc00; color: #333; }
+.payment-status.success { background-color: #28a745; color: #fff; }
+.payment-status.failed { background-color: #dc3545; color: #fff; }
+.payment-status.refunded { background-color: #6c757d; color: #fff; }
+
+/* 讓表格內的內容垂直置中 */
+td { vertical-align: middle !important; padding: 10px; }
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .order-table-container { overflow-x: auto; }
+    .order-table { min-width: 800px; }
+}
+</style>
+{% endblock %}

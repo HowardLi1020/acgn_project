@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cart.models import ShoppingCartItems, Orders, OrderItems
+from cart.models import ShoppingCartItems, Orders, OrderItems, PaymentTransactions
 from products.models import ProductImages
 
 class ShoppingCartItemsSerializer(serializers.ModelSerializer):
@@ -19,17 +19,10 @@ class ShoppingCartItemsSerializer(serializers.ModelSerializer):
         return None
 
 class OrdersSerializer(serializers.ModelSerializer):
-    payment_method = serializers.ChoiceField(
-        choices=[
-            ('CREDIT_CARD', 'Credit Card'),
-            ('BANK_TRANSFER', 'Bank Transfer'),
-            ('PAYPAL', 'PayPal')
-        ]
-    )
     class Meta:
         model = Orders
         fields = [
-            'order_id', 'recipient', 'recipient_phone', 'city', 'region', 'detailed_address', 'postal_code',  'payment_method', 'order_status', 'total_amount'
+            'order_id', 'recipient', 'recipient_phone', 'city', 'region', 'detailed_address', 'postal_code', 'order_status', 'total_amount', 'created_at'
         ]
 
 class OrderItemsSerializer(serializers.ModelSerializer):
@@ -40,3 +33,10 @@ class OrderItemsSerializer(serializers.ModelSerializer):
             'product_id', 'product_name' , 'price', 'quantity', 'subtotal'
         ]
         read_only_fields = ['subtotal']
+
+class PaymentTransactionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentTransactions
+        fields = [
+            'payment_id', 'payment_method', 'payment_status', 'payment_date', 'payment_amount', 'transaction_id'
+        ]

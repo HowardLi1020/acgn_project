@@ -1,36 +1,42 @@
 from django.urls import path
-from rest_framework.routers import DefaultRouter
 from . import views
-
-router = DefaultRouter()
-router.register(r'products', views.ProductViewSet)
 
 app_name = 'products'
 
 urlpatterns = [
-    # 公開 API 端點
+    # 商品
     path('', views.index, name='index'),
+    # 編輯
     path('edit_product/<int:product_id>/', views.edit_product, name='edit_product'),
+    # 刪除
     path('delete_product/<int:product_id>/', views.delete_product, name='delete_product'),
-    path('view_all_products/', views.view_all_products, name='view_all_products'),
+    # 詳細商品
     path('products/<int:product_id>/', views.ProductDetail.as_view(), name='product_detail'),
+    # 商品評論
+    path('products/<int:product_id>/reviews/', views.ProductReviewsView.as_view(), name='product_reviews'),
+    path('products/<int:product_id>/can-review/', views.check_can_review, name='check_can_review'),
+    path('products/<int:product_id>/reviews/<int:review_id>/', views.ProductReviewsView.as_view(), name='update_review'),
+    # 已購商品
+    path('purchased-products/', views.get_purchased_products, name='purchased-products'),
+    # 我的商品
     path('my-products/', views.MyProductsView.as_view(), name='my_products'),
+    # 分類
     path('categories/', views.CategoryListView.as_view(), name='category-list'),
+    #品牌
     path('brands/', views.BrandListView.as_view(), name='brand-list'),
+    #系列
     path('series/', views.SeriesListView.as_view(), name='series-list'),
-    path('featured-products/', views.FeaturedProductsView.as_view(), name='featured-products'),
-    path('new-arrivals/', views.NewArrivalsView.as_view(), name='new-arrivals'),
-
-    path('products/<int:product_id>/reviews/', views.ProductReviewsView.as_view(), name='get_reviews'),
+    # 推薦商品
     path('recommendations/similar/<int:product_id>/', views.ProductRecommendationsView.as_view(), name='product-recommendations'),
-    
+    # 創建商品
     path('create_product/', views.create_product, name='create_product'),
+    # 創建品牌
     path('create_brand/', views.create_brand, name='create_brand'),
+    # 創建分類
     path('create_category/', views.create_category, name='create_category'),
+    # 創建系列
     path('create_series/', views.create_series, name='create_series'),
-
+    # 收藏
     path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
     path('wishlist/check/<int:product_id>/', views.check_wishlist, name='check_wishlist'),
 ]
-
-urlpatterns += router.urls

@@ -1,11 +1,11 @@
-from django.shortcuts import  get_object_or_404
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from authentication.permissions import IsAuthenticatedWithCustomToken
-from cart.models import ShoppingCartItems, Orders, OrderItems
+from cart.models import ShoppingCartItems, Orders, OrderItems, PaymentTransactions
 from products.models import Products
-from cart_api.serializers import ShoppingCartItemsSerializer, OrdersSerializer
+from cart_api.serializers import ShoppingCartItemsSerializer, OrdersSerializer, PaymentTransactionsSerializer
 from django.db import transaction
 #購物車功能
 class ShoppingCartView(APIView):
@@ -63,8 +63,8 @@ class ShoppingCartView(APIView):
         cart_item.delete()
         return Response({'message':'商品已從購物車移除'}, status=status.HTTP_200_OK)
 
-#訂單功能
-class OrdersView(APIView):
+#用戶端訂單功能
+class UserOrdersView(APIView):
 
     permission_classes = [IsAuthenticatedWithCustomToken]
 
@@ -120,6 +120,7 @@ class OrdersView(APIView):
         return Response(
             {
                 "message": "訂單建立成功",
+                "order_id": order.order_id,
                 "data": serializer.data,
             },
             status=status.HTTP_201_CREATED,
@@ -144,3 +145,23 @@ class OrdersView(APIView):
                 },
                 status= status.HTTP_404_NOT_FOUND
             )
+    
+    #檢視訂單
+    def get(self, request):
+        user_orders = Orders.objects.filter(user=request.user).order_by('-created_at')
+        order_list = []
+
+        for order in user_orders:
+            # 取得該訂單的最新付款交易
+            transaction = PaymentTransactions.objects.filter(order=order).order_by('-payment_date').first()
+
+            order_list.append({
+                "order_id": order.order_id,
+                "total_amount": order.total_amount,
+                "order_status": order.order_status,
+                "payment_method": transaction.payment_method if transaction else "未付款",
+                "payment_status": transaction.payment_status if transaction else "Pending",
+                "created_at": order.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+
+        return Response({"orders": order_list}, status=status.HTTP_200_OK)

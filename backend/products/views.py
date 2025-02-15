@@ -1,53 +1,90 @@
-from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from products.models import Products, ProductBrands, ProductCategories, ProductSeries, ProductImages, ProductReviews,  ProductRecommendations, ProductComments
-from users.models import ProductWishlist, MemberBasic
-from cart.models import ProductMemberRatings
+from products.models import Products, ProductBrands, ProductCategories, ProductSeries, ProductImages, ProductReviews, ProductWishlist
+from users.models import  MemberBasic
 from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, SeriesSerializer, ReviewSerializer
 from rest_framework import generics
-from rest_framework import viewsets
 from rest_framework.views import APIView
-from datetime import datetime, timedelta
 import logging
-from django.db.models import Subquery, OuterRef
 import json
-from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime, timedelta
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils.decorators import method_decorator
 from django.views import View
 import jwt 
 from django.conf import settings
-
+from cart.models import OrderItems
+from django.db.models import F
 
 # 設置日誌
 logger = logging.getLogger(__name__)
-now = datetime.now()
-# 刪除不需要的原始模板渲染邏輯（如 render, redirect 等）
-
-# API 版本的視圖
 
 @api_view(['GET'])
 def index(request):
-    products = Products.objects.all()
-    products_data = [
-        {
-            'product_id': product.product_id,
-            'product_name': product.product_name,
-            'price': str(product.price),
-            'stock': product.stock,
-            'image_url': ProductImages.objects.filter(product=product).first().image_url if ProductImages.objects.filter(product=product).exists() else '',
-            'brand_name': product.brand.brand_name if product.brand else '未指定',
-            'category_name': product.category.category_name if product.category else '未指定',
-            'series_name': product.series.series_name if product.series else '未指定'
-        }
-        for product in products
-    ]
-    return JsonResponse({'products': products_data})
+    try:
+        # 獲取查詢參數
+        search_query = request.query_params.get('search', '')
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        category_id = request.GET.get('category')
+        brand_id = request.GET.get('brand')
+        series_id = request.GET.get('series')
+        sort = request.GET.get('sort', 'newest')  # 默认排序方式
+
+        logger.debug(f"min_price: {min_price}, max_price: {max_price}")  # 打印 min_price 和 max_price
+
+        # 基本查詢
+        products = Products.objects.all().select_related('brand', 'category', 'series')
+
+        # 應用搜索過濾
+        if search_query:
+            products = products.filter(product_name__icontains=search_query)
+
+        # 根据价格进行筛选
+        if min_price and min_price.isdigit():  # 确保 min_price 是有效的数字
+            products = products.filter(price__gte=float(min_price))
+        if max_price and max_price.isdigit():  # 确保 max_price 是有效的数字
+            products = products.filter(price__lte=float(max_price))
+
+        # 根据分类、品牌和系列进行筛选
+        if category_id:
+            products = products.filter(category_id=category_id)
+        if brand_id:
+            products = products.filter(brand_id=brand_id)
+        if series_id:
+            products = products.filter(series_id=series_id)
+
+        # 根据排序条件进行排序
+        if sort == 'price_asc':
+            products = products.order_by('price')  # 从低到高
+        elif sort == 'price_desc':
+            products = products.order_by('-price')  # 从高到低
+        else:
+            products = products.order_by('-created_at')  # 默认按最新上架排序
+
+        # 构建返回的数据
+        products_data = []
+        for product in products:
+            # 获取产品的主图片
+            product_image = (ProductImages.objects.filter(product=product, is_main=1).first() or ProductImages.objects.filter(product=product).first())
+
+            product_data = {
+                'product_id': product.product_id,
+                'product_name': product.product_name,
+                'price': str(product.price),
+                'stock': product.stock,
+                'image_url': str(product_image.image_url) if product_image else '',  # 直接轉換為字符串
+                'brand_name': product.brand.brand_name if product.brand else '未指定',
+                'category_name': product.category.category_name if product.category else '未指定',
+                'series_name': product.series.series_name if product.series else '未指定'
+            }
+            products_data.append(product_data)
+
+        return JsonResponse({'products': products_data, 'total': len(products_data)}, status=200)
+    except Exception as e:
+        logger.error(f"处理请求时出错: {e}")  # 打印错误信息
+        return JsonResponse({'error': 'An error occurred during the product loading'}, status=500)
 
 @api_view(['POST'])
 def create_product(request):
@@ -93,9 +130,7 @@ def create_product(request):
             description_text=request.data.get('description_text', ''),
             price=request.data['price'],
             stock=request.data['stock'],
-            user_id=user_id,  # 直接使用從 token 中獲取的 user_id
-            created_at=datetime.now(),
-            updated_at=datetime.now()
+            user_id=user_id,
         )
 
         # 處理外鍵關係
@@ -116,7 +151,6 @@ def create_product(request):
                     product=product,
                     image_url=image,
                     is_main=1 if index == 0 else 0,
-                    created_at=datetime.now()
                 )
 
         return Response({
@@ -195,72 +229,6 @@ def delete_product(request, product_id):
             'detail': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(['GET'])
-def view_all_products(request):
-    try:
-        # 獲取查詢參數
-        search_query = request.query_params.get('search', '')
-        min_price = request.GET.get('min_price')
-        max_price = request.GET.get('max_price')
-        category_id = request.GET.get('category')
-        brand_id = request.GET.get('brand')
-        series_id = request.GET.get('series')
-        sort = request.GET.get('sort', 'newest')  # 默认排序方式
-
-        logger.debug(f"min_price: {min_price}, max_price: {max_price}")  # 打印 min_price 和 max_price
-
-        # 基本查詢
-        products = Products.objects.all().select_related('brand', 'category', 'series')
-
-        # 應用搜索過濾
-        if search_query:
-            products = products.filter(product_name__icontains=search_query)
-
-        # 根据价格进行筛选
-        if min_price and min_price.isdigit():  # 确保 min_price 是有效的数字
-            products = products.filter(price__gte=float(min_price))
-        if max_price and max_price.isdigit():  # 确保 max_price 是有效的数字
-            products = products.filter(price__lte=float(max_price))
-
-        # 根据分类、品牌和系列进行筛选
-        if category_id:
-            products = products.filter(category_id=category_id)
-        if brand_id:
-            products = products.filter(brand_id=brand_id)
-        if series_id:
-            products = products.filter(series_id=series_id)
-
-        # 根据排序条件进行排序
-        if sort == 'price_asc':
-            products = products.order_by('price')  # 从低到高
-        elif sort == 'price_desc':
-            products = products.order_by('-price')  # 从高到低
-        else:
-            products = products.order_by('-created_at')  # 默认按最新上架排序
-
-        # 构建返回的数据
-        products_data = []
-        for product in products:
-            # 获取产品的主图片
-            product_image = (ProductImages.objects.filter(product=product, is_main=1).first() or ProductImages.objects.filter(product=product).first())
-
-            product_data = {
-                'product_id': product.product_id,
-                'product_name': product.product_name,
-                'price': str(product.price),
-                'stock': product.stock,
-                'image_url': str(product_image.image_url) if product_image else '',  # 直接轉換為字符串
-                'brand_name': product.brand.brand_name if product.brand else '未指定',
-                'category_name': product.category.category_name if product.category else '未指定',
-                'series_name': product.series.series_name if product.series else '未指定'
-            }
-            products_data.append(product_data)
-
-        return JsonResponse({'products': products_data, 'total': len(products_data)}, status=200)
-    except Exception as e:
-        logger.error(f"处理请求时出错: {e}")  # 打印错误信息
-        return JsonResponse({'error': 'An error occurred during the product loading'}, status=500)
-
 @api_view(['GET', 'PUT'])
 def edit_product(request, product_id):
     try:
@@ -321,7 +289,6 @@ def edit_product(request, product_id):
                         product=product,
                         image_url=image,
                         is_main=False,
-                        created_at=datetime.now()
                     )
 
             # 確保有一張圖片被標註為主圖
@@ -382,7 +349,6 @@ def create_brand(request):
     except Exception as e:
         logger.error(f"創建品牌時發生錯誤: {str(e)}")
         return Response({'detail': f'創建品牌時發生錯誤: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['POST'])
 def create_category(request):
@@ -472,7 +438,6 @@ def create_series(request):
         logger.error(f"創建系列時發生錯誤: {str(e)}")
         return Response({'detail': f'創建系列時發生錯誤: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# 替換 `render` 的部分
 class CategoryListView(generics.ListAPIView):
     queryset = ProductCategories.objects.all().order_by('category_id')
     serializer_class = CategorySerializer
@@ -484,10 +449,6 @@ class BrandListView(generics.ListAPIView):
 class SeriesListView(generics.ListAPIView):
     queryset = ProductSeries.objects.all().order_by('series_id')
     serializer_class = SeriesSerializer
-
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Products.objects.all()
-    serializer_class = ProductSerializer
 
 class ProductDetail(APIView):
     def get(self, request, product_id):
@@ -648,100 +609,215 @@ def check_wishlist(request, product_id):
     except Exception as e:
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class FeaturedProductsView(APIView):
-    def get(self, request):
-        featured_products = Products.objects.filter(is_featured=True)
-        serializer = ProductSerializer(featured_products, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-class NewArrivalsView(APIView):
-    def get(self, request):
-        try:
-            one_month_ago = datetime.now() - timedelta(days=30)
-            new_arrivals = Products.objects.filter(date_added__gte=one_month_ago).order_by('-date_added')
-
-            if not new_arrivals.exists():
-                new_arrivals = Products.objects.all().order_by('-date_added')[:8]
-
-            products_data = []
-            for product in new_arrivals:
-                # 獲取產品的第一張圖片
-                product_image = ProductImages.objects.filter(product=product).first()
-                
-                product_data = {
-                    'product_id': product.product_id,
-                    'product_name': product.product_name,
-                    'price': str(product.price),
-                    'date_added': product.created_at,
-                    'image_url': str(product_image.image_url) if product_image else ''
-                }
-                products_data.append(product_data)
-
-            if not products_data:
-                return JsonResponse({"error": "No new arrivals found."}, status=404)
-
-            return JsonResponse({"products": products_data})
-
-        except Exception as e:
-            logger.error(f"Error while fetching new arrivals: {e}")
-            return JsonResponse({"error": "載入商品時出現問題，請稍後再試。"}, status=500)
-
 class ProductReviewsView(APIView):
     def get(self, request, product_id):
-        product = Products.objects.filter(product_id=product_id).first()
-        if not product:
-            return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            # 獲取當前用戶ID（如果已登入）
+            current_user_id = None
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                try:
+                    token = auth_header.split(' ')[1]
+                    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                    current_user_id = payload.get('user_id')
+                except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+                    pass
 
-        reviews = ProductReviews.objects.filter(product=product)
-        review_data = [{"rating": review.rating, "comment": review.comment, "created_at": review.created_at} for review in reviews]
-        return Response(review_data, status=status.HTTP_200_OK)
-    
+            # 獲取商品的所有評論
+            reviews = ProductReviews.objects.filter(product_id=product_id)\
+                .select_related('user')\
+                .order_by('-review_date')
+            
+            # 使用序列化器
+            serializer = ReviewSerializer(reviews, many=True)
+            reviews_data = serializer.data
+            
+            # 添加額外的字段
+            for review_data, review in zip(reviews_data, reviews):
+                review_data['user_name'] = review.user.user_nickname or review.user.user_name
+                review_data['is_owner'] = current_user_id == review.user.user_id
+            
+            return Response(reviews_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"獲取評論時發生錯誤: {str(e)}")
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    # 更新評論
+    def put(self, request, product_id, review_id):
+        try:
+            # 驗證用戶身份
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return Response({'detail': '請先登入'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            token = auth_header.split(' ')[1]
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            # 獲取評論
+            try:
+                review = ProductReviews.objects.get(
+                    review_id=review_id,
+                    product_id=product_id
+                )
+            except ProductReviews.DoesNotExist:
+                return Response({'detail': '評論不存在'}, status=status.HTTP_404_NOT_FOUND)
+            
+            # 確認是否為評論擁有者
+            if review.user_id != user_id:
+                return Response({'detail': '您沒有權限編輯此評論'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # 更新評論
+            rating = request.data.get('rating')
+            review_text = request.data.get('review_text', '')
+            
+            if not rating or not isinstance(rating, (int, float)) or rating < 1 or rating > 5:
+                return Response({'detail': '請提供有效的評分（1-5）'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            review.rating = rating
+            review.review_text = review_text
+            review.save()
+            
+            return Response({'detail': '評論已更新'}, status=status.HTTP_200_OK)
+            
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            logger.error(f"更新評論時發生錯誤: {str(e)}")
+            return Response({'detail': '更新評論時發生錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     def post(self, request, product_id):
         try:
-            # 獲取請求數據
-            data = request.data
-            rating = data.get('rating')
-            review_text = data.get('review_text')
-
-            # 確保用戶已登入
-            user_id = request.query_params.get('user_id')
-            if not user_id:
+            # 驗證用戶身份
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
                 return Response({'detail': '請先登入'}, status=status.HTTP_401_UNAUTHORIZED)
-
-            # 創建評論
-            product = Products.objects.get(product_id=product_id)
-            review = ProductReviews.objects.create(
-                product=product,
+            
+            token = auth_header.split(' ')[1]
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            # 檢查用戶是否已購買商品
+            has_purchased = OrderItems.objects.filter(
+                order__user_id=user_id,
+                product_id=product_id,
+                order__order_status='COMPLETED'
+            ).exists()
+            
+            if not has_purchased:
+                return Response({'detail': '您尚未購買此商品，無法評論'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # 檢查是否已經評論過
+            has_reviewed = ProductReviews.objects.filter(
                 user_id=user_id,
+                product_id=product_id
+            ).exists()
+            
+            if has_reviewed:
+                return Response({'detail': '您已經評論過此商品'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 獲取評論數據
+            rating = request.data.get('rating')
+            review_text = request.data.get('review_text', '')
+            
+            if not rating or not isinstance(rating, (int, float)) or rating < 1 or rating > 5:
+                return Response({'detail': '請提供有效的評分（1-5）'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 創建評論
+            user = MemberBasic.objects.get(user_id=user_id)
+            product = Products.objects.get(product_id=product_id)
+            
+            review = ProductReviews.objects.create(
+                user=user,
+                product=product,
                 rating=rating,
                 review_text=review_text
             )
-
-            return Response({'message': '評論已提交'}, status=status.HTTP_201_CREATED)
-
+            
+            return Response({'detail': '評論已提交'}, status=status.HTTP_201_CREATED)
+            
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            logger.error(f"提交評論時發生錯誤: {str(e)}")
+            return Response({'detail': '提交評論時發生錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def delete(self, request, product_id, review_id):
+        try:
+            # 驗證用戶身份
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return Response({'detail': '請先登入'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            token = auth_header.split(' ')[1]
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            # 獲取評論
+            try:
+                review = ProductReviews.objects.get(
+                    review_id=review_id,
+                    product_id=product_id
+                )
+            except ProductReviews.DoesNotExist:
+                return Response({'detail': '評論不存在'}, status=status.HTTP_404_NOT_FOUND)
+            
+            # 確認是否為評論擁有者
+            if review.user_id != user_id:
+                return Response({'detail': '您沒有權限刪除此評論'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # 刪除評論
+            review.delete()
+            
+            return Response({'detail': '評論已刪除'}, status=status.HTTP_200_OK)
+            
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            logger.error(f"刪除評論時發生錯誤: {str(e)}")
+            return Response({'detail': '刪除評論時發生錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 @api_view(['GET'])
-def get_featured_products(request):
-    featured_products = Products.objects.filter(is_featured=True)
-    serialized_products = ProductSerializer(featured_products, many=True)
-    return Response(serialized_products.data)
-
-def get_new_arrivals(request):
-    one_month_ago = now() - timedelta(days=30)
-
-    # 嘗試獲取符合條件的新品
-    new_arrivals = Products.objects.filter(date_added__gte=one_month_ago).order_by('-date_added')
-
-    # 如果新品為空，返回最近的 10 個商品
-    if not new_arrivals.exists():
-        new_arrivals = Products.objects.all().order_by('-date_added')[:10]  # 限制返回最多 10 個
-
-    # 返回 JSON 格式的數據
-    return JsonResponse({
-        "products": list(new_arrivals.values())
-    })
+def check_can_review(request, product_id):
+    try:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'can_review': False}, status=status.HTTP_200_OK)
+        
+        token = auth_header.split(' ')[1]
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        user_id = payload.get('user_id')
+        
+        if not user_id:
+            return Response({'can_review': False}, status=status.HTTP_200_OK)
+        
+        # 檢查是否購買過且未評論
+        has_purchased = OrderItems.objects.filter(
+            order__user_id=user_id,
+            product_id=product_id,
+            order__order_status='COMPLETED'
+        ).exists()
+        
+        has_reviewed = ProductReviews.objects.filter(
+            user_id=user_id,
+            product_id=product_id
+        ).exists()
+        
+        can_review = has_purchased and not has_reviewed
+        
+        return Response({'can_review': can_review}, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"檢查評論權限時發生錯誤: {str(e)}")
+        return Response({'can_review': False}, status=status.HTTP_200_OK)
 
 class ProductRecommendationsView(APIView):
     def get(self, request, product_id):
@@ -761,7 +837,7 @@ class ProductRecommendationsView(APIView):
                 product_data = {
                     'product_id': product.product_id,
                     'product_name': product.product_name,
-                    'price': str(product.price),
+                    'price': int(product.price),
                     'stock': product.stock,
                     'image_url': str(product_image.image_url) if product_image else '',
                     'brand_name': product.brand.brand_name if product.brand else '未指定',
@@ -776,4 +852,63 @@ class ProductRecommendationsView(APIView):
             logger.error(f"Error getting recommendations: {e}")
             return Response({"detail": "An error occurred while getting recommendations."}, 
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view(['GET'])
+def get_purchased_products(request):
+    try:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'detail': '請先登入'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        token = auth_header.split(' ')[1]
+        
+        try:
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return Response({'detail': '無效的用戶信息'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # 獲取用戶的所有已完成訂單中的商品
+            purchased_items = OrderItems.objects.filter(
+                order__user_id=user_id,
+                order__order_status='COMPLETED'
+            ).select_related('product', 'order').annotate(
+                purchase_date=F('order__order_date')
+            ).order_by('-order__order_date')
+
+            
+            # 構建響應數據
+            products_data = []
+            for item in purchased_items:
+                product = item.product
+                product_image = ProductImages.objects.filter(product=product, is_main=1).first()
+                
+                product_data = {
+                    'product_id': product.product_id,
+                    'product_name': product.product_name,
+                    'price': float(item.product_price),  # 購買時的價格
+                    'quantity': item.quantity,
+                    'purchase_date': item.purchase_date.strftime('%Y-%m-%d %H:%M:%S'),
+                    'order_id': item.order.order_id,
+                    'image_url': str(product_image.image_url) if product_image else '',
+                    'can_review': not ProductReviews.objects.filter(
+                        user_id=user_id,
+                        product=product
+                    ).exists()
+                }
+                products_data.append(product_data)
+            
+            return Response(products_data, status=status.HTTP_200_OK)
+            
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+    except Exception as e:
+        logger.error(f"獲取購買紀錄時發生錯誤: {str(e)}")
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     

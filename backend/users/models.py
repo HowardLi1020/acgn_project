@@ -104,15 +104,7 @@ class MemberVerify(models.Model):
         db_table = 'member_verify'
 
 
-class ProductWishlist(models.Model):
-    wishlist_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('users.MemberBasic', models.DO_NOTHING)
-    product = models.ForeignKey('products.Products', models.DO_NOTHING)
-    added_date = models.DateTimeField(blank=True, null=True)
 
-    class Meta:
-        managed = False
-        db_table = 'product_wishlist'
 
 
 

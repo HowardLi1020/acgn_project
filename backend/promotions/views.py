@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Coupons
 from .form import CouponForm
+from promotions.models import Coupons
 from users.models import MemberBasic
 from member_api.models import Usercoupons
 from django.contrib import messages

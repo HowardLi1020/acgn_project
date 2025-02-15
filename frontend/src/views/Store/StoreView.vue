@@ -148,9 +148,14 @@ const checkMemberAndNavigateToCreateProduct = () => {
   }
 }
 
+
 // 導航到我的商品頁面
 const navigateToMyProducts = () => {
   router.push({ name: 'MyProduct' })
+}
+
+const navigateToPurchasedProducts = () => {
+  router.push({ name: 'PurchasedProducts' })
 }
 
 onMounted(() => {
@@ -166,10 +171,13 @@ onMounted(() => {
   <div class="store">
     <!-- 錯誤提示 -->
     <ErrorMessage v-if="error">{{ error }}</ErrorMessage>
-
+    <h1> 所有商品 </h1>
     <!-- 創建商品按鈕 -->
     <button @click="checkMemberAndNavigateToCreateProduct">創建商品</button>
     <button v-if="isMember" @click="navigateToMyProducts">我的商品</button>
+    <button v-if="isMember" @click="navigateToPurchasedProducts" class="purchased-btn">
+        購買紀錄
+    </button>
     <!-- 添加搜索欄 -->
     <div class="search-bar">
       <input
