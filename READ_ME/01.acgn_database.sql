@@ -410,7 +410,7 @@ CREATE TABLE db_work_info (
 CREATE TABLE db_work_original_file (
     original_file_id INT AUTO_INCREMENT PRIMARY KEY,-- 原始檔上傳流水號
     work_id INT,                                    -- 作品id
-    --step INT,                                        第幾個檔
+    -- step INT,                                        第幾個檔
     original_file_url VARCHAR(255),                 -- 原始檔名
     FOREIGN KEY (work_id) REFERENCES db_work_info(work_id) ON DELETE CASCADE
 );
@@ -448,7 +448,7 @@ CREATE TABLE db_public_card_info (
     -- need_price DECIMAL(10),                           -- 酬金（關聯資料表：需求need_info）
     deal_count INT,                                   -- 成交計數
     sell_public_status BOOLEAN DEFAULT TRUE,          -- 價目表 是否公開開關
-    work_list_public_status BOOLEAN DEFAULT TRUE,     -- 公開作品列表 是否公開開關
+    work_sellnow_list_public_status BOOLEAN DEFAULT TRUE,     -- 公開作品列表 是否公開開關
     work_done_list_public_status BOOLEAN DEFAULT TRUE,-- 已成交作品列表 是否公開開關
     need_list_public_status BOOLEAN DEFAULT TRUE,     -- 發起需求列表 是否公開開關
     last_update DATETIME,                             -- 最後更新

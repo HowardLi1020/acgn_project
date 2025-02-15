@@ -124,7 +124,7 @@ class DbPublicCardInfo(models.Model):
     key_tags = models.CharField(max_length=255, blank=True, null=True)
     
     sell_public_status = models.BooleanField(default=True)
-    work_list_public_status = models.BooleanField(default=True)
+    work_sellnow_list_public_status = models.BooleanField(default=True)
     work_done_list_public_status = models.BooleanField(default=True)
     need_list_public_status = models.BooleanField(default=True)
 

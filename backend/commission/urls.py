@@ -26,11 +26,13 @@ urlpatterns = [
     path('publiccard_list/', views.ViewFn_publiccard_list, name='Urls_publiccard_list'),
     path('publiccard/edit/<int:view_fn_publiccard_id>/', views.ViewFn_publiccard_edit, name='Urls_publiccard_edit'),
     
-    # 測試用待註解
+    # 名片剝皮測試用待註解
     path('publiccard/edit/<int:view_fn_publiccard_id>/[all]publiccard_edit/', views.ViewFn_publiccard_edit, name='[all]publiccard_edit'), #[測試用]名片編輯-剝皮主頁
     path('publiccard/edit/<int:view_fn_publiccard_id>/sell_list/', views.ViewFn_publiccard_edit, name='sell_list'), #[測試用]名片編輯-價目表
     path('publiccard/edit/<int:view_fn_publiccard_id>/favorite_acgn/', views.ViewFn_publiccard_edit, name='favorite_acgn'), #[測試用]名片編輯-喜好作品
     path('publiccard/edit/<int:view_fn_publiccard_id>/tag/', views.ViewFn_publiccard_edit, name='tag'), #[測試用]名片編輯-屬性Tag
+    path('publiccard/edit/<int:view_fn_publiccard_id>/work_sellnow/', views.ViewFn_publiccard_edit, name='work_sellnow'), #[測試用]名片編輯-公開販售作品
+    path('publiccard/edit/<int:view_fn_publiccard_id>/work_done/', views.ViewFn_publiccard_edit, name='work_done'), #[測試用]名片編輯-已成交作品
     path('publiccard/edit/<int:view_fn_publiccard_id>/need/', views.ViewFn_publiccard_edit, name='need'), #[測試用]名片編輯-需求小卡
     # path('usercard/edit/<int:view_fn_usercard_id>/', views.ViewFn_usercard_edit, name='Urls_usercard_edit'),
 

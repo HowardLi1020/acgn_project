@@ -3,14 +3,14 @@
 {% block app_css %}
 <style>
 
-  /* 發起過的需求 - 委託小卡樣式 */
-  .commission-card {
+  /* 發起過的需求 - 需求小卡樣式 */
+  .need-card {
     width: 240px; 
     flex: 0 0 auto;
   }
 
-  /* 委託小卡容器樣式 */
-  .commission-card-container {
+  /* 需求小卡容器樣式 */
+  .need-card-container {
     position: relative; /* 為遮罩層提供定位基準 */
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -20,7 +20,7 @@
   }
 
   /* 遮罩層樣式 */
-  .commission-card-overlay {
+  .need-card-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -33,30 +33,20 @@
   }
 
   /* 非公開狀態的遮罩層 */
-  .commission-card-container.private .commission-card-overlay {
+  .need-card-container.private .need-card-overlay {
     background-color: rgba(0, 0, 0, 0.2); /* 半透明黑色 */
   }
 
-  /* 委託小卡標題樣式 - 深色版本 */
-  .commission-card-header {
+  /* 需求小卡標題樣式 - 深色版本 */
+  .need-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 5px;
   }
 
-  /* 委託小卡標題文字樣式 */
-  .commission-card-title a {
-    color: #252930; /* 原<h5>的預設色 */
-    text-decoration: underline !important;
-    transition: opacity 0.2s; /* 添加懸停效果 */
-}
-
-.commission-card-title a:hover {
-    opacity: 0.8; /* 懸停時輕微透明 */
-}
-  /* 委託小卡內容樣式 - 淺色版本 */
-  .commission-card-body {
+  /* 需求小卡內容樣式 - 淺色版本 */
+  .need-card-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -65,54 +55,54 @@
   }
 
   /* 徵件中狀態 */
-  .commission-card-header.status-recruiting {
+  .need-card-header.status-recruiting {
     background-color: #b8e7be; 
   }
-  .commission-card-body.status-recruiting {
+  .need-card-body.status-recruiting {
     background-color: #ebf8ec;
   }
 
   /* 截止狀態 */
-  .commission-card-header.status-closed {
+  .need-card-header.status-closed {
     background-color: #f3cdcd; 
   }
-  .commission-card-body.status-closed {
+  .need-card-body.status-closed {
     background-color: #fcecec;
   }
 
   /* 已成交狀態 */
-  .commission-card-header.status-completed {
+  .need-card-header.status-completed {
     background-color: #d6e8f9;
   }
-  .commission-card-body.status-completed {
+  .need-card-body.status-completed {
     background-color: #eef4fc;
   }
 
   /* 取消徵件狀態 */
-  .commission-card-header.status-cancelled {
+  .need-card-header.status-cancelled {
     background-color: #CECECE;
   }
-  .commission-card-body.status-cancelled {
+  .need-card-body.status-cancelled {
     background-color: #F0F0F0; 
   }
 
-  /* 委託小卡標題樣式 */
-  .commission-card-header {
+  /* 需求小卡標題樣式 */
+  .need-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 5px;
   }
 
-  /* 委託小卡標題文字樣式 */
-  .commission-card-title {
+  /* 需求小卡標題文字樣式 */
+  .need-card-title {
     margin: 0;
     font-size: 16px;
     font-weight: bold;
   }
 
-  /* 委託小卡內容樣式 - 確保固定高度 */
-  .commission-card-body {
+  /* 需求小卡內容樣式 - 確保固定高度 */
+  .need-card-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -120,20 +110,20 @@
     height: 100px; /* 設定固定高度 */
   }
 
-  /* 委託小卡描述樣式 */
-  .commission-card-description {
+  /* 需求小卡描述樣式 */
+  .need-card-description {
     flex: 1;
   }
 
-  /* 委託小卡描述文字樣式 */
-  .commission-card-text {
+  /* 需求小卡描述文字樣式 */
+  .need-card-text {
     margin-top: 5px; /* 內文與標題間距 */
     font-size: 14px;
     color: #555;
   }
 
-  /* 委託小卡預覽圖容器樣式 */
-  .commission-card-preview {
+  /* 需求小卡預覽圖容器樣式 */
+  .need-card-preview {
     width: 80%;
     height: 110%;
     /* background-color: #d0d0d0; */
@@ -144,8 +134,8 @@
     margin-left: 5px;
   }
 
-  /* 委託小卡預覽圖片樣式 */
-  .commission-card-preview img {
+  /* 需求小卡預覽圖片樣式 */
+  .need-card-preview img {
     width: auto; /* 自動寬度 */
     height: auto; /* 自動高度 */
     max-width: 100%; /* 最大寬度 */
@@ -153,21 +143,21 @@
     object-fit: contain; /* 保持原圖比例 */
   }
 
-  /* 委託小卡公開狀態樣式 */
-  .commission-card-status {
+  /* 需求小卡公開狀態樣式 */
+  .need-card-status {
     padding: 10px;
     display: flex;
     justify-content: center;
     gap: 5px;
   }
 
-  /* 委託小卡公開狀態標籤樣式 */
-  .commission-card-status .form-check-label {
+  /* 需求小卡公開狀態標籤樣式 */
+  .need-card-status .form-check-label {
     font-size: 0.75em;
   }
 
     /* 委託狀態 radio 按鈕樣式 */
-    input.form-check-input.commission-radio {
+    input.form-check-input.need-list-radio {
     position: static; /* 覆蓋 .right-section .form-check-input 的定位 */
     right: auto;
     top: auto;
@@ -223,7 +213,7 @@
         <div class="d-flex flex-row flex-wrap gap-3">
           {% if ViewKey_DbNeedInfo %} 
           {% for HTML_need in ViewKey_DbNeedInfo %}
-          <div class="commission-card">
+          <div class="need-card">
             <!-- 加入隱藏的偵錯資訊 -->
             <div style="display: none;" 
                  data-debug="true"
@@ -232,24 +222,19 @@
             </div>
             
             <div
-              class="commission-card-container {% if not HTML_need.public_status %}private{% endif %}"
+              class="need-card-container {% if not HTML_need.public_status %}private{% endif %}"
             >
-              <div class="commission-card-overlay"></div>
+              <div class="need-card-overlay"></div>
               <!-- 上層DIV -->
-              <div class="commission-card-header 
+              <div class="need-card-header 
                   {% if HTML_need.need_status == '徵件中' %}status-recruiting
                   {% elif HTML_need.need_status == '截止' %}status-closed
                   {% elif HTML_need.need_status == '已成交' %}status-completed
                   {% elif HTML_need.need_status == '取消徵件' %}status-cancelled{% endif %}">
                 <div style="display: flex; flex-direction: column;">
-                  <h5 class="commission-card-title">
-                    <a href="{% url 'commission:Urls_need_edit' view_fn_need_id=HTML_need.need_id %}" 
-                        class="text-dark text-decoration-underline">
-                      {{ HTML_need.need_title }}
-                    </a>
-                  </h5>
+                  <h5 class="need-card-title">{{ HTML_need.need_title }}</h5>
                   {% if HTML_need.need_original_from %}
-                  <p class="commission-card-text small text-muted" style="margin-bottom: 0; font-size: 0.75em; margin: 2px  0 0 6px;">
+                  <p class="need-card-text small text-muted" style="margin-bottom: 0; font-size: 0.75em; margin: 2px  0 0 6px;">
                     原作：{{ HTML_need.need_original_from }}
                   </p>
                   {% endif %}
@@ -262,7 +247,7 @@
               </div>
               <!-- 下層DIV -->
               <!-- 依徵件狀態決定顯色 -->
-              <div class="commission-card-body
+              <div class="need-card-body
                   {% if HTML_need.need_status == '徵件中' %}status-recruiting
                   {% elif HTML_need.need_status == '截止' %}status-closed
                   {% elif HTML_need.need_status == '已成交' %}status-completed
@@ -270,17 +255,17 @@
                 {% with first_need_image=HTML_need.dbneedimages_set.all|first %} 
                 {% if first_need_image %}
                 <!-- 需求說明  -->
-                <div class="commission-card-description" style="flex: 0 1 auto; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
-                  <p class="commission-card-text">
+                <div class="need-card-description" style="flex: 0 1 auto; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <p class="need-card-text">
                     {{ HTML_need.need_description|truncatechars:16 }}
                   </p>
                   <!-- 更新時間 -->
-                  <p class="commission-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
+                  <p class="need-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
                     {{ HTML_need.last_update|date:"Y.m.d" }}
                   </p>
                 </div>
                 <!-- 需求預覽圖 -->
-                <div class="commission-card-preview">
+                <div class="need-card-preview">
                   <img
                     src="{{ MEDIA_URL }}commission/needID_img/{{ first_need_image.image_url }}"
                     alt="需求預覽圖"
@@ -289,12 +274,12 @@
                 </div>
                 {% else %}
                 <!-- 需求說明 -->
-                <div class="commission-card-description" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
-                  <p class="commission-card-text">
+                <div class="need-card-description" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <p class="need-card-text">
                     {{ HTML_need.need_description|truncatechars:30 }}
                   </p>
                   <!-- 更新時間 -->
-                  <p class="commission-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
+                  <p class="need-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
                     {{ HTML_need.last_update|date:"Y.m.d" }}
                   </p>
                 </div>
@@ -303,7 +288,7 @@
               </div>
             </div>
             <!-- 公開狀態切換 -->
-            <div class="commission-card-status">
+            <div class="need-card-status">
               <div class="form-check">
                 <label
                   class="form-check-label badge bg-success"
@@ -312,7 +297,7 @@
                   公開
                 </label>
                 <input
-                  class="form-check-input commission-radio mx-2"
+                  class="form-check-input need-list-radio mx-2"
                   type="radio"
                   name="needStatus{{ HTML_need.need_id }}"
                   id="status{{ HTML_need.need_id }}_public"
@@ -328,7 +313,7 @@
                   非公開
                 </label>
                 <input
-                  class="form-check-input commission-radio mx-2"
+                  class="form-check-input need-list-radio mx-2"
                   type="radio"
                   name="needStatus{{ HTML_need.need_id }}"
                   id="status{{ HTML_need.need_id }}_private"
@@ -339,7 +324,7 @@
             </div>
           </div>
           {% endfor %} {% else %}
-          <div class="text-muted">尚未有發起過的需求</div>
+          <div class="text-muted">使用者未有發起過的需求</div>
           {% endif %}
         </div>
         <!-- 結束水平排列的 div -->
@@ -352,6 +337,91 @@
 {% block app_script %}
 <!-- 如果應用程式有自己的JAVA Script放這邊 -->
 <script>
+    //       // === 原卡片狀態初始化 ===
+//   const radios = document.querySelectorAll(".need-list-radio:checked");
+//   radios.forEach((radio) => {
+//     handleVisibilityChange(radio, radio.id.match(/\d+/)[0]);
+//   });
+
+//   // 初始化需求卡片的公開狀態
+//   const needCards = document.querySelectorAll('.need-card');
+//   needCards.forEach(card => {
+//     const publicRadio = card.querySelector('input[id$="_public"]');
+//     const privateRadio = card.querySelector('input[id$="_private"]');
+//     const container = card.querySelector('.need-card-container');
+    
+//     if (publicRadio && privateRadio && container) {
+//       // 根據選中的 radio 設置初始狀態
+//       if (privateRadio.checked) {
+//         container.classList.add('private');
+//       } else {
+//         container.classList.remove('private');
+//       }
+//     }
+//   });
+
+
+// // 檢查所有需求卡片的初始狀態
+// const allNeedCards = document.querySelectorAll('.need-card');
+// allNeedCards.forEach(card => {
+//   const debugInfo = card.querySelector('[data-debug="true"]');
+//   if (debugInfo) {
+//     const needId = debugInfo.dataset.needId;
+//     const dbPublicStatus = debugInfo.dataset.publicStatus === 'true';
+    
+//     const publicRadio = card.querySelector(`#status${needId}_public`);
+//     const privateRadio = card.querySelector(`#status${needId}_private`);
+    
+//     console.log(`需求 ID: ${needId}`, {
+//       '資料庫狀態': dbPublicStatus,
+//       '公開按鈕狀態': publicRadio ? publicRadio.checked : 'not found',
+//       '非公開按鈕狀態': privateRadio ? privateRadio.checked : 'not found'
+//     });
+//   }
+// });
+
+// // 初始化需求卡片的公開狀態
+// allNeedCards.forEach(card => {
+//   const debugInfo = card.querySelector('[data-debug="true"]');
+//   if (debugInfo) {
+//     const needId = debugInfo.dataset.needId;
+//     const dbPublicStatus = debugInfo.dataset.publicStatus === 'true';
+    
+//     const publicRadio = card.querySelector(`#status${needId}_public`);
+//     const privateRadio = card.querySelector(`#status${needId}_private`);
+//     const container = card.querySelector('.need-card-container');
+    
+//     if (publicRadio && privateRadio && container) {
+//       // 強制設置為資料庫狀態
+//       publicRadio.checked = dbPublicStatus;
+//       privateRadio.checked = !dbPublicStatus;
+      
+//       // 設置卡片視覺狀態
+//       if (!dbPublicStatus) {
+//         container.classList.add('private');
+//       } else {
+//         container.classList.remove('private');
+//       }
+//     }
+//   }
+// });
+
+//   // === 原 handleVisibilityChange 函數，處理卡片可見性 ===
+//   window.handleVisibilityChange = function(radio, needId) {
+//   console.log('狀態變更:', {
+//     '需求 ID': needId,
+//     '新狀態': radio.id === `status${needId}_public` ? '公開' : '非公開'
+//   });
+  
+//   const container = radio.closest('.need-card').querySelector('.need-card-container');
+//   if (container) {
+//     if (radio.id === `status${needId}_private`) {
+//       container.classList.add('private');
+//     } else {
+//       container.classList.remove('private');
+//     }
+//   }
+// };
   document.addEventListener('DOMContentLoaded', function() {
     // 監聽 'DOMContentLoaded' 事件，確保在 HTML 文件完全加載後執行
     window.handleVisibilityChange = function(radio, needId) {
@@ -365,8 +435,8 @@
     //     '新狀態': radio.id === `status${needId}_public` ? '公開' : '非公開' // 根據 radio 的 id 判斷新狀態是公開還是非公開
     //   });
 
-      const container = radio.closest('.commission-card').querySelector('.commission-card-container');
-      // 向上查找最近的祖先元素 '.commission-card'，然後在其內部選取子元素 '.commission-card-container'
+      const container = radio.closest('.need-card').querySelector('.need-card-container');
+      // 向上查找最近的祖先元素 '.need-card'，然後在其內部選取子元素 '.need-card-container'
       // 這樣可以找到與觸發事件的 radio 按鈕相關聯的卡片容器
 
       if (container) {

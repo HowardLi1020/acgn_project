@@ -13,8 +13,9 @@ drop table db_public_card_sell;
 SELECT * FROM shopping.member_basic;
 SELECT * FROM shopping.db_need_info;
 SELECT * FROM shopping.db_need_images;
-SELECT * FROM shopping.db_works_info;
-SELECT * FROM shopping.db_works_preview;
+SELECT * FROM shopping.db_work_info;
+SELECT * FROM shopping.db_work_images;
+SELECT * FROM shopping.db_work_original_file;
 SELECT * FROM shopping.db_public_card_info;
 SELECT * FROM shopping.db_public_card_sell;
 

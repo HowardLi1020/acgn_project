@@ -1097,23 +1097,16 @@ def ViewFn_publiccard_list(request):
 @never_cache
 def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, pk=view_fn_publiccard_id)
-
-    # 獲取該用戶的價目表資料
-    view_db_publiccard_sell = DbPublicCardSell.objects.filter(user=view_db_publiccard_info)
-        
-    # 獲取該用戶的作品列表，並預加載相關的圖片
-    view_db_work_info = DbWorkInfo.objects.filter(
-        worker_id=view_db_publiccard_info.member_basic_id
-    ).prefetch_related(
-        'dbworkimages_set'  # 預加載關聯的圖片
-    ).order_by('-publish_time')  # 使用 publish_time 進行排序
-        
+    
     # 獲取該用戶的需求列表，並預加載相關的圖片
     view_db_need_info = DbNeedInfo.objects.filter(
         needer_id=view_db_publiccard_info.member_basic_id
     ).prefetch_related(
         'dbneedimages_set'  # 預加載關聯的圖片
     ).order_by('-publish_time')  # 使用 publish_time 進行排序
+    
+    # 獲取該用戶的價目表資料
+    view_db_publiccard_sell = DbPublicCardSell.objects.filter(user=view_db_publiccard_info)
     
     # 動態判斷模板路徑
     url_name = request.resolver_match.url_name
@@ -1125,8 +1118,7 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
 
     context = {
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
-        'ViewKey_DbPublicCardSell': view_db_publiccard_sell,
-        'ViewKey_DbWorkInfo': view_db_work_info,
         'ViewKey_DbNeedInfo': view_db_need_info,
+        'ViewKey_DbPublicCardSell': view_db_publiccard_sell,
     }
     return render(request, template_name, context)

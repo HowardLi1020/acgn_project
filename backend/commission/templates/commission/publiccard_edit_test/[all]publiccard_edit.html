@@ -622,62 +622,9 @@
       <!-- 右側區域(分隔線區分兩側) -->
       <div class="right-section" style="border-left: 1px solid #dee2e6;">
         <ul class="content-list">
-          
           {% include 'commission/publiccard_edit_test/sell_list.html' %}
-          <li>
-            <div class="d-flex justify-content-between align-items-center">
-              <label
-                class="form-check-label form-label me-2"
-                for="switch-work-list"
-                >公開作品列表</label
-              >
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="switch-work-list"
-                  checked
-                />
-              </div>
-            </div>
-            <div class="private-message" style="display: none;">
-              <div class="text-muted text-center py-3">使用者未開放資訊</div>
-            </div>
-            <div class="expandable-content" id="content-work-list">
-              <div class="public-content">
-                <!-- 作品列表的內容 -->
-                223
-              </div>
-            </div>
-          </li>
-
-          <li>
-            <div class="d-flex justify-content-between align-items-center">
-              <label
-                class="form-check-label form-label me-2"
-                for="switch-work-done"
-                >已成交作品</label
-              >
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="switch-work-done"
-                  checked
-                />
-              </div>
-            </div>
-            <div class="private-message" style="display: none;">
-              <div class="text-muted text-center py-3">使用者未開放資訊</div>
-            </div>
-            <div class="expandable-content" id="content-work-done">
-              <div class="public-content">
-                <!-- 已成交作品的內容 -->
-                323
-              </div>
-            </div>
-          </li>
-
+          {% include 'commission/publiccard_edit_test/work_sellnow.html' %}
+          {% include 'commission/publiccard_edit_test/work_done.html' %}
           {% include 'commission/publiccard_edit_test/need.html' %}
         </ul>
       </div>
@@ -1036,11 +983,10 @@ window.toggleContent = function(contentId) {
 };
 
 
-
 // 初始化開關狀態並添加事件監聽器
 const switchStates = {
   'switch-sell': {{ ViewKey_DbPublicCardInfo.sell_public_status|lower }},
-  'switch-work-list': {{ ViewKey_DbPublicCardInfo.work_list_public_status|lower }},
+  'switch-work-sellnow': {{ ViewKey_DbPublicCardInfo.work_sellnow_list_public_status|lower }},
   'switch-work-done': {{ ViewKey_DbPublicCardInfo.work_done_list_public_status|lower }},
   'switch-need-list': {{ ViewKey_DbPublicCardInfo.need_list_public_status|lower }}
 };
