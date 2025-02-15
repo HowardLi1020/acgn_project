@@ -17,13 +17,6 @@ import time
 from django.core.files.base import ContentFile
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 import io
-import zipfile
-import py7zr
-import rarfile
-import tempfile
-from django.views.decorators.csrf import csrf_exempt
-import tempfile
-import os
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -882,69 +875,6 @@ def ViewFn_image_info_api(request):
             }, status=400)
             
     return JsonResponse({'error': '無效的請求'}, status=400)
-
-# 接案編輯頁-壓縮檔資訊API端點
-@csrf_exempt  # 如果你想要跳過 CSRF 驗證（不建議用在生產環境）
-def ViewFn_archive_info_api(request):
-    if request.method == 'POST' and request.FILES:
-        archive_file = request.FILES.get('archive')
-        if not archive_file:
-            return JsonResponse({
-                'success': False,
-                'error': '未找到上傳的檔案'
-            })
-            
-        file_list = []
-        
-        try:
-            # 根據檔案類型使用不同的處理方法
-            if archive_file.name.lower().endswith('.zip'):
-                with zipfile.ZipFile(archive_file) as zf:
-                    file_list = [f for f in zf.namelist() if not f.endswith('/')]
-            
-            elif archive_file.name.lower().endswith('.7z'):
-                # 需要先將檔案寫入臨時檔案
-                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                    for chunk in archive_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.flush()
-                    
-                try:
-                    with py7zr.SevenZipFile(tmp_file.name, 'r') as sz:
-                        file_list = [f for f in sz.getnames() if not f.endswith('/')]
-                finally:
-                    # 確保清理臨時檔案
-                    os.unlink(tmp_file.name)
-            
-            elif archive_file.name.lower().endswith('.rar'):
-                # 需要先將檔案寫入臨時檔案
-                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                    for chunk in archive_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.flush()
-                    
-                try:
-                    with rarfile.RarFile(tmp_file.name) as rf:
-                        file_list = [f for f in rf.namelist() if not f.endswith('/')]
-                finally:
-                    # 確保清理臨時檔案
-                    os.unlink(tmp_file.name)
-            
-            return JsonResponse({
-                'success': True,
-                'files': file_list
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
-    
-    return JsonResponse({
-        'success': False,
-        'error': '無效的請求'
-    }, status=400)
 
 # 接案編輯頁-選擇投稿需求案id之API端點
 def ViewFn_need_info_api(request):

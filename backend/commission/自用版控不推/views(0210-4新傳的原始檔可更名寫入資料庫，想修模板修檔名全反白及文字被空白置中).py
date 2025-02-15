@@ -17,13 +17,6 @@ import time
 from django.core.files.base import ContentFile
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 import io
-import zipfile
-import py7zr
-import rarfile
-import tempfile
-from django.views.decorators.csrf import csrf_exempt
-import tempfile
-import os
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -468,6 +461,7 @@ def ViewFn_work_edit(request, view_fn_work_id):
     # ．從原始檔上傳的圖片還無法於模板控制刪除或替換再傳入views
     # ．(已解決)上傳未滿5張圖時，會重複上傳
     if request.method == 'POST':
+
         try:
             with transaction.atomic():
                 view_db_work_info_id = get_object_or_404(DbWorkInfo, work_id=view_fn_work_id)
@@ -680,14 +674,16 @@ def ViewFn_work_edit(request, view_fn_work_id):
                 if 'work_ex_image' in request.FILES:
                     uploaded_files = request.FILES.getlist('work_ex_image')
 
+
                     # 獲取現有的圖片記錄
                     existing_images = DbWorkImages.objects.filter(work_id=view_fn_work_id).order_by('step')
                     current_step = existing_images.count()
+                    
 
                     if current_step >= 5:
                         # 當已有5張圖片時，依序替換
                         for index, file in enumerate(uploaded_files):
-                            if index < 5 and file.content_type.startswith('image/'):  # 確認是圖片檔案
+                            if index < 5:
                                 # 找到要替換的圖片記錄
                                 image_record = existing_images[index]
                                 
@@ -696,6 +692,7 @@ def ViewFn_work_edit(request, view_fn_work_id):
                                 if default_storage.exists(old_file_path):
                                     default_storage.delete(old_file_path)
                                 
+
                                 # 加上浮水印
                                 watermarked_file = add_watermark(file)
 
@@ -703,16 +700,18 @@ def ViewFn_work_edit(request, view_fn_work_id):
                                 new_extension = Path(file.name).suffix
                                 new_filename = f"{view_fn_work_id}_sketch{image_record.step}{new_extension}"
                                 
+
                                 # 儲存新檔案
                                 file_path = os.path.join('commission', 'workID_img', new_filename)
                                 default_storage.save(file_path, watermarked_file)
                                 
+
                                 # 更新資料庫記錄
                                 image_record.image_url = new_filename
                                 image_record.save()
                     else:
                         # 只處理前5張上傳的文件
-                        files_to_process = [f for f in uploaded_files[:5 - current_step] if f.content_type.startswith('image/')]
+                        files_to_process = uploaded_files[:5 - current_step]
 
                         # 處理新上傳的檔案
                         for index, file in enumerate(files_to_process, start=current_step + 1):
@@ -882,69 +881,6 @@ def ViewFn_image_info_api(request):
             }, status=400)
             
     return JsonResponse({'error': '無效的請求'}, status=400)
-
-# 接案編輯頁-壓縮檔資訊API端點
-@csrf_exempt  # 如果你想要跳過 CSRF 驗證（不建議用在生產環境）
-def ViewFn_archive_info_api(request):
-    if request.method == 'POST' and request.FILES:
-        archive_file = request.FILES.get('archive')
-        if not archive_file:
-            return JsonResponse({
-                'success': False,
-                'error': '未找到上傳的檔案'
-            })
-            
-        file_list = []
-        
-        try:
-            # 根據檔案類型使用不同的處理方法
-            if archive_file.name.lower().endswith('.zip'):
-                with zipfile.ZipFile(archive_file) as zf:
-                    file_list = [f for f in zf.namelist() if not f.endswith('/')]
-            
-            elif archive_file.name.lower().endswith('.7z'):
-                # 需要先將檔案寫入臨時檔案
-                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                    for chunk in archive_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.flush()
-                    
-                try:
-                    with py7zr.SevenZipFile(tmp_file.name, 'r') as sz:
-                        file_list = [f for f in sz.getnames() if not f.endswith('/')]
-                finally:
-                    # 確保清理臨時檔案
-                    os.unlink(tmp_file.name)
-            
-            elif archive_file.name.lower().endswith('.rar'):
-                # 需要先將檔案寫入臨時檔案
-                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                    for chunk in archive_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.flush()
-                    
-                try:
-                    with rarfile.RarFile(tmp_file.name) as rf:
-                        file_list = [f for f in rf.namelist() if not f.endswith('/')]
-                finally:
-                    # 確保清理臨時檔案
-                    os.unlink(tmp_file.name)
-            
-            return JsonResponse({
-                'success': True,
-                'files': file_list
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
-    
-    return JsonResponse({
-        'success': False,
-        'error': '無效的請求'
-    }, status=400)
 
 # 接案編輯頁-選擇投稿需求案id之API端點
 def ViewFn_need_info_api(request):

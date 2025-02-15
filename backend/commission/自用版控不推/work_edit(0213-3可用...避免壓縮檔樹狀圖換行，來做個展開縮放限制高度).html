@@ -156,16 +156,6 @@
     text-overflow: ellipsis;
     max-width: 150px;
   }
-
-  .overflow-trigger {
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 2px 8px;
-    transition: background-color 0.2s;
-  }
-  .overflow-trigger:hover {
-    background-color: #e9ecef;
-  }
 </style>
 {% endblock %} 
 {% block app_title %}
@@ -1233,98 +1223,68 @@ const remainingSlots = 5 - allSelectedFiles.length;
               if (archiveInfo.success && archiveInfo.files.length > 0) {
                 // 建立樹狀結構資料
                 const tree = {};
-                const allPaths = archiveInfo.files
+                archiveInfo.files
                   .filter(f => !f.includes('__MACOSX/'))
-                  .sort((a, b) => a.localeCompare(b)); // 排序路徑
-
-                let totalLines = 0; // 新增：總行數計數器
-                allPaths.forEach(path => {
-                  const parts = path.split('/');
-                  let currentLevel = tree;
-                  parts.forEach((part, index) => {
-                    if (!currentLevel[part]) {
-                      currentLevel[part] = { isFile: index === parts.length - 1 };
-                      totalLines++; // 計算總行數
-                    }
-                    currentLevel = currentLevel[part];
+                  .forEach(path => {
+                    const parts = path.split('/');
+                    let currentLevel = tree;
+                    parts.forEach((part, index) => {
+                      if (!currentLevel[part]) {
+                        currentLevel[part] = { isFile: index === parts.length - 1 };
+                      }
+                      currentLevel = currentLevel[part];
+                    });
                   });
-                });
 
                 // 生成樹狀結構 HTML
-                const generateTreeHTML = (node, depth = 0, isLast = [], lineCount = {value:0}, showAll = false) => {
+                const generateTreeHTML = (node, depth = 0, isLast = []) => {
                   let html = '';
                   const keys = Object.keys(node).filter(k => k !== 'isFile');
                   
                   keys.forEach((key, index) => {
-                    // 如果不是顯示全部且已經超過4行，則跳過
-                    if (!showAll && lineCount.value >= 4) return;
-                    
                     const isLastItem = index === keys.length - 1;
                     const isFile = node[key].isFile;
                     
-                    // 只有在前4行或showAll為true時才生成行內容
-                    if (showAll ? lineCount.value >= 4 : lineCount.value < 4) {
-                      // 生成前導符號
-                      let line = '';
-                      for (let i = 0; i < depth; i++) {
-                        line += isLast[i] ? '&nbsp;&nbsp;&nbsp;&nbsp;' : '│&nbsp;&nbsp;&nbsp;';
-                      }
-                      
-                      line += isLastItem 
-                        ? (depth === 0 ? '└── ' : '└── ')
-                        : (depth === 0 ? '├── ' : '├── ');
-
-                      // 添加檔案/目錄行
-                      html += `
-                        <div class="tree-line">
-                          <div class="tree-indent" style="flex-shrink: 0;">${line}</div>
-                          <span class="tree-filename" 
-                                style="white-space: nowrap; 
-                                      overflow: hidden;
-                                      text-overflow: ellipsis;
-                                      max-width: 150px;" 
-                                title="${key}${isFile ? '' : '/'}">
-                            ${key}${isFile ? '' : '/'}
-                          </span>
-                        </div>
-                      `;
+                    // 生成前導符號
+                    let line = '';
+                    for (let i = 0; i < depth; i++) {
+                      line += isLast[i] ? '&nbsp;&nbsp;&nbsp;&nbsp;' : '│&nbsp;&nbsp;&nbsp;';
                     }
                     
-                    lineCount.value++;
+                    line += isLastItem 
+                      ? (depth === 0 ? '└── ' : '└── ')
+                      : (depth === 0 ? '├── ' : '├── ');
+                    
+                    // 添加帶有截斷效果的檔名
+                    const fullName = `${key}${isFile ? '' : '/'}`;
+                    html += `
+                      <div class="tree-line" style="display: flex; align-items: center;">
+                        <div class="tree-indent" style="flex-shrink: 0;">${line}</div>
+                        <span class="tree-filename" 
+                              style="white-space: nowrap; 
+                                     overflow: hidden;
+                                     text-overflow: ellipsis;
+                                     max-width: 150px;" 
+                              title="${fullName}">
+                          &nbsp${fullName}
+                        </span>
+                      </div>
+                    `;
                     
                     // 遞迴處理子目錄
                     if (!isFile) {
-                      html += generateTreeHTML(node[key], depth + 1, [...isLast, isLastItem], lineCount, showAll);
+                      html += generateTreeHTML(node[key], depth + 1, [...isLast, isLastItem]);
                     }
                   });
                   
                   return html;
                 };
 
-                // 生成初始的樹狀結構（前4行）
-                const initialTreeHtml = generateTreeHTML(tree, 0, [], {value: 0}, false);
+                const fileTreeHtml = generateTreeHTML(tree);
                 
-                // 生成完整的樹狀結構（用於展開時顯示）
-                const fullTreeHtml = generateTreeHTML(tree, 0, [], {value: 0}, true);
-
                 fileInfoHTML += `
-                  <div>壓縮檔結構：</div>
-                  <div class="ms-3" id="fileTreeContainer">
-                    <div class="initial-content">
-                      ${initialTreeHtml}
-                    </div>
-                    ${totalLines > 4 ? `
-                      <div class="tree-line overflow-trigger" 
-                           style="cursor:pointer;text-align:center;"
-                           data-remaining="${totalLines - 4}"
-                           onclick="toggleTreeLines(this)">
-                          點擊顯示下略 ${totalLines - 4} 行 ▼
-                      </div>
-                      <div class="overflow-content" style="display:none;">
-                        ${fullTreeHtml}
-                      </div>
-                    ` : ''}
-                  </div>
+                    <div>壓縮檔結構：</div>
+                    <div class="ms-3">${fileTreeHtml}</div>
                 `;
               }
             } catch (error) {
@@ -1334,7 +1294,6 @@ const remainingSlots = 5 - allSelectedFiles.length;
           
           fileInfoHTML += '</div>'; // 關閉 ms-4 div
           fileDetails.innerHTML = fileInfoHTML;
- 
 
           // 添加刪除按鈕的事件監聽器
           const deleteButton = fileDetails.querySelector('.delete-file');
@@ -1369,7 +1328,6 @@ const remainingSlots = 5 - allSelectedFiles.length;
       }
     })();
 
-    
     // 上傳原始檔-監聽檔案選擇變更事件
   fileInput.addEventListener('change', function(e) {
   // 移除舊的清空檔案資訊的程式碼
@@ -1579,24 +1537,6 @@ const remainingSlots = 5 - allSelectedFiles.length;
     });
   });
 
-// 資料庫讀入原始檔-壓縮檔樹狀圖-修改切換顯示的函數
-function toggleTreeLines(element) {
-    const container = element.closest('#fileTreeContainer');
-    const overflowContent = container.querySelector('.overflow-content');
-    const initialContent = container.querySelector('.initial-content');
-    
-    if (overflowContent.style.display === 'none') {
-        // initialContent.style.display = 'none';  // 隱藏前4行
-        overflowContent.style.display = 'block';  // 顯示完整內容
-        element.innerHTML = '點擊收合 ▲';
-    } else {
-        initialContent.style.display = 'block';  // 顯示前4行
-        overflowContent.style.display = 'none';  // 隱藏完整內容
-        element.innerHTML = `點擊顯示下略 ${element.dataset.remaining} 行 ▼`;
-    }
-    
-    event.stopPropagation();
-}
 // ======= 修改原始檔名相關函數 =======
 // 修改原始檔名-從檔名中提取副檔名的函數
 function getFileExtension(filename) {
@@ -1905,11 +1845,7 @@ function getFileIcon(fileType, fileName) { // 函數加入 fileName 參數
       popup.style.display = 'none';
     }
   });
-
-
 });
-
-
 </script>
 
 {% endblock %}

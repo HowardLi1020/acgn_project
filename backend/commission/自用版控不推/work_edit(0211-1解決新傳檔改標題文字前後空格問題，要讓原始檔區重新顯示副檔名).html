@@ -140,32 +140,6 @@
     max-height: 90%;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   }
-
-  .tree-line {
-    display: flex;
-    align-items: center;
-  }
-
-  .tree-indent {
-    flex-shrink: 0;
-  }
-
-  .tree-filename {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-  }
-
-  .overflow-trigger {
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 2px 8px;
-    transition: background-color 0.2s;
-  }
-  .overflow-trigger:hover {
-    background-color: #e9ecef;
-  }
 </style>
 {% endblock %} 
 {% block app_title %}
@@ -939,449 +913,325 @@ const remainingSlots = 5 - allSelectedFiles.length;
 
   // 處理文件選擇
   function handleFileSelection(files) {
-    let currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
-    let placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
-    const remainingPlaceholders = placeholders.length;
+let currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+let placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+const remainingPlaceholders = placeholders.length;
 
-    // 決定要處理的文件數量
-    const filesToProcess = remainingPlaceholders > 0 
-      ? Math.min(files.length, remainingPlaceholders) 
-      : Math.min(files.length, maxImages);
+// 決定要處理的文件數量
+const filesToProcess = remainingPlaceholders > 0 
+  ? Math.min(files.length, remainingPlaceholders) 
+  : Math.min(files.length, maxImages);
 
-    let fileIndex = 0;
-    let replacementIndex = 0;
+let fileIndex = 0;
+let replacementIndex = 0;
 
-    function processNextFile() {
-      if (fileIndex >= filesToProcess) {
-        adjustImageSizes();
-        updatePlaceholders();
-        return;
+function processNextFile() {
+  if (fileIndex >= filesToProcess) {
+    adjustImageSizes();
+    updatePlaceholders();
+    return;
+  }
+
+  const file = files[fileIndex];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'image-preview-wrapper';
+      wrapper.dataset.isNewImage = 'true'; // 標記這是新增的圖片
+
+
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.width = '100%';
+      img.style.height = 'auto';
+      img.style.objectFit = 'cover';
+
+      const iconContainer = createIconContainer();
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(iconContainer);
+
+              if (placeholders.length > 0) {
+                
+      // 優先填充灰色加號 DIV
+      imagePreviewContainer.replaceChild(wrapper, placeholders[0]);
+      
+        newImageChanges.add(wrapper); // 記錄新增的圖片
+        changedFields.add('work_ex_image');
+      placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+    } else {
+      // 如果沒有灰色加號 DIV，則替換現有圖片
+      if (currentImages[replacementIndex]) {
+        imagePreviewContainer.replaceChild(wrapper, currentImages[replacementIndex]);
+      } else {
+        imagePreviewContainer.appendChild(wrapper);
       }
-
-      const file = files[fileIndex];
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'image-preview-wrapper';
-          wrapper.dataset.isNewImage = 'true'; // 標記這是新增的圖片
-
-
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.style.width = '100%';
-          img.style.height = 'auto';
-          img.style.objectFit = 'cover';
-
-          const iconContainer = createIconContainer();
-
-          wrapper.appendChild(img);
-          wrapper.appendChild(iconContainer);
-
-                  if (placeholders.length > 0) {
-                    
-                  // 優先填充灰色加號 DIV
-                  imagePreviewContainer.replaceChild(wrapper, placeholders[0]);
-                  
-                    newImageChanges.add(wrapper); // 記錄新增的圖片
-                    changedFields.add('work_ex_image');
-                  placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
-                } else {
-                  // 如果沒有灰色加號 DIV，則替換現有圖片
-                  if (currentImages[replacementIndex]) {
-                    imagePreviewContainer.replaceChild(wrapper, currentImages[replacementIndex]);
-                  } else {
-                    imagePreviewContainer.appendChild(wrapper);
-                  }
-                  replacementIndex = (replacementIndex + 1) % maxImages;
-                }
-
-                currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
-                fileIndex++;
-                processNextFile();
-      };
-
-      reader.readAsDataURL(file);
+      replacementIndex = (replacementIndex + 1) % maxImages;
     }
 
+    currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+    fileIndex++;
     processNextFile();
-  }
-  const existingImages = document.querySelectorAll('.image-preview-wrapper');
-      existingImages.forEach(wrapper => {
-          const iconContainer = createIconContainer();
-          wrapper.appendChild(iconContainer);
-      });
+  };
 
-      function updatePlaceholders() {
-        const currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
-        const placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+  reader.readAsDataURL(file);
+}
 
-        // 移除所有現有的佔位符
-        placeholders.forEach(placeholder => placeholder.remove());
+processNextFile();
+}
+const existingImages = document.querySelectorAll('.image-preview-wrapper');
+    existingImages.forEach(wrapper => {
+        const iconContainer = createIconContainer();
+        wrapper.appendChild(iconContainer);
+    });
 
-        // 添加剩餘的灰色加號DIV
-        for (let i = currentImages.length; i < maxImages; i++) {
-          const placeholder = createPlaceholder();
-          imagePreviewContainer.appendChild(placeholder);
-        }
+    function updatePlaceholders() {
+      const currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+      const placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+
+      // 移除所有現有的佔位符
+      placeholders.forEach(placeholder => placeholder.remove());
+
+      // 添加剩餘的灰色加號DIV
+      for (let i = currentImages.length; i < maxImages; i++) {
+        const placeholder = createPlaceholder();
+        imagePreviewContainer.appendChild(placeholder);
       }
+    }
 
-      function createPlaceholder() {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'd-flex align-items-center justify-content-center image-upload-placeholder';
-        placeholder.style.width = 'calc(33.33% - 10px)';
-        placeholder.style.height = '100px';
-        placeholder.style.backgroundColor = '#e0e0e0';
-        placeholder.style.borderRadius = '5px';
-        placeholder.style.cursor = 'pointer';
-        placeholder.style.marginRight = '10px';
-        placeholder.style.marginBottom = '10px';
+    function createPlaceholder() {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'd-flex align-items-center justify-content-center image-upload-placeholder';
+      placeholder.style.width = 'calc(33.33% - 10px)';
+      placeholder.style.height = '100px';
+      placeholder.style.backgroundColor = '#e0e0e0';
+      placeholder.style.borderRadius = '5px';
+      placeholder.style.cursor = 'pointer';
+      placeholder.style.marginRight = '10px';
+      placeholder.style.marginBottom = '10px';
 
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '16');
-        svg.setAttribute('height', '16');
-        svg.setAttribute('fill', 'currentColor');
-        svg.classList.add('bi', 'bi-plus-circle');
-        svg.setAttribute('viewBox', '0 0 16 16');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '16');
+      svg.setAttribute('height', '16');
+      svg.setAttribute('fill', 'currentColor');
+      svg.classList.add('bi', 'bi-plus-circle');
+      svg.setAttribute('viewBox', '0 0 16 16');
 
-        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path1.setAttribute('d', 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16');
+      const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path1.setAttribute('d', 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16');
 
-        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path2.setAttribute('d', 'M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4');
+      const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path2.setAttribute('d', 'M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4');
 
-        svg.appendChild(path1);
-        svg.appendChild(path2);
-        placeholder.appendChild(svg);
+      svg.appendChild(path1);
+      svg.appendChild(path2);
+      placeholder.appendChild(svg);
 
-        return placeholder;
-      }
-  // 調整圖片和佔位符的大小
-  function adjustImageSizes() {
-    const images = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
-    const placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
-    const totalItems = images.length + placeholders.length;
+      return placeholder;
+    }
+// 調整圖片和佔位符的大小
+function adjustImageSizes() {
+  const images = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+  const placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+  const totalItems = images.length + placeholders.length;
 
-    // 設定不同數量下的預覽圖尺寸
-    const setSize = (element, size) => {
-      element.style.width = size;
-      // 保持佔位符固定高度，圖片使用自動高度維持比例
-      element.style.height = size === 'calc(33.33% - 10px)' ? '100px' : (element.classList.contains('image-upload-placeholder') ? '100px' : 'auto');
-    };
-    // 根據當前項目的總數量調整大小
-  if (totalItems <= 3) {
-      // 3 個以下項目時顯示 3 列佈局
-      images.forEach(img => setSize(img, 'calc(33.33% - 10px)'));
-      placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)'));
-  } else if (totalItems <= 6) {
-      // 4-6 個項目時顯示 2 列佈局
-      images.forEach(img => setSize(img, 'calc(50% - 10px)'));
-      // 將所有佔位符的大小設置為固定值
-      placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)')); // 確保佔位符的寬度
-  } else {
-      // 7 個以上項目時顯示 4 列佈局 (理論上不會發生，因限制最多5張)
-      images.forEach(img => setSize(img, 'calc(25% - 10px)'));
-      // 將所有佔位符的大小設置為固定值
-      placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)')); // 確保佔位符的寬度
-  }
-  }
+  // 設定不同數量下的預覽圖尺寸
+  const setSize = (element, size) => {
+    element.style.width = size;
+    // 保持佔位符固定高度，圖片使用自動高度維持比例
+    element.style.height = size === 'calc(33.33% - 10px)' ? '100px' : (element.classList.contains('image-upload-placeholder') ? '100px' : 'auto');
+  };
+  // 根據當前項目的總數量調整大小
+if (totalItems <= 3) {
+    // 3 個以下項目時顯示 3 列佈局
+    images.forEach(img => setSize(img, 'calc(33.33% - 10px)'));
+    placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)'));
+} else if (totalItems <= 6) {
+    // 4-6 個項目時顯示 2 列佈局
+    images.forEach(img => setSize(img, 'calc(50% - 10px)'));
+    // 將所有佔位符的大小設置為固定值
+    placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)')); // 確保佔位符的寬度
+} else {
+    // 7 個以上項目時顯示 4 列佈局 (理論上不會發生，因限制最多5張)
+    images.forEach(img => setSize(img, 'calc(25% - 10px)'));
+    // 將所有佔位符的大小設置為固定值
+    placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)')); // 確保佔位符的寬度
+}
+}
 
-      // 初始化佔位符
-      updatePlaceholders();
-      // =====上傳原始檔相關函式=====
-      // 上傳原始檔-獲取檔案輸入元素和檔案資訊顯示區域
-      const fileInput = document.getElementById('setting-input-7');
-  // ===== 初始化檔案資訊顯示 =====
-    // 新增：從後端獲取已存在的原始檔案資料
-    const originalFiles = JSON.parse('{{ original_files_json|escapejs }}');
-    const fileInfo = document.getElementById('fileInfo');
-    const deletedOriginalFiles = []; // 將變數定義移到這裡
+    // 初始化佔位符
+    updatePlaceholders();
+    // =====上傳原始檔相關函式=====
+    // 上傳原始檔-獲取檔案輸入元素和檔案資訊顯示區域
+    const fileInput = document.getElementById('setting-input-7');
+// ===== 初始化檔案資訊顯示 =====
+  // 新增：從後端獲取已存在的原始檔案資料
+  const originalFiles = JSON.parse('{{ original_files_json|escapejs }}');
+  const fileInfo = document.getElementById('fileInfo');
+  const deletedOriginalFiles = []; // 將變數定義移到這裡
 
-    // 創建 flex 容器(與上傳檔案顯示方式一致)
-    const flexContainer = document.createElement('div');
-    flexContainer.className = 'd-flex flex-wrap gap-3';
-    fileInfo.appendChild(flexContainer);
+  // 創建 flex 容器(與上傳檔案顯示方式一致)
+  const flexContainer = document.createElement('div');
+  flexContainer.className = 'd-flex flex-wrap gap-3';
+  fileInfo.appendChild(flexContainer);
 
-  // ===== 處理已存在的原始檔案 =====
-  // 已存在的原始檔-處理檔名排除顯示唯一值的函數
-  function getDisplayFileName(fullFileName) {
-      // 使用正則表達式移除時間戳記部分
-      return fullFileName.replace(/^\d+_/, '');
-  }
+// ===== 處理已存在的原始檔案 =====
+// 已存在的原始檔-處理檔名排除顯示唯一值的函數
+function getDisplayFileName(fullFileName) {
+    // 使用正則表達式移除時間戳記部分
+    const cleanName = fullFileName.replace(/^\d+_/, '');
+    // 移除副檔名
+    return cleanName.replace(/\.[^/.]+$/, '');
+}
 
-    // 已存在的原始檔-先依照 original_file_id 排序
-    const sortedOriginalFiles = originalFiles.sort((a, b) => a.original_file_id - b.original_file_id);
-    
-    // 使用 async IIFE 來確保順序
-    (async () => {
-      for (const file of sortedOriginalFiles) {
-        // 組合檔案 URL(使用 Django 模板變數)
-        const fileUrl = `{{ MEDIA_URL }}commission/workID_file/${file.work_id}/${file.original_file_url}`;
-        
-        try {
-          const response = await fetch(fileUrl);
-          if (!response.ok) throw new Error('檔案載入失敗');
-          const blob = await response.blob();
+  // 已存在的原始檔-先依照 original_file_id 排序
+  const sortedOriginalFiles = originalFiles.sort((a, b) => a.original_file_id - b.original_file_id);
+  
+  // 使用 async IIFE 來確保順序
+  (async () => {
+    for (const file of sortedOriginalFiles) {
+      // 組合檔案 URL(使用 Django 模板變數)
+      const fileUrl = `{{ MEDIA_URL }}commission/workID_file/${file.work_id}/${file.original_file_url}`;
+      
+      try {
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error('檔案載入失敗');
+        const blob = await response.blob();
 
-          // 已存在的原始檔-創建檔案資訊卡片(樣式與上傳檔案相同)
-          const fileDetails = document.createElement('div');
-          fileDetails.className = 'border rounded p-2 bg-light';
-          fileDetails.style.minWidth = '200px';
-          fileDetails.style.maxWidth = '300px';
+        // 已存在的原始檔-創建檔案資訊卡片(樣式與上傳檔案相同)
+        const fileDetails = document.createElement('div');
+        fileDetails.className = 'border rounded p-2 bg-light';
+        fileDetails.style.minWidth = '200px';
+        fileDetails.style.maxWidth = '300px';
 
-          // 已存在的原始檔-基本檔案資訊(與上傳檔案相同結構)
-          let fileInfoHTML = `
-            <div class="d-flex align-items-start justify-content-between mb-1 position-relative">
-              <div class="d-flex align-items-start flex-grow-1 pe-4">
-                ${getFileIcon(blob.type, file.original_file_url)} <!-- 使用動態圖示函數，並傳入檔名 -->
-                <span class="text-break file-name" data-original-name="${file.original_file_url}" data-extension="${getFileExtension(file.original_file_url)}">${getDisplayFileName(file.original_file_url)}</span>
-              </div>
-              <button type="button" class="btn btn-link text-danger p-0 delete-file position-absolute top-0 end-0" style="line-height: 1;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                </svg>
-              </button>
+        // 已存在的原始檔-基本檔案資訊(與上傳檔案相同結構)
+        let fileInfoHTML = `
+          <div class="d-flex align-items-start justify-content-between mb-1 position-relative">
+            <div class="d-flex align-items-start flex-grow-1 pe-4">
+              ${getFileIcon(blob.type, file.original_file_url)} <!-- 使用動態圖示函數，並傳入檔名 -->
+              <span class="text-break file-name" data-original-name="${file.original_file_url}" data-extension="${getFileExtension(file.original_file_url)}">${getDisplayFileName(file.original_file_url)}</span>
             </div>
-            <div class="ms-4 text-muted small">
-              <div>類型：${blob.type || '未知類型'}</div>
-              <div>大小：${formatFileSize(blob.size)}</div>
-          `;
+            <button type="button" class="btn btn-link text-danger p-0 delete-file position-absolute top-0 end-0" style="line-height: 1;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ms-4 text-muted small">
+            <div>類型：${blob.type || '未知類型'}</div>
+            <div>大小：${formatFileSize(blob.size)}</div>
+        `;
 
-          // 如果是圖片檔案，讀取額外資訊
+          // 如果是圖片檔案，讀取額外資訊(與上傳檔案相同邏輯)
           if (blob.type.startsWith('image/')) {
-            const img = new Image();
-            img.src = fileUrl;
-            
-            img.onload = async function() {
-              // 建立FormData物件
-              const formData = new FormData();
-              formData.append('image', blob);
-              
-              try {
-                // 從cookie中獲取CSRF token
-                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                
-                // 發送請求到後端API
-                const response = await fetch('/commission/api/image-info/', {
-                  method: 'POST',
-                  headers: {
-                    'X-CSRFToken': csrftoken
-                  },
-                  body: formData,
-                  credentials: 'same-origin'  // 需要包含cookies
-                });
-                
-                if (!response.ok) {
-                  throw new Error('Network response was not ok');
-                }
-                
-                const imageInfo = await response.json();
-                
-                // 更新顯示資訊
-                const dpiInfo = imageInfo.dpi_x === imageInfo.dpi_y 
-                  ? `DPI：${imageInfo.dpi_x}` 
-                  : `DPI：${imageInfo.dpi_x} x ${imageInfo.dpi_y}`;
-                  
-                const additionalInfo = `
-                  <div>尺寸：${imageInfo.width} x ${imageInfo.height} px</div>
-                  <div>${dpiInfo}</div>
-                `;
-                
-                const infoContainer = fileDetails.querySelector('.ms-4');
-                if (infoContainer) {
-                  infoContainer.innerHTML += additionalInfo;
-                }
-                
-              } catch (error) {
-                console.error('Error fetching image info:', error);
-                // 如果發生錯誤，顯示基本資訊
-                const basicInfo = `
-                  <div>尺寸：${this.width} x ${this.height} px</div>
-                  <div>DPI：提交以顯示DPI資訊</div>
-                `;
-                const infoContainer = fileDetails.querySelector('.ms-4');
-                if (infoContainer) {
-                  infoContainer.innerHTML += basicInfo;
-                }
-              }
-            };
-          } else if (file.original_file_url.match(/\.(zip|rar|7z)$/i)) {
-            // 處理壓縮檔樹狀結構
+          const img = new Image();
+          img.src = fileUrl;
+          
+          img.onload = async function() {
+            // 建立FormData物件
             const formData = new FormData();
-            formData.append('archive', blob, file.original_file_url);
+            formData.append('image', blob);
             
             try {
-              // 獲取 CSRF token
+              // 從cookie中獲取CSRF token
               const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
               
-              const response = await fetch('/commission/api/archive-info/', {
+              // 發送請求到後端API
+              const response = await fetch('/commission/api/image-info/', {
                 method: 'POST',
                 headers: {
                   'X-CSRFToken': csrftoken
                 },
                 body: formData,
-                credentials: 'same-origin'  // 需要包含 cookies
+                credentials: 'same-origin'  // 需要包含cookies
               });
               
               if (!response.ok) {
-                throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
+                throw new Error('Network response was not ok');
               }
               
-              const archiveInfo = await response.json();
+              const imageInfo = await response.json();
               
-              if (archiveInfo.success && archiveInfo.files.length > 0) {
-                // 建立樹狀結構資料
-                const tree = {};
-                const allPaths = archiveInfo.files
-                  .filter(f => !f.includes('__MACOSX/'))
-                  .sort((a, b) => a.localeCompare(b)); // 排序路徑
-
-                let totalLines = 0; // 新增：總行數計數器
-                allPaths.forEach(path => {
-                  const parts = path.split('/');
-                  let currentLevel = tree;
-                  parts.forEach((part, index) => {
-                    if (!currentLevel[part]) {
-                      currentLevel[part] = { isFile: index === parts.length - 1 };
-                      totalLines++; // 計算總行數
-                    }
-                    currentLevel = currentLevel[part];
-                  });
-                });
-
-                // 生成樹狀結構 HTML
-                const generateTreeHTML = (node, depth = 0, isLast = [], lineCount = {value:0}, showAll = false) => {
-                  let html = '';
-                  const keys = Object.keys(node).filter(k => k !== 'isFile');
-                  
-                  keys.forEach((key, index) => {
-                    // 如果不是顯示全部且已經超過4行，則跳過
-                    if (!showAll && lineCount.value >= 4) return;
-                    
-                    const isLastItem = index === keys.length - 1;
-                    const isFile = node[key].isFile;
-                    
-                    // 只有在前4行或showAll為true時才生成行內容
-                    if (showAll ? lineCount.value >= 4 : lineCount.value < 4) {
-                      // 生成前導符號
-                      let line = '';
-                      for (let i = 0; i < depth; i++) {
-                        line += isLast[i] ? '&nbsp;&nbsp;&nbsp;&nbsp;' : '│&nbsp;&nbsp;&nbsp;';
-                      }
-                      
-                      line += isLastItem 
-                        ? (depth === 0 ? '└── ' : '└── ')
-                        : (depth === 0 ? '├── ' : '├── ');
-
-                      // 添加檔案/目錄行
-                      html += `
-                        <div class="tree-line">
-                          <div class="tree-indent" style="flex-shrink: 0;">${line}</div>
-                          <span class="tree-filename" 
-                                style="white-space: nowrap; 
-                                      overflow: hidden;
-                                      text-overflow: ellipsis;
-                                      max-width: 150px;" 
-                                title="${key}${isFile ? '' : '/'}">
-                            ${key}${isFile ? '' : '/'}
-                          </span>
-                        </div>
-                      `;
-                    }
-                    
-                    lineCount.value++;
-                    
-                    // 遞迴處理子目錄
-                    if (!isFile) {
-                      html += generateTreeHTML(node[key], depth + 1, [...isLast, isLastItem], lineCount, showAll);
-                    }
-                  });
-                  
-                  return html;
-                };
-
-                // 生成初始的樹狀結構（前4行）
-                const initialTreeHtml = generateTreeHTML(tree, 0, [], {value: 0}, false);
+              // 更新顯示資訊
+              const dpiInfo = imageInfo.dpi_x === imageInfo.dpi_y 
+                ? `DPI：${imageInfo.dpi_x}` 
+                : `DPI：${imageInfo.dpi_x} x ${imageInfo.dpi_y}`;
                 
-                // 生成完整的樹狀結構（用於展開時顯示）
-                const fullTreeHtml = generateTreeHTML(tree, 0, [], {value: 0}, true);
-
-                fileInfoHTML += `
-                  <div>壓縮檔結構：</div>
-                  <div class="ms-3" id="fileTreeContainer">
-                    <div class="initial-content">
-                      ${initialTreeHtml}
-                    </div>
-                    ${totalLines > 4 ? `
-                      <div class="tree-line overflow-trigger" 
-                           style="cursor:pointer;text-align:center;"
-                           data-remaining="${totalLines - 4}"
-                           onclick="toggleTreeLines(this)">
-                          點擊顯示下略 ${totalLines - 4} 行 ▼
-                      </div>
-                      <div class="overflow-content" style="display:none;">
-                        ${fullTreeHtml}
-                      </div>
-                    ` : ''}
-                  </div>
-                `;
+              const additionalInfo = `
+                <div>尺寸：${imageInfo.width} x ${imageInfo.height} px</div>
+                <div>${dpiInfo}</div>
+              `;
+              
+              const infoContainer = fileDetails.querySelector('.ms-4');
+              if (infoContainer) {
+                infoContainer.innerHTML += additionalInfo;
               }
+              
             } catch (error) {
-              console.error('取得壓縮檔資訊錯誤:', error);
+              console.error('Error fetching image info:', error);
+              // 如果發生錯誤，顯示基本資訊
+              const basicInfo = `
+                <div>尺寸：${this.width} x ${this.height} px</div>
+                <div>DPI：提交以顯示DPI資訊</div>
+              `;
+              const infoContainer = fileDetails.querySelector('.ms-4');
+              if (infoContainer) {
+                infoContainer.innerHTML += basicInfo;
+              }
+            }
+          };
+        }
+        fileInfoHTML += '</div>'; // 關閉 ms-4 div
+        fileDetails.innerHTML = fileInfoHTML;
+        
+        // 添加刪除按鈕的事件監聽器
+        const deleteButton = fileDetails.querySelector('.delete-file');
+        deleteButton.addEventListener('click', function() {
+          // 移除檔案資訊顯示
+          fileDetails.remove();
+          
+          // 將檔案名稱加入到被刪除檔案的陣列中
+          deletedOriginalFiles.push(file.original_file_url);
+          
+          // 更新隱藏欄位的值
+          document.getElementById('deleted-original-files').value = JSON.stringify(deletedOriginalFiles);
+          
+          // 標記表單有變更
+          changedFields.add('original_files');
+          
+          // 只有當所有新上傳的檔案都被刪除時，才清空新上傳區域
+          const remainingNewFiles = flexContainer.querySelectorAll('[data-is-new-upload="true"]');
+          if (remainingNewFiles.length === 0) {
+            // 檢查是否還有後端讀入的檔案
+            const remainingOriginalFiles = flexContainer.querySelectorAll(':not([data-is-new-upload="true"])');
+            if (remainingOriginalFiles.length === 0) {
+              fileInfo.innerHTML = '';
             }
           }
-          
-          fileInfoHTML += '</div>'; // 關閉 ms-4 div
-          fileDetails.innerHTML = fileInfoHTML;
- 
+        });
 
-          // 添加刪除按鈕的事件監聽器
-          const deleteButton = fileDetails.querySelector('.delete-file');
-          deleteButton.addEventListener('click', function() {
-            // 移除檔案資訊顯示
-            fileDetails.remove();
-            
-            // 將檔案名稱加入到被刪除檔案的陣列中
-            deletedOriginalFiles.push(file.original_file_url);
-            
-            // 更新隱藏欄位的值
-            document.getElementById('deleted-original-files').value = JSON.stringify(deletedOriginalFiles);
-            
-            // 標記表單有變更
-            changedFields.add('original_files');
-            
-            // 只有當所有新上傳的檔案都被刪除時，才清空新上傳區域
-            const remainingNewFiles = flexContainer.querySelectorAll('[data-is-new-upload="true"]');
-            if (remainingNewFiles.length === 0) {
-              // 檢查是否還有後端讀入的檔案
-              const remainingOriginalFiles = flexContainer.querySelectorAll(':not([data-is-new-upload="true"])');
-              if (remainingOriginalFiles.length === 0) {
-                fileInfo.innerHTML = '';
-              }
-            }
-          });
-
-          flexContainer.appendChild(fileDetails);
-        } catch (error) {
-          console.error('檔案載入錯誤:', error);
-        }
+        flexContainer.appendChild(fileDetails);
+      } catch (error) {
+        console.error('檔案載入錯誤:', error);
+        // 可選：顯示錯誤訊息
       }
-    })();
+    }
+  })();
 
-    
-    // 上傳原始檔-監聽檔案選擇變更事件
+  // 上傳原始檔-監聽檔案選擇變更事件
   fileInput.addEventListener('change', function(e) {
   // 移除舊的清空檔案資訊的程式碼
   // fileInfo.innerHTML = '';
   
-      // 使用已存在的 flex 容器，如果不存在才創建新的
-      let flexContainer = fileInfo.querySelector('.d-flex.flex-wrap.gap-3');
-      if (!flexContainer) {
-        flexContainer = document.createElement('div');
-        flexContainer.className = 'd-flex flex-wrap gap-3';
-        fileInfo.appendChild(flexContainer);
-      }
+  // 使用已存在的 flex 容器，如果不存在才創建新的
+  let flexContainer = fileInfo.querySelector('.d-flex.flex-wrap.gap-3');
+  if (!flexContainer) {
+    flexContainer = document.createElement('div');
+    flexContainer.className = 'd-flex flex-wrap gap-3';
+    fileInfo.appendChild(flexContainer);
+  }
 
   // 檢查是否有圖片檔案需要預覽
   const imageFiles = Array.from(this.files).filter(file => file.type.startsWith('image/'));
@@ -1465,13 +1315,13 @@ const remainingSlots = 5 - allSelectedFiles.length;
           
           img.onload = async function() {
             // 建立FormData物件
-          const formData = new FormData();
+            const formData = new FormData();
             formData.append('image', file);
-          
-          try {
+            
+            try {
                 // 發送請求到後端API
                 const response = await fetch('/commission/api/image-info/', {
-              method: 'POST',
+                    method: 'POST',
                     body: formData
                 });
                 
@@ -1502,11 +1352,11 @@ const remainingSlots = 5 - allSelectedFiles.length;
         img.src = url;
       }
       fileDetails.innerHTML = basicInfo;
-        flexContainer.appendChild(fileDetails);
+      flexContainer.appendChild(fileDetails);
 
         // 在這裡添加刪除按鈕的事件監聽器
         const deleteButton = fileDetails.querySelector('.delete-file');
-          deleteButton.addEventListener('click', function() {
+        deleteButton.addEventListener('click', function() {
           const fileIndex = parseInt(this.dataset.fileIndex);
           const dt = new DataTransfer();
           const input = document.getElementById('setting-input-7');
@@ -1521,19 +1371,19 @@ const remainingSlots = 5 - allSelectedFiles.length;
           // 更新input的files
           input.files = dt.files;
           
-            // 移除檔案資訊顯示
+          // 移除檔案資訊顯示
           this.closest('.border').remove();
-            
-            // 只有當所有新上傳的檔案都被刪除時，才清空新上傳區域
-            const remainingNewFiles = flexContainer.querySelectorAll('[data-is-new-upload="true"]');
-            if (remainingNewFiles.length === 0) {
-              // 檢查是否還有後端讀入的檔案
-              const remainingOriginalFiles = flexContainer.querySelectorAll(':not([data-is-new-upload="true"])');
-              if (remainingOriginalFiles.length === 0) {
-                fileInfo.innerHTML = '';
-              }
+          
+          // 只有當所有新上傳的檔案都被刪除時，才清空新上傳區域
+          const remainingNewFiles = flexContainer.querySelectorAll('[data-is-new-upload="true"]');
+          if (remainingNewFiles.length === 0) {
+            // 檢查是否還有後端讀入的檔案
+            const remainingOriginalFiles = flexContainer.querySelectorAll(':not([data-is-new-upload="true"])');
+            if (remainingOriginalFiles.length === 0) {
+              fileInfo.innerHTML = '';
             }
-          });
+          }
+        });
       });
     });
 
@@ -1579,24 +1429,6 @@ const remainingSlots = 5 - allSelectedFiles.length;
     });
   });
 
-// 資料庫讀入原始檔-壓縮檔樹狀圖-修改切換顯示的函數
-function toggleTreeLines(element) {
-    const container = element.closest('#fileTreeContainer');
-    const overflowContent = container.querySelector('.overflow-content');
-    const initialContent = container.querySelector('.initial-content');
-    
-    if (overflowContent.style.display === 'none') {
-        // initialContent.style.display = 'none';  // 隱藏前4行
-        overflowContent.style.display = 'block';  // 顯示完整內容
-        element.innerHTML = '點擊收合 ▲';
-    } else {
-        initialContent.style.display = 'block';  // 顯示前4行
-        overflowContent.style.display = 'none';  // 隱藏完整內容
-        element.innerHTML = `點擊顯示下略 ${element.dataset.remaining} 行 ▼`;
-    }
-    
-    event.stopPropagation();
-}
 // ======= 修改原始檔名相關函數 =======
 // 修改原始檔名-從檔名中提取副檔名的函數
 function getFileExtension(filename) {
@@ -1611,80 +1443,68 @@ function getFileExtension(filename) {
 const changedFields = new Set();
 // 檔案名稱編輯相關函數
 
-// 修改：顯示檔名時包含副檔名的函數
-function getDisplayFileName(fullFileName) {
-    // 使用正則表達式移除時間戳記部分
-    return fullFileName.replace(/^\d+_/, '');
-}
-
-// 修改：獲取不含副檔名的檔名（用於編輯）
-function getFileNameWithoutExtension(fullFileName) {
-    // 先移除時間戳記
-    const cleanName = fullFileName.replace(/^\d+_/, '');
-    // 移除副檔名
-    return cleanName.replace(/\.[^/.]+$/, '');
-}
-
 function makeFileNameEditable() {
   // 儲存修改過的檔名
   let renamedFiles = new Map();
-    
-    document.addEventListener('click', function(e) {
-        const fileNameSpan = e.target.closest('.file-name');
-        if (fileNameSpan && !fileNameSpan.querySelector('input')) {
-            const originalName = fileNameSpan.dataset.originalName;
-            const extension = fileNameSpan.dataset.extension;
-            // 取得不含副檔名的檔名用於編輯
-            const nameWithoutExtension = getFileNameWithoutExtension(fileNameSpan.textContent.trim());
-            
-            // 創建輸入框
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = nameWithoutExtension; // 設置不含副檔名的值
-            input.className = 'form-control form-control-sm';
-            input.style.width = '100%';
-            
-            // 自動全選文字功能
-            input.addEventListener('focus', function() {
-                this.select();
-            });
+  
+  // 監聽所有檔名span的點擊事件
+  document.addEventListener('click', function(e) {
+    const fileNameSpan = e.target.closest('.file-name');
+    if (fileNameSpan && !fileNameSpan.querySelector('input')) {
+      const originalName = fileNameSpan.dataset.originalName;
+      const extension = fileNameSpan.dataset.extension;
+      // 確保 currentName 移除前後空白(因新傳入的檔案會有更名時前後會被加入空格的BUG)
+      const currentName = fileNameSpan.textContent.trim();
+      
+      // 創建輸入框
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = currentName;
+      input.className = 'form-control form-control-sm';
+      input.style.width = '100%';
+      
+      // 自動全選文字功能
+      input.addEventListener('focus', function() {
+          this.select();
+      });
 
-            // 在輸入框顯示後立即觸發全選
-            setTimeout(() => {
-                input.focus();
-                input.select();
-            }, 10);
-            
-            // 替換span為input
-            fileNameSpan.textContent = '';
-            fileNameSpan.appendChild(input);
-            
-            // 處理輸入完成
-            function handleComplete() {
-                const newNameWithoutExtension = input.value.trim();
-                if (newNameWithoutExtension && newNameWithoutExtension !== nameWithoutExtension) {
-                    // 儲存新舊檔名的對應關係（加上副檔名）
-                    renamedFiles.set(originalName, newNameWithoutExtension + extension);
-                    // 更新隱藏欄位
-                    document.getElementById('renamed-files').value = JSON.stringify(Array.from(renamedFiles.entries()));
-                    // 標記表單有變更
-                    changedFields.add('renamed_files');
-                }
-                // 恢復為span顯示，確保顯示包含副檔名
-                fileNameSpan.textContent = newNameWithoutExtension + extension;
-            }
-            
-            // 監聽Enter鍵和失去焦點事件
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleComplete();
-                }
-            });
-            
-            input.addEventListener('blur', handleComplete);
+      // 在輸入框顯示後立即觸發全選
+      setTimeout(() => {
+          input.focus();
+          input.select();
+      }, 10);
+      
+      // 替換span為input
+      fileNameSpan.textContent = '';
+      fileNameSpan.appendChild(input);
+      
+      // 處理輸入完成
+      function handleComplete() {
+        // 修改：確保新檔名也移除前後空白
+        const newName = input.value.trim();
+        if (newName && newName !== currentName) {
+          // 儲存新舊檔名的對應關係
+          renamedFiles.set(originalName, newName + extension);
+          // 更新隱藏欄位
+          document.getElementById('renamed-files').value = JSON.stringify(Array.from(renamedFiles.entries()));
+          // 標記表單有變更
+          changedFields.add('renamed_files');
         }
-    });
+        // 恢復為span顯示，確保使用清理過的文字
+        fileNameSpan.textContent = newName || currentName;
+      }
+      
+      // 監聽Enter鍵和失去焦點事件
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleComplete();
+        }
+      });
+      
+      input.addEventListener('blur', handleComplete);
+    }
+  });
 }
 
 // 初始化檔名編輯功能
@@ -1905,11 +1725,7 @@ function getFileIcon(fileType, fileName) { // 函數加入 fileName 參數
       popup.style.display = 'none';
     }
   });
-
-
 });
-
-
 </script>
 
 {% endblock %}

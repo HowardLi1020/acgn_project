@@ -17,13 +17,6 @@ import time
 from django.core.files.base import ContentFile
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 import io
-import zipfile
-import py7zr
-import rarfile
-import tempfile
-from django.views.decorators.csrf import csrf_exempt
-import tempfile
-import os
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -468,66 +461,12 @@ def ViewFn_work_edit(request, view_fn_work_id):
     # ．從原始檔上傳的圖片還無法於模板控制刪除或替換再傳入views
     # ．(已解決)上傳未滿5張圖時，會重複上傳
     if request.method == 'POST':
+
         try:
             with transaction.atomic():
                 view_db_work_info_id = get_object_or_404(DbWorkInfo, work_id=view_fn_work_id)
                 
-                # 用於追蹤已處理的檔案
-                processed_files = set()
-
-                # 處理重命名的檔案
-                renamed_files = request.POST.get('renamed_files', '')
-                if renamed_files:
-                    try:
-                        renamed_files_list = json.loads(renamed_files)
-                        for old_name, new_name in renamed_files_list:
-                            # 檢查是否為已存在的檔案
-                            existing_file = DbWorkOriginalFile.objects.filter(
-                                work=view_db_work_info_id,
-                                original_file_url=old_name
-                            ).first()
-                            
-                            if existing_file:
-                                # 處理已存在檔案的重命名
-                                old_path = os.path.join('commission', 'workID_file', str(view_fn_work_id), old_name)
-                                new_path = os.path.join('commission', 'workID_file', str(view_fn_work_id), new_name)
-                                
-                                if default_storage.exists(old_path):
-                                    # 讀取舊檔案內容
-                                    with default_storage.open(old_path, 'rb') as old_file:
-                                        # 儲存為新檔案
-                                        default_storage.save(new_path, old_file)
-                                    # 刪除舊檔案
-                                    default_storage.delete(old_path)
-                                    
-                                    # 更新資料庫記錄
-                                    existing_file.original_file_url = new_name
-                                    existing_file.save()
-                            else:
-                                # 處理新上傳檔案的重命名
-                                for file in request.FILES.getlist('original_files'):
-                                    if file.name == old_name:
-                                        # 使用新檔名保存檔案
-                                        save_path = os.path.join('commission', 'workID_file', str(view_fn_work_id))
-                                        os.makedirs(os.path.join(settings.MEDIA_ROOT, save_path), exist_ok=True)
-                                        
-                                        full_path = os.path.join(save_path, new_name)
-                                        default_storage.save(full_path, file)
-                                        
-                                        # 寫入資料庫
-                                        DbWorkOriginalFile.objects.create(
-                                            work=view_db_work_info_id,
-                                            original_file_url=new_name
-                                        )
-                                        # 將檔案標記為已處理
-                                        processed_files.add(file.name)
-                                        break
-                                
-                    except json.JSONDecodeError:
-                        # 如果JSON解析失敗，忽略重命名操作
-                        pass
-
-                # 處理未重命名的新上傳檔案
+                # 處理原始檔案上傳
                 if 'original_files' in request.FILES:
                     # 建立儲存路徑
                     save_path = os.path.join('commission', 'workID_file', str(view_fn_work_id))
@@ -535,10 +474,6 @@ def ViewFn_work_edit(request, view_fn_work_id):
                     
                     # 處理每個上傳的原始檔案
                     for file in request.FILES.getlist('original_files'):
-                        # 跳過已處理的檔案
-                        if file.name in processed_files:
-                            continue
-                            
                         # 生成唯一檔名
                         filename = file.name
                         unique_name = f"{int(time.time())}_{filename}"
@@ -566,14 +501,13 @@ def ViewFn_work_edit(request, view_fn_work_id):
                             ).delete()
                             
                             # 刪除實際檔案
-                            file_path = os.path.join('commission', 'workID_file', str
-                            (view_fn_work_id), filename)
+                            file_path = os.path.join('commission', 'workID_file', str(view_fn_work_id), filename)
                             if default_storage.exists(file_path):
                                 default_storage.delete(file_path)
                     except json.JSONDecodeError:
                         # 如果 JSON 解析失敗，忽略刪除操作
                         pass
-                
+
                 # 處理刪除圖片
                 if 'deleted_images' in request.POST:
                     deleted_images = json.loads(request.POST['deleted_images'])
@@ -680,14 +614,16 @@ def ViewFn_work_edit(request, view_fn_work_id):
                 if 'work_ex_image' in request.FILES:
                     uploaded_files = request.FILES.getlist('work_ex_image')
 
+
                     # 獲取現有的圖片記錄
                     existing_images = DbWorkImages.objects.filter(work_id=view_fn_work_id).order_by('step')
                     current_step = existing_images.count()
+                    
 
                     if current_step >= 5:
                         # 當已有5張圖片時，依序替換
                         for index, file in enumerate(uploaded_files):
-                            if index < 5 and file.content_type.startswith('image/'):  # 確認是圖片檔案
+                            if index < 5:
                                 # 找到要替換的圖片記錄
                                 image_record = existing_images[index]
                                 
@@ -696,6 +632,7 @@ def ViewFn_work_edit(request, view_fn_work_id):
                                 if default_storage.exists(old_file_path):
                                     default_storage.delete(old_file_path)
                                 
+
                                 # 加上浮水印
                                 watermarked_file = add_watermark(file)
 
@@ -703,16 +640,18 @@ def ViewFn_work_edit(request, view_fn_work_id):
                                 new_extension = Path(file.name).suffix
                                 new_filename = f"{view_fn_work_id}_sketch{image_record.step}{new_extension}"
                                 
+
                                 # 儲存新檔案
                                 file_path = os.path.join('commission', 'workID_img', new_filename)
                                 default_storage.save(file_path, watermarked_file)
                                 
+
                                 # 更新資料庫記錄
                                 image_record.image_url = new_filename
                                 image_record.save()
                     else:
                         # 只處理前5張上傳的文件
-                        files_to_process = [f for f in uploaded_files[:5 - current_step] if f.content_type.startswith('image/')]
+                        files_to_process = uploaded_files[:5 - current_step]
 
                         # 處理新上傳的檔案
                         for index, file in enumerate(files_to_process, start=current_step + 1):
@@ -778,6 +717,36 @@ def ViewFn_work_edit(request, view_fn_work_id):
                 view_db_work_info_id.save()
                 
 
+                # 處理重命名的原始檔
+                renamed_files = request.POST.get('renamed_files', '')
+                if renamed_files:
+                    try:
+                        renamed_files_list = json.loads(renamed_files)
+                        for old_name, new_name in renamed_files_list:
+                            # 更新資料庫記錄
+                            file_record = DbWorkOriginalFile.objects.get(
+                                work=view_db_work_info_id,
+                                original_file_url=old_name
+                            )
+                            file_record.original_file_url = new_name
+                            file_record.save()
+                            
+                            # 重命名實際檔案
+                            old_path = os.path.join('commission', 'workID_file', str(view_fn_work_id), old_name)
+                            new_path = os.path.join('commission', 'workID_file', str(view_fn_work_id), new_name)
+                            
+                            if default_storage.exists(old_path):
+                                # 讀取舊檔案內容
+                                with default_storage.open(old_path, 'rb') as old_file:
+                                    # 儲存為新檔案
+                                    default_storage.save(new_path, old_file)
+                                # 刪除舊檔案
+                                default_storage.delete(old_path)
+                                
+                    except json.JSONDecodeError:
+                        # 如果JSON解析失敗，忽略重命名操作
+                        pass
+                
                 # 驗證保存後的狀態
                 updated_work = DbWorkInfo.objects.get(work_id=view_fn_work_id)
                 print("Saved status:", updated_work.work_status)
@@ -882,69 +851,6 @@ def ViewFn_image_info_api(request):
             }, status=400)
             
     return JsonResponse({'error': '無效的請求'}, status=400)
-
-# 接案編輯頁-壓縮檔資訊API端點
-@csrf_exempt  # 如果你想要跳過 CSRF 驗證（不建議用在生產環境）
-def ViewFn_archive_info_api(request):
-    if request.method == 'POST' and request.FILES:
-        archive_file = request.FILES.get('archive')
-        if not archive_file:
-            return JsonResponse({
-                'success': False,
-                'error': '未找到上傳的檔案'
-            })
-            
-        file_list = []
-        
-        try:
-            # 根據檔案類型使用不同的處理方法
-            if archive_file.name.lower().endswith('.zip'):
-                with zipfile.ZipFile(archive_file) as zf:
-                    file_list = [f for f in zf.namelist() if not f.endswith('/')]
-            
-            elif archive_file.name.lower().endswith('.7z'):
-                # 需要先將檔案寫入臨時檔案
-                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                    for chunk in archive_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.flush()
-                    
-                try:
-                    with py7zr.SevenZipFile(tmp_file.name, 'r') as sz:
-                        file_list = [f for f in sz.getnames() if not f.endswith('/')]
-                finally:
-                    # 確保清理臨時檔案
-                    os.unlink(tmp_file.name)
-            
-            elif archive_file.name.lower().endswith('.rar'):
-                # 需要先將檔案寫入臨時檔案
-                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                    for chunk in archive_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.flush()
-                    
-                try:
-                    with rarfile.RarFile(tmp_file.name) as rf:
-                        file_list = [f for f in rf.namelist() if not f.endswith('/')]
-                finally:
-                    # 確保清理臨時檔案
-                    os.unlink(tmp_file.name)
-            
-            return JsonResponse({
-                'success': True,
-                'files': file_list
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
-    
-    return JsonResponse({
-        'success': False,
-        'error': '無效的請求'
-    }, status=400)
 
 # 接案編輯頁-選擇投稿需求案id之API端點
 def ViewFn_need_info_api(request):
