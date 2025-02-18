@@ -1,0 +1,85 @@
+ {#{% extends '[BASE]ALL.html' %}#}
+{% load static %} 
+{% block app_css %}
+<style>
+/* 使用者資訊-暱稱與簡介整體容器定位 */
+.user-info {
+    padding-left: 60px; /* 頭像與個人資訊的距離 */
+    margin-top: -55px; /* 暱稱、簡介的垂直位置，數字越小越上方 */
+  }
+  /* 用戶暱稱樣式 */
+  /* .nickname {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+  } */
+
+  /* 使用者資訊-暱稱輸入樣式 */
+  .nickname input {
+    font-size: 1.75rem; /* h3 的大小 */
+    font-weight: bold;
+    border: none;
+    width: 230%;
+    padding: 0;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  /* 用戶簡介樣式 */
+  /* .introduction {
+    color: #666;
+  } */
+  
+    /* 使用者資訊-簡介輸入樣式 */
+    .introduction textarea {
+    border: none;
+    width: 230%;
+    padding: 4px;
+    margin: 0;
+    color: #666;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    min-height: 80px; /* 設置最小高度 */
+    resize: none; /* 防止用戶調整大小 */
+    font-family: inherit; /* 繼承字體 */
+    line-height: 1.5; /* 行高 */
+    vertical-align: top; /* 文字靠上對齊 */
+  }
+
+  /* 使用者資訊-暱稱與簡介輸入框焦點樣式 */
+  .nickname input:focus,
+  .introduction textarea:focus {
+    outline: none; /* 去除預設焦點框線 */
+  }
+</style>
+{% endblock %}
+
+{% block app_content %}
+<!-- 最外層div框為測試單頁使用，拉進正式頁要註解掉或從更下複製 -->
+<!-- <div class="profile-info-container d-flex position-relative"> -->
+<!-- 暱稱和介紹區域 -->
+  <div class="user-info">
+    <div class="nickname">
+      <input
+        type="text"
+        value="{{ ViewKey_DbPublicCardInfo.user_nickname }}"
+        placeholder="{% if ViewKey_DbPublicCardInfo.member_basic.user_nickname %}{{ ViewKey_DbPublicCardInfo.member_basic.user_nickname }}{% else %}請輸入暱稱{% endif %}"
+        autocomplete="off"
+      />
+    </div>
+    <div class="introduction">
+      <!-- textarea與Django語法要連在一起不得換行排版會跑掉，用Pretter時要留意 -->
+      <textarea placeholder="請輸入簡介" autocomplete="off">{{ ViewKey_DbPublicCardInfo.user_introduction }}</textarea>
+    </div>
+  </div>
+<!-- </div> -->
+{% endblock %}
+
+
+{% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+<script>
+
+</script>
+{% endblock %}

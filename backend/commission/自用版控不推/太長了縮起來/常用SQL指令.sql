@@ -30,7 +30,7 @@ WHERE
 UPDATE db_public_card_info
 SET 
     sell_public_status = false,
-    work_list_public_status = 1,
+    work_sellnow_list_public_status = 1,
     work_done_list_public_status = 1,
     need_list_public_status = false
 WHERE 

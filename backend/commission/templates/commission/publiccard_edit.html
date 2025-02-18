@@ -752,9 +752,11 @@
 <!-- 白底編輯區 -->
  <span style="position:absolute;top: 55px;">分割測試區塊：</span>
  <a href="{% url 'commission:[all]publiccard_edit' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">剝皮主頁</a>
+ <a href="{% url 'commission:banner' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">橫幅</a>
+ <a href="{% url 'commission:avatar' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">頭像</a>
+ <a href="{% url 'commission:user_info' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">個人資訊</a>
+ <a href="{% url 'commission:favorite_and_tag' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">喜好作品&屬性Tag</a>
  <a href="{% url 'commission:sell_list' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">價目表</a>  <!-- 價目表待組合(是說有把price改成sell，組合時留意要取代) -->
- <a href="{% url 'commission:favorite_acgn' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">喜好作品</a>
- <a href="{% url 'commission:tag' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">屬性Tag</a>
  <a href="{% url 'commission:work_sellnow' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">公開販售作品</a>
  <a href="{% url 'commission:work_done' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">已成交作品</a>
  <a href="{% url 'commission:need' view_fn_publiccard_id=ViewKey_DbPublicCardInfo.pk %}">需求小卡</a>

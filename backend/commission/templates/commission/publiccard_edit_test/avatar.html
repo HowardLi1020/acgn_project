@@ -1,0 +1,250 @@
+{# {% extends '[BASE]ALL.html' %} #}
+{% load static %} 
+{% block app_css %}
+<style>
+  /* 頭像圖片-包裝容器 */
+  .avatar-wrapper {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    /* border: 4px solid white; */
+    /* border-radius: 50%; */
+    overflow: hidden;
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* 防止頭像被壓縮 */
+  }
+
+  /* 頭像圖片-格式 */
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* 頭像控制項-開關、按鈕整體容器 */
+  .avatar-controls {
+    position: absolute;
+    left: 170px; /* 頭像寬度 + 一些間距 */
+    bottom: 0px; /* 與頭像底部對齊 */
+    /* top: 20px;    與頭像頂部對齊 */
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* 調整間距，讓開關和按鈕更接近 */
+  }
+  
+  /* 頭像控制項-按鈕樣式 */
+  .avatar-controls .btn {
+    width: fit-content;
+    /* padding: 0.25rem 0.5rem; 調整內邊距，使按鈕變小 */
+    /* font-size: 0.85rem; 調整字體大小 */
+  }
+</style>
+{% endblock %}
+
+{% block app_content %}
+<!-- 最外層div框為測試單頁使用，拉進正式頁要註解掉或從更下複製 -->
+<!-- <div class="profile-info-container d-flex position-relative"> -->
+      <!-- 頭像區域，若使用者沒進來換過頭像，則預設為使用者帳號頭像 -->
+      <div class="avatar-wrapper">
+        {% if ViewKey_DbPublicCardInfo.use_default_avatar %}
+          <img
+            class="avatar-img"
+            src="{{ MEDIA_URL }}{{ ViewKey_DbPublicCardInfo.member_basic.user_avatar }}"
+            alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像"
+          />
+        {% else %}
+          {% if ViewKey_DbPublicCardInfo.user_avatar %}
+          <img
+            class="avatar-img"
+            src="{{ MEDIA_URL }}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}"
+            alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像"
+          />
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- 頭像控制項 -->
+      <div class="avatar-controls">
+        <div class="form-check form-switch">
+          {% if ViewKey_DbPublicCardInfo.user_avatar %}
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="settings-switch-2"
+            {% if not ViewKey_DbPublicCardInfo.use_default_avatar %}checked{% endif %}
+            onchange="handleAvatarToggle(this)"
+          />
+          <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
+          {% endif %}
+        </div>
+        <button class="btn app-btn-primary" onclick="changeAvatar(event)">變更頭像</button>
+      </div>
+<!-- </div> -->
+{% endblock %}
+
+
+{% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+<script>
+// 新增全域變數保存使用者選擇的頭像
+let userSelectedAvatar = null;
+
+  // === 頭像相關功能初始化 ===
+//   const useDefaultAvatar = {{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
+//   const userAvatar = '{{ ViewKey_DbPublicCardInfo.user_avatar }}';
+//   const hasCustomAvatar = userAvatar !== '' && userAvatar !== 'None';
+
+//   const avatarSwitch = document.getElementById('settings-switch-2');
+//   if (avatarSwitch) {
+//     if (!hasCustomAvatar) {
+//       avatarSwitch.checked = true;
+//       avatarSwitch.disabled = true;
+
+//       const switchContainer = avatarSwitch.parentElement;
+//       if (switchContainer) {
+//         const newContainer = switchContainer.cloneNode(true);
+//         switchContainer.parentNode.replaceChild(newContainer, switchContainer);
+
+//         const newSwitch = newContainer.querySelector('input');
+//         if (newSwitch) {
+//           newSwitch.checked = true;
+//           newSwitch.disabled = true;
+//         }
+//       }
+//     } else {
+//       avatarSwitch.checked = !useDefaultAvatar;
+//       avatarSwitch.disabled = false;
+//     }
+//   }
+  
+
+
+// // 處理點擊事件，確保只觸發一次
+// window.handleAvatarClick = function(element) {
+//   if (confirm('請先添加自訂頭像圖片')) {
+//     showAvatarAlert();
+//   }
+//   // 移除 onclick 事件，防止重複觸發
+//   element.onclick = null;
+// };
+
+// 處理頭像選擇提示和檔案選擇
+// function showAvatarAlert() {
+//   const fileInput = document.createElement('input');
+//   fileInput.type = 'file';
+//   fileInput.accept = 'image/*';
+  
+//   fileInput.onchange = function(e) {
+//     if (e.target.files && e.target.files[0]) {
+//       const file = e.target.files[0];
+//       const reader = new FileReader();
+      
+//       reader.onload = function(e) {
+//         userSelectedAvatar = e.target.result;
+        
+//         // 更新頭像圖片
+//         const avatarImg = document.querySelector('.avatar-img');
+//         if (avatarImg) {
+//           avatarImg.src = userSelectedAvatar;
+//         }
+        
+//         // 處理開關狀態
+//         const switchElement = document.getElementById('settings-switch-2');
+//         if (switchElement) {
+//           switchElement.disabled = false;
+//           switchElement.checked = !{{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
+          
+//           // 替換原有的 div，移除 onclick 事件
+//           const oldSwitchContainer = switchElement.parentElement;
+//           const newSwitchContainer = document.createElement('div');
+//           newSwitchContainer.className = 'form-check form-switch';
+//           newSwitchContainer.innerHTML = oldSwitchContainer.innerHTML;
+          
+//           // 確保新的開關保持正確的狀態
+//           const newSwitch = newSwitchContainer.querySelector('input');
+//           if (newSwitch) {
+//             newSwitch.disabled = false;
+//             newSwitch.checked = !{{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
+//           }
+          
+//           oldSwitchContainer.parentElement.replaceChild(newSwitchContainer, oldSwitchContainer);
+//         }
+//       };
+      
+//       reader.readAsDataURL(file);
+//     }
+//   };
+  
+//   fileInput.click();
+// }
+
+
+// 使用者頭像-變更頭像按鈕
+window.changeAvatar = function(event) {
+  event.preventDefault();
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+
+  fileInput.onchange = function(e) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        userSelectedAvatar = e.target.result;
+        const avatarImg = document.querySelector('.avatar-img');
+        if (avatarImg) {
+          avatarImg.src = userSelectedAvatar;
+        }
+
+        // 顯示並更新頭像開關
+        const switchContainer = document.querySelector('.avatar-controls .form-check');
+        if (switchContainer) {
+          if (!switchContainer.querySelector('input')) {
+            // 如果開關不存在，創建新的開關
+            switchContainer.innerHTML = `
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="settings-switch-2"
+                onchange="handleAvatarToggle(this)"
+                checked
+              />
+              <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
+            `;
+          } else {
+            // 如果開關已存在，更新其狀態
+            const switchInput = switchContainer.querySelector('input');
+            switchInput.checked = true;
+          }
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  fileInput.click();
+};
+
+// 使用者頭像-自訂圖切換開關
+window.handleAvatarToggle = function(checkbox) {
+  const avatarImg = document.querySelector('.avatar-img');
+  const mediaUrl = '{{ MEDIA_URL }}';
+  
+  if (checkbox.checked) {
+    // 使用自訂頭像
+    if (userSelectedAvatar) {
+      avatarImg.src = userSelectedAvatar;
+    } else {
+      avatarImg.src = `${mediaUrl}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}`;
+    }
+  } else {
+    // 使用預設頭像
+    avatarImg.src = `${mediaUrl}{{ ViewKey_DbPublicCardInfo.member_basic.user_avatar }}`;
+  }
+};
+</script>
+{% endblock %}

@@ -366,10 +366,6 @@
           {% endfor %} {% else %}
           <div class="text-muted">尚未有發起過的需求</div>
           {% endif %}
-          <!-- 新增篩選無結果提示 -->
-          <div class="no-results text-muted" data-template="need" style="display: none; width: 100%; text-align: center;">
-            查無符合「<span class="search-term"></span>」的項目...
-          </div>
         </div>
         <!-- 結束水平排列的 div -->
       </div>
@@ -502,10 +498,6 @@ function getCookie(name) {
                     // const cards = document.querySelectorAll('.commission-card');
                     // console.log('Found cards:', cards.length); // [Debug Log Removed]
 
-                    const templateType = e.target.dataset.template;
-                    const cards = document.querySelectorAll(`.commission-card[data-template="${templateType}"]`);
-                    let visibleCount = 0;
-
                     cards.forEach(card => {
                         // 遍歷所有卡片，根據返回的 ID 更新顯示狀態
                         const debugInfo = card.querySelector('[data-debug]');
@@ -518,21 +510,10 @@ function getCookie(name) {
                             // });
                             // 根據 ID 是否在返回列表中決定顯示或隱藏
                             card.style.display = data.includes(parseInt(itemId)) ? '' : 'none';
-                            if (card.style.display !== 'none') visibleCount++;
                         } else {
                             // console.warn('Debug info not found for card:', card); // [Debug Log Removed]
                         }
                     });
-
-                    // 控制提示訊息顯示，若無結果則顯示提示訊息
-                    const noResults = document.querySelector(`.no-results[data-template="${templateType}"]`);
-                    const searchTermSpan = noResults.querySelector('.search-term');
-                    if (visibleCount === 0) {
-                        noResults.style.display = 'block';
-                        searchTermSpan.textContent = `"${searchTerm}"`;
-                    } else {
-                        noResults.style.display = 'none';
-                    }
                 })
                 .catch(error => {
                     console.error('Error during filtering:', error);
@@ -547,9 +528,6 @@ function getCookie(name) {
     document.getElementById('clearFilterBtn').addEventListener('click', function() {
       const filterInput = document.getElementById('filterInput');
       const templateType = filterInput.dataset.template; // 獲取模板類型
-      
-      // 在清除篩選條件時，主動隱藏「查無結果」的提示訊息
-      document.querySelector(`.no-results[data-template="${templateType}"]`).style.display = 'none';
       
       // 清空輸入框
       filterInput.value = '';

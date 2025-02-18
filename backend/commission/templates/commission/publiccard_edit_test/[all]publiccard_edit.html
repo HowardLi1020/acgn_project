@@ -12,15 +12,6 @@
     padding-top: 0 !important;
   }
 
-  /* Banner 相關樣式 */
-  .app-card-thumb-holder {
-    position: relative;
-    background-position: center;
-    height: 160px; /* banner 高度 */
-    margin-bottom: 40px; /* 調整空間給頭像 */
-    background-size: cover;
-  }
-
   /* 頭像和個人資訊容器 */
   .profile-info-container {
     position: absolute;
@@ -31,65 +22,23 @@
     overflow: visible; /* 允許內容超出容器 */
   }
 
-  /* 頭像包裝器 */
-  .avatar-wrapper {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    /* border: 4px solid white; */
-    /* border-radius: 50%; */
-    overflow: hidden;
-    background-color: #f0f0f0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0; /* 防止頭像被壓縮 */
-  }
-
-  /* 頭像圖片樣式 */
-  .avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  /* 用戶資訊區域 */
-  .user-info {
-    padding-left: 60px; /* 頭像與個人資訊的距離 */
-    margin-top: -55px; /* 暱稱、簡介的垂直位置，數字越小越上方 */
-  }
-  /* 用戶暱稱樣式 */
-  .nickname {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-
-  /* 用戶簡介樣式 */
-  .introduction {
-    color: #666;
-  }
-
-  /* 橫幅控制按鈕樣式 */
-  .banner-controls {
-    position: absolute;
-    top: 10px; /* 調整按鈕的垂直位置 */
-    right: 20px; /* 調整按鈕的水平位置 */
-    z-index: 2; /* 確保按鈕在 banner 上方 */
-  }
   /* 開關樣式 */
-  .switch {
+  /* .switch {
     position: relative;
     display: inline-block;
     width: 60px;
     height: 34px;
-  }
+  } */
+
   /* 開關輸入樣式 */
-  .switch input {
+  /* .switch input {
     opacity: 0;
     width: 0;
     height: 0;
-  }
+  } */
 
   /* 開關滑塊樣式 */
-  .slider {
+  /* .slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -99,10 +48,10 @@
     background-color: #ccc;
     transition: 0.4s;
     border-radius: 34px;
-  }
+  } */
 
   /* 開關滑塊前景樣式 */
-  .slider:before {
+  /* .slider:before {
     position: absolute;
     content: "";
     height: 26px;
@@ -112,123 +61,8 @@
     background-color: white;
     border-radius: 50%;
     transition: 0.4s;
-  }
+  } */
 
-  /* 新增喜好作品和屬性Tag輸入區域的樣式 */
-  .profile-section {
-    /* margin-top: -100px; 調整與頭像的距離，數字越小越上方 */
-    width: 28%; /* 設置寬度為畫面的1/3 */
-    padding: 0 20px; /* 增加左右間距 */
-  }
-
-  /* 表單組樣式 */
-  .profile-form .form-group {
-    margin-bottom: 1rem;
-  }
-
-  /* 表單控制樣式 */
-  .profile-form .form-control {
-    width: 100%;
-  }
-
-  /* 屬性Tag容器樣式 */
-  .tags-container {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
-  /* 屬性Tag標籤樣式 */
-  .tag {
-    background-color: #e9ecef;
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 14px;
-    display: inline-flex;
-    align-items: center;
-    margin-right: 5px; /* 控制水平間距 */
-    margin-bottom: 10px; /* 保持垂直間距 */
-    position: relative; /* 讓偽元素可以相對於 tag 定位 */
-    padding-left: 1.5em; /* 為指示符號留出空間 */
-  }
-
-  /* 屬性Tag標籤指示符號 */
-  .tag::before {
-    content: "⋮"; /* 使用三個點作為指示符號 */
-    position: absolute;
-    left: 0.5em; /* 調整指示符號的位置 */
-    top: 50%;
-    transform: translateY(-50%);
-    color: #aaa; /* 指示符號的顏色 */
-    font-size: 1.2em; /* 指示符號的大小 */
-    cursor: move; /* 滑鼠移上去時顯示移動游標 */
-  }
-
-  /* 屬性Tag刪除按鈕樣式 */
-  .tag .remove-tag {
-    margin-left: 8px;
-    cursor: pointer;
-    color: #666;
-  }
-
-  /* 輸入框容器樣式 */
-  .input-group {
-    display: flex;
-    align-items: stretch;
-    width: 100%; /* 確保容器佔滿整個寬度 */
-  }
-
-  /* 輸入框樣式 */
-  .input-group .form-control {
-    flex: 1; /* 讓輸入框佔據剩餘空間 */
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-right: 0; /* 移除右側邊距 */
-  }
-
-  /* 喜好作品、屬性Tag輸入框的新增按鈕樣式 */
-  .add-tag-btn {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    margin-left: -1px; /* 微調按鈕位置，使邊框重疊 */
-    white-space: nowrap; /* 防止按鈕文字換行 */
-    padding: 0.375rem 0.75rem; /* 標準按鈕內邊距 */
-    color: white; /* 設置字體顏色為白色 */
-  }
-
-  /* 新增輸入框樣式 */
-  .nickname input {
-    font-size: 1.75rem; /* h3 的大小 */
-    font-weight: bold;
-    border: none;
-    width: 230%;
-    padding: 0;
-    margin: 0;
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-  }
-
-  /* 用戶簡介輸入框樣式 */
-  .introduction textarea {
-    /* 改用 textarea */
-    border: none;
-    width: 230%;
-    padding: 4px;
-    margin: 0;
-    color: #666;
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-    min-height: 80px; /* 設置最小高度 */
-    resize: none; /* 防止用戶調整大小 */
-    font-family: inherit; /* 繼承字體 */
-    line-height: 1.5; /* 行高 */
-    vertical-align: top; /* 文字靠上對齊 */
-  }
-
-  /* 輸入框獲得焦點時的樣式 */
-  .nickname input:focus,
-  .introduction textarea:focus {
-    outline: none;
-  }
 
   /* 右側區域容器樣式 */
   .right-section {
@@ -238,43 +72,20 @@
   }
 
   /* 開關容器樣式 */
-  .switches-container {
-    display: grid;
+  /* .switches-container { */
+    /* display: grid; */
     /* grid-template-columns: repeat(2, 1fr); 2x2 網格布局 */
-    gap: 15px;
-  }
+    /* gap: 15px; */
+  /* } */
 
-  /* 最後更新時間樣式 */
-  .last-update {
-    position: absolute;
-    top: 210px; /* 調整到 Banner 下方 */
-    right: 0px; /* 與右邊界的距離 */
-    font-size: 0.9rem;
-    color: #666;
-  }
+  
 
-  /* 頭像控制項容器樣式 */
-  .avatar-controls {
-    position: absolute;
-    left: 170px; /* 頭像寬度 + 一些間距 */
-    bottom: 0px; /* 與頭像底部對齊 */
-    /* top: 20px;    與頭像頂部對齊 */
-    display: flex;
-    flex-direction: column;
-    gap: 5px; /* 調整間距，讓開關和按鈕更接近 */
-  }
 
-  /* 調整開關和按鈕的字體大小 */
+  /* 頭像與橫幅-自訂圖開關的字體大小 */
   .form-check-label {
-    font-size: 0.85rem; /* 調整字體大小 */
+    font-size: 0.85rem; /*  調整字體大小 */
   }
 
-  /* 頭像控制按鈕樣式 */
-  .avatar-controls .btn {
-    width: fit-content;
-    /* padding: 0.25rem 0.5rem; 調整內邊距，使按鈕變小 */
-    /* font-size: 0.85rem; 調整字體大小 */
-  }
 
   /* 右側開關區域的獨立樣式 */
   .right-section .form-check {
@@ -357,61 +168,6 @@
     align-items: center; /* 垂直居中 */
   }
 
-  /* 喜好作品清單樣式 */
-  .favorite-acgn-list {
-    list-style: none;
-    padding: 0;
-    /* margin: 0 0 10px 0; */
-  }
-
-  /* 喜好作品清單生成 */
-  .favorite-acgn-list li {
-    display: flex;
-    align-items: flex-start; /* 改為靠上對齊，避免長文字時垃圾桶位置異常 */
-    /* margin-top: 5px; */
-    margin-bottom: 7px;
-    padding: 5px 10px;
-    background-color: #f3f3f3; /* 喜好作品清單背景色 */
-    border-radius: 4px;
-    word-break: break-all; /* 允許在任何字符間換行 */
-    word-wrap: break-word; /* 確保長單詞也會換行 */
-    position: relative; /* 讓偽元素可以相對於 li 定位 */
-    padding-left: 1.5em; /* 為指示符號留出空間 */
-  }
-
-  /* 喜好作品清單指示符號 */
-  .favorite-acgn-list li::before {
-    content: "⋮"; /* 使用三個點作為指示符號 */
-    position: absolute;
-    left: 0.5em; /* 調整指示符號的位置 */
-    top: 50%;
-    transform: translateY(-50%);
-    color: #aaa; /* 指示符號的顏色 */
-    font-size: 1.2em; /* 指示符號的大小 */
-    cursor: move; /* 滑鼠移上去時顯示移動游標 */
-  }
-
-  /* 喜好作品清單-文字 */
-  .acgn-text {
-    flex-grow: 1; /* 讓文字佔據剩餘空間 */
-    margin-right: 10px; /* 與垃圾桶圖示保持距離 */
-    padding-top: 5px; /* 文字與垃圾桶上切齊 */
-    min-width: 0; /* 允許文字區域收縮 */
-  }
-
-  /* 喜好作品清單-垃圾桶 */
-  .remove-acgn {
-    color: #dc3545;
-    cursor: pointer;
-    padding: 5px;
-    flex-shrink: 0; /* 防止圖示被壓縮 */
-  }
-
-  /* 喜好作品清單刪除按鈕懸停樣式 */
-  .remove-acgn:hover {
-    color: #c82333;
-  }
-  
 
 
 
@@ -423,7 +179,7 @@
 
 
 
-  /* 輸入框提示字 placeholder 樣式 */
+  /* 輸入框(含喜好作品、屬性Tag、價目表區)-提示字 placeholder 樣式 */
   .form-control::placeholder {
     font-size: 0.875rem;  /* 14px，比預設的 16px 小一點 */
     color: #7b838d;          /* 淺灰色 */
@@ -431,26 +187,15 @@
   }
 
   
+  /* 表單組樣式 */
+  /* .profile-form .form-group {
+    margin-bottom: 1rem;
+  } */
 
-
-
-
-    /* 左欄喜好作品、屬性Tag拖曳排序相關樣式 */
-    .sortable-ghost {
-    opacity: 0.5;
-    background: #f8f9fa;
-  }
-  .sortable-chosen {
-    cursor: move;
-    cursor: -webkit-grabbing;
-  }
-  .sortable-drag {
-    opacity: 1 !important;
-    transform: rotate(3deg);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  }
-
-  
+  /* 表單控制樣式 */
+  /* .profile-form .form-control {
+    width: 100%;
+  } */
 
   
 </style>
@@ -467,157 +212,19 @@
   style="flex-grow: 1"
 >
   <form method="post" enctype="multipart/form-data">
-    <!-- 名片橫幅，若使用者沒進名片編輯頁換過橫幅，則檢查使用者性別替換預設橫幅 -->
-    <div
-      class="app-card-thumb-holder"
-      style="background-image: url('{{ MEDIA_URL }}{% if ViewKey_DbPublicCardInfo.use_default_banner %}commission/publiccard/banner/{% if ViewKey_DbPublicCardInfo.member_basic.user_gender == 'female' %}banner_female.png{% elif ViewKey_DbPublicCardInfo.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}{% else %}commission/publiccard/banner/{{ ViewKey_DbPublicCardInfo.card_banner }}{% endif %}'); background-size: cover; background-position: center; height: 200px;"
-    >
-      <!-- 新增公開狀態標籤 -->
-      <span class="badge {% if ViewKey_DbPublicCardInfo.card_status == '公開' %}bg-success{% elif ViewKey_DbPublicCardInfo.card_status == '非公開' %}bg-warning{% else %}bg-secondary{% endif %}" style="margin: 10px; opacity: 0.9;">
-        {{ ViewKey_DbPublicCardInfo.card_status }}
-      </span>
-      <!-- 右上角按鈕區域 -->
-      <div class="banner-controls d-flex align-items-center">
-        <div class="form-check form-switch mb-0 me-2">
-          {% if ViewKey_DbPublicCardInfo.card_banner %}
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="settings-switch-1"
-            {% if not ViewKey_DbPublicCardInfo.use_default_banner %}checked{% endif %}
-            onchange="handleBannerToggle(this)"
-          />
-          <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
-          {% endif %}
-        </div>
-        <button class="btn app-btn-primary" onclick="changeBanner(event)">變更橫幅</button>
-      </div>
-      <!-- 最後更新時間 -->
-      <div class="last-update">
-        最後更新：{{ ViewKey_DbPublicCardInfo.last_update|date:"Y.m.d H:i" }}
-      </div>
-    </div>
+    {% include 'commission/publiccard_edit_test/banner.html' %}
+    
 
     <!-- 頭像和個人資訊區域 -->
     <div class="profile-info-container d-flex position-relative">
-      <!-- 頭像區域，若使用者沒進來換過頭像，則預設為使用者帳號頭像 -->
-      <div class="avatar-wrapper">
-        {% if ViewKey_DbPublicCardInfo.use_default_avatar %}
-          <img
-            class="avatar-img"
-            src="{{ MEDIA_URL }}{{ ViewKey_DbPublicCardInfo.member_basic.user_avatar }}"
-            alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像"
-          />
-        {% else %}
-          {% if ViewKey_DbPublicCardInfo.user_avatar %}
-          <img
-            class="avatar-img"
-            src="{{ MEDIA_URL }}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}"
-            alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像"
-          />
-          {% endif %}
-        {% endif %}
-      </div>
-
-      <!-- 頭像控制項 -->
-      <div class="avatar-controls">
-        <div class="form-check form-switch">
-          {% if ViewKey_DbPublicCardInfo.user_avatar %}
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="settings-switch-2"
-            {% if not ViewKey_DbPublicCardInfo.use_default_avatar %}checked{% endif %}
-            onchange="handleAvatarToggle(this)"
-          />
-          <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
-          {% endif %}
-        </div>
-        <button class="btn app-btn-primary" onclick="changeAvatar(event)">變更頭像</button>
-      </div>
-      <!-- 暱稱和介紹區域 -->
-      <div class="user-info">
-        <div class="nickname">
-          <input
-            type="text"
-            value="{{ ViewKey_DbPublicCardInfo.user_nickname }}"
-            placeholder="輸入暱稱"
-            autocomplete="off"
-          />
-        </div>
-        <div class="introduction">
-          <!-- textarea與Django語法要連在一起不得換行排版會跑掉，用Pretter時要留意 -->
-          <textarea placeholder="輸入簡介" autocomplete="off">{{ ViewKey_DbPublicCardInfo.user_introduction }}</textarea>
-        </div>
-      </div>
+      {% include 'commission/publiccard_edit_test/avatar.html' %}
+      {% include 'commission/publiccard_edit_test/user_info.html' %}      
     </div>
 
     <!-- 新增一個容器來包住兩個區塊 -->
     <div class="sections-container" style="display: flex; margin-top: -90px">
       <!-- 左側區域 -->
-      <!-- 喜好作品和Tag輸入區域 -->
-      <div class="profile-section">
-        <!-- 新增分隔線 -->
-        <!-- <div style="position: absolute; width: 80%; height: 1px; background-color: #dee2e6; left: 50%; transform: translateX(-50%); margin-top: -5px;"></div> -->
-        
-        <form class="profile-form">
-          <ul class="form-list">
-            <li>
-              <!-- 未來展望：區分平台分類/作品名 (如：NS/寶可夢朱紫、手遊/FGO) -->
-              <label class="form-label mb-3 mt-3"
-                >喜好作品
-                <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
-              </label
-              >
-              <div class="favorite-acgn-container">
-                <!-- 喜好作品清單會在這裡動態生成 -->
-                <ul class="favorite-acgn-list" id="favoriteAcgnList"></ul>
-              </div>
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="acgnInput"
-                  placeholder="如：寶可夢朱紫,鬼滅之刃..."
-                />
-                <button
-                  type="button"
-                  class="btn btn-primary add-tag-btn"
-                  id="addAcgnBtn"
-                >
-                  新增
-                </button>
-              </div>
-            </li>
-
-            <li>
-              <label class="form-label mb-3 mt-5"
-                >屬性Tag
-                <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
-              </label
-              >
-              <div class="tags-container" id="tagsContainer">
-                <!-- 標籤會在這裡動態生成 -->
-              </div>
-              <div class="input-group mt-1">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="tagInput"
-                  placeholder="如：獸控,夢向,BL,犬派,自耕農..."
-                />
-                <button
-                  type="button"
-                  class="btn btn-primary add-tag-btn"
-                  id="addTagBtn"
-                >
-                  新增
-                </button>
-              </div>
-            </li>
-          </ul>
-        </form>
-      </div>
+      {% include 'commission/publiccard_edit_test/favorite_and_tag.html' %}
 
       <!-- 右側區域(分隔線區分兩側) -->
       <div class="right-section" style="border-left: 1px solid #dee2e6;">
@@ -654,333 +261,32 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 
-// 新增全域變數保存使用者選擇的圖片
-let userSelectedBanner = null;
 
-document.addEventListener("DOMContentLoaded", function () {
-  console.log('=== 頁面載入時的狀態檢查 ===');
-  
-  // === 橫幅相關功能初始化 ===
-  // 檢查資料庫值
-  const useDefaultBanner = {{ ViewKey_DbPublicCardInfo.use_default_banner|lower }};
-  const cardBanner = '{{ ViewKey_DbPublicCardInfo.card_banner }}';
-  const hasCustomBanner = cardBanner !== '' && cardBanner !== 'None';  // 修正判斷邏輯
-  
-  console.log('資料庫狀態:', {
-    useDefaultBanner: useDefaultBanner,
-    cardBanner: cardBanner,
-    hasCustomBanner: hasCustomBanner
-  });
-
-  // 初始化開關狀態
-  const switchElement = document.getElementById('settings-switch-1');
-  if (switchElement) {
-    console.log('開關元素狀態:', {
-      exists: true,
-      checked: switchElement.checked,
-      disabled: switchElement.disabled
-    });
-    
-    // 設定初始狀態
-    if (!hasCustomBanner) {
-      switchElement.checked = true;
-      switchElement.disabled = true;
+//   // === 修正其他開關的事件監聽器 ===
+//   const switches = document.querySelectorAll(".form-check-input");
+//   switches.forEach((switchEl) => {
+//     switchEl.addEventListener("change", function () {
+//       const contentId = "content-" + this.id.split("-")[1];
+//       const contentEl = document.getElementById(contentId);
       
-      // 移除點擊事件（如果存在）
-      const switchContainer = switchElement.parentElement;
-      if (switchContainer) {
-        const newContainer = switchContainer.cloneNode(true);
-        switchContainer.parentNode.replaceChild(newContainer, switchContainer);
-        
-        // 重新綁定開關事件
-        const newSwitch = newContainer.querySelector('input');
-        if (newSwitch) {
-          newSwitch.checked = true;
-          newSwitch.disabled = true;
-        }
-      }
-    } else {
-      switchElement.checked = !useDefaultBanner;
-      switchElement.disabled = false;
-    }
-  } else {
-    console.log('開關元素不存在');
-  }
+//       // 加入檢查
+//       if (contentEl) {
+//         if (this.checked) {
+//           contentEl.classList.add("show");
+//         } else {
+//           contentEl.classList.remove("show");
+//         }
+//       }
+//     });
+//   });
 
-  // === 頭像相關功能初始化 ===
-  const useDefaultAvatar = {{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
-  const userAvatar = '{{ ViewKey_DbPublicCardInfo.user_avatar }}';
-  const hasCustomAvatar = userAvatar !== '' && userAvatar !== 'None';
-
-  const avatarSwitch = document.getElementById('settings-switch-2');
-  if (avatarSwitch) {
-    if (!hasCustomAvatar) {
-      avatarSwitch.checked = true;
-      avatarSwitch.disabled = true;
-
-      const switchContainer = avatarSwitch.parentElement;
-      if (switchContainer) {
-        const newContainer = switchContainer.cloneNode(true);
-        switchContainer.parentNode.replaceChild(newContainer, switchContainer);
-
-        const newSwitch = newContainer.querySelector('input');
-        if (newSwitch) {
-          newSwitch.checked = true;
-          newSwitch.disabled = true;
-        }
-      }
-    } else {
-      avatarSwitch.checked = !useDefaultAvatar;
-      avatarSwitch.disabled = false;
-    }
-  }
-
-  // === 修正其他開關的事件監聽器 ===
-  const switches = document.querySelectorAll(".form-check-input");
-  switches.forEach((switchEl) => {
-    switchEl.addEventListener("change", function () {
-      const contentId = "content-" + this.id.split("-")[1];
-      const contentEl = document.getElementById(contentId);
-      
-      // 加入檢查
-      if (contentEl) {
-        if (this.checked) {
-          contentEl.classList.add("show");
-        } else {
-          contentEl.classList.remove("show");
-        }
-      }
-    });
-  });
-
-  // === Tag標籤功能相關代碼 ===
-  const tagsContainer = document.getElementById("tagsContainer");
-  const tagInput = document.getElementById("tagInput");
-  const addTagBtn = document.getElementById("addTagBtn");
-  
-  // 新增標籤函數
-  function addTag() {
-    const tagText = tagInput.value.trim();
-    if (tagText) {
-      // 將輸入的文字以半形逗號分割成陣列
-      const tags = tagText.split(',').map(tag => tag.trim()).filter(tag => tag);
-      
-      tags.forEach(tagText => {
-        // 創建標籤元素
-        const tag = document.createElement("span");
-        tag.className = "tag";
-        tag.innerHTML = `
-                ${tagText}
-                <span class="remove-tag">×</span>
-            `;
-
-        // 添加刪除功能
-        tag.querySelector(".remove-tag").addEventListener("click", function () {
-          tag.remove();
-        });
-
-        // 添加標籤到容器
-        tagsContainer.appendChild(tag);
-      });
-
-      // 清空輸入框
-      tagInput.value = "";
-    }
-  }
-
-  // 點擊新增按鈕時添加標籤
-  addTagBtn.addEventListener("click", addTag);
-
-  // 按下 Enter 鍵時也可以添加標籤
-  tagInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTag();
-    }
-  });
-
-  // === 原作品列表相關代碼 ===
-  const acgnList = document.querySelector(".favorite-acgn-list");
-  const acgnInput = document.getElementById("acgnInput");
-  const addAcgnBtn = document.getElementById("addAcgnBtn");
-  
-  // 新增作品函數
-  function addAcgn() {
-    const acgnText = acgnInput.value.trim();
-    if (acgnText) {
-      // 創建作品項目
-      const acgn = acgnText.split(',').map(acgn => acgn.trim()).filter(acgn => acgn);
-      
-      acgn.forEach(acgnText => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-                <span class="acgn-text">${acgnText}</span>
-                <span class="remove-acgn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                    </svg>
-                </span>
-            `;
-
-        // 添加刪除功能
-        li.querySelector(".remove-acgn").addEventListener("click", function () {
-          li.remove();
-        });
-
-        // 添加作品到列表
-        acgnList.appendChild(li);
-      });
-      // 清空輸入框
-      acgnInput.value = "";
-    }
-  }
-
-  // 點擊新增按鈕時添加作品
-  addAcgnBtn.addEventListener("click", addAcgn);
-
-  // 按下 Enter 鍵時也可以添加作品
-  acgnInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addAcgn();
-    }
-  });
-
-
-
-  // === 初始化左欄[喜好作品、Tag標籤]既有資料 ===
-  // 從 Django 模板變數取得資料庫資料
-  const involvedAcgn = '{{ ViewKey_DbPublicCardInfo.involved_acgn|default:""|escapejs }}';
-  const keyTags = '{{ ViewKey_DbPublicCardInfo.key_tags|default:""|escapejs }}';
-
-  // 解析[喜好作品]資料
-  if (involvedAcgn) {
-    involvedAcgn.split(',').forEach(acgn => {
-      const trimmedAcgn = acgn.trim();
-      if (trimmedAcgn) {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <span class="acgn-text">${trimmedAcgn}</span>
-          <span class="remove-acgn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-              </svg>
-          </span>`;
-        li.querySelector(".remove-acgn").addEventListener("click", () => li.remove());
-        acgnList.appendChild(li);
-      }
-    });
-  }
-
-  // 解析[Tag標籤]資料
-  if (keyTags) {
-    keyTags.split(',').forEach(tag => {
-      const trimmedTag = tag.trim();
-      if (trimmedTag) {
-        const tagElement = document.createElement("span");
-        tagElement.className = "tag";
-        tagElement.innerHTML = `
-          ${trimmedTag}
-          <span class="remove-tag">×</span>`;
-        tagElement.querySelector(".remove-tag").addEventListener("click", () => tagElement.remove());
-        tagsContainer.appendChild(tagElement);
-      }
-    });
-  }
-});
-// === 橫幅相關函數定義 ===
-// 修改 showBannerAlert 函數中的事件觸發部分
-window.showBannerAlert = function() {
-  if (confirm('請先添加自訂橫幅圖片')) {
-    // 建立隱藏的檔案輸入元素
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';  // 只接受圖片檔案
-    
-    // 監聽檔案選擇事件
-    fileInput.onchange = function(e) {
-      if (e.target.files && e.target.files[0]) {
-        // 如果有選擇檔案
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-          // 保存使用者選擇的圖片
-          userSelectedBanner = e.target.result;
-          
-          // 更新橫幅圖片
-          const bannerHolder = document.querySelector('.app-card-thumb-holder');
-          if (bannerHolder) {
-            bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
-          }
-          
-          const switchElement = document.getElementById('settings-switch-1');
-          if (switchElement) {
-            switchElement.disabled = false;
-            switchElement.checked = false;
-            
-            // 替換原有的 div，移除 onclick 事件
-            const oldSwitchContainer = switchElement.parentElement;
-            const newSwitchContainer = document.createElement('div');
-            newSwitchContainer.className = 'form-check form-switch mb-0 me-2';
-            newSwitchContainer.innerHTML = oldSwitchContainer.innerHTML;
-            
-            // 確保新的開關保持正確的狀態
-            const newSwitch = newSwitchContainer.querySelector('input');
-            if (newSwitch) {
-              newSwitch.disabled = false;
-              newSwitch.checked = false;
-            }
-            
-            oldSwitchContainer.parentElement.replaceChild(newSwitchContainer, oldSwitchContainer);
-            
-            // 安全地觸發 change 事件
-            try {
-              const event = new Event('change');
-              switchElement.dispatchEvent(event);
-            } catch (error) {
-              console.log('Change event error:', error);
-            }
-          }
-        };
-        
-        // 讀取圖片檔案
-        reader.readAsDataURL(file);
-      }
-    };
-    
-    // 觸發檔案選擇器
-    fileInput.click();
-  }
-};
-
-// 處理橫幅開關切換
-window.handleBannerToggle = function(checkbox) {
-  const bannerHolder = document.querySelector('.app-card-thumb-holder');
-  const mediaUrl = '{{ MEDIA_URL }}';
-  
-  if (checkbox.checked) {
-    // 使用自訂橫幅
-    if (userSelectedBanner) {
-      bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
-    } else {
-      bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/{{ ViewKey_DbPublicCardInfo.card_banner }}')`;
-    }
-  } else {
-    // 使用預設橫幅
-    bannerHolder.style.backgroundImage = `url('${mediaUrl}commission/publiccard/banner/{% if ViewKey_DbPublicCardInfo.member_basic.user_gender == 'female' %}banner_female.png{% elif ViewKey_DbPublicCardInfo.member_basic.user_gender == 'male' %}banner_male.png{% else %}banner_unknown.png{% endif %}')`;
-  }
-};
-
-// === 原 toggleContent 函數，處理內容顯示/隱藏 ===
-window.toggleContent = function(contentId) {
-  const content = document.getElementById(contentId);
-  if (content) {
-    content.classList.toggle("show");
-  }
-};
+// // === 原 toggleContent 函數，處理內容顯示/隱藏 ===
+// window.toggleContent = function(contentId) {
+//   const content = document.getElementById(contentId);
+//   if (content) {
+//     content.classList.toggle("show");
+//   }
+// };
 
 
 // 初始化開關狀態並添加事件監聽器
@@ -1035,243 +341,14 @@ Object.entries(switchStates).forEach(([switchId, initialState]) => {
 });
 
 
-// 新增全域變數保存使用者選擇的頭像
-let userSelectedAvatar = null;
-
-// 處理點擊事件，確保只觸發一次
-window.handleAvatarClick = function(element) {
-  if (confirm('請先添加自訂頭像圖片')) {
-    showAvatarAlert();
-  }
-  // 移除 onclick 事件，防止重複觸發
-  element.onclick = null;
-};
-
-// 處理頭像選擇提示和檔案選擇
-function showAvatarAlert() {
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-  
-  fileInput.onchange = function(e) {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = function(e) {
-        userSelectedAvatar = e.target.result;
-        
-        // 更新頭像圖片
-        const avatarImg = document.querySelector('.avatar-img');
-        if (avatarImg) {
-          avatarImg.src = userSelectedAvatar;
-        }
-        
-        // 處理開關狀態
-        const switchElement = document.getElementById('settings-switch-2');
-        if (switchElement) {
-          switchElement.disabled = false;
-          switchElement.checked = !{{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
-          
-          // 替換原有的 div，移除 onclick 事件
-          const oldSwitchContainer = switchElement.parentElement;
-          const newSwitchContainer = document.createElement('div');
-          newSwitchContainer.className = 'form-check form-switch';
-          newSwitchContainer.innerHTML = oldSwitchContainer.innerHTML;
-          
-          // 確保新的開關保持正確的狀態
-          const newSwitch = newSwitchContainer.querySelector('input');
-          if (newSwitch) {
-            newSwitch.disabled = false;
-            newSwitch.checked = !{{ ViewKey_DbPublicCardInfo.use_default_avatar|lower }};
-          }
-          
-          oldSwitchContainer.parentElement.replaceChild(newSwitchContainer, oldSwitchContainer);
-        }
-      };
-      
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  fileInput.click();
-}
-
-// 處理頭像切換
-window.handleAvatarToggle = function(checkbox) {
-  const avatarImg = document.querySelector('.avatar-img');
-  const mediaUrl = '{{ MEDIA_URL }}';
-  
-  if (checkbox.checked) {
-    // 使用自訂頭像
-    if (userSelectedAvatar) {
-      avatarImg.src = userSelectedAvatar;
-    } else {
-      avatarImg.src = `${mediaUrl}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}`;
-    }
-  } else {
-    // 使用預設頭像
-    avatarImg.src = `${mediaUrl}{{ ViewKey_DbPublicCardInfo.member_basic.user_avatar }}`;
-  }
-};
-
-// 變更橫幅
-window.changeBanner = function(event) {
-  event.preventDefault();
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-
-  fileInput.onchange = function(e) {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        userSelectedBanner = e.target.result;
-        const bannerHolder = document.querySelector('.app-card-thumb-holder');
-        if (bannerHolder) {
-          bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
-        }
-
-        // 顯示並更新橫幅開關
-        const switchContainer = document.querySelector('.banner-controls .form-check');
-        if (switchContainer) {
-          if (!switchContainer.querySelector('input')) {
-            // 如果開關不存在，創建新的開關
-            switchContainer.innerHTML = `
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="settings-switch-1"
-                onchange="handleBannerToggle(this)"
-                checked
-              />
-              <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
-            `;
-          } else {
-            // 如果開關已存在，更新其狀態
-            const switchInput = switchContainer.querySelector('input');
-            switchInput.checked = true;
-          }
-        }
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
-  fileInput.click();
-};
-
-// 變更頭像
-window.changeAvatar = function(event) {
-  event.preventDefault();
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-
-  fileInput.onchange = function(e) {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        userSelectedAvatar = e.target.result;
-        const avatarImg = document.querySelector('.avatar-img');
-        if (avatarImg) {
-          avatarImg.src = userSelectedAvatar;
-        }
-
-        // 顯示並更新頭像開關
-        const switchContainer = document.querySelector('.avatar-controls .form-check');
-        if (switchContainer) {
-          if (!switchContainer.querySelector('input')) {
-            // 如果開關不存在，創建新的開關
-            switchContainer.innerHTML = `
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="settings-switch-2"
-                onchange="handleAvatarToggle(this)"
-                checked
-              />
-              <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
-            `;
-          } else {
-            // 如果開關已存在，更新其狀態
-            const switchInput = switchContainer.querySelector('input');
-            switchInput.checked = true;
-          }
-        }
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
-  fileInput.click();
-};
 
 
 
-document.addEventListener("DOMContentLoaded", function () {
-  // 初始化喜好作品清單拖曳排序
-  const acgnList = document.getElementById('favoriteAcgnList');
-  new Sortable(acgnList, {
-    animation: 150,
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-    dragClass: 'sortable-drag',
-    onUpdate: function(evt) {
-      console.log('項目順序已變更:', evt.oldIndex, '->', evt.newIndex);
-    }
-  });
 
-  // 初始化標籤容器拖曳排序
-  const tagsContainer = document.getElementById('tagsContainer');
-  new Sortable(tagsContainer, {
-    animation: 150,
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-    dragClass: 'sortable-drag',
-    draggable: '.tag',  // 指定可拖曳元素
-    onUpdate: function(evt) {
-      console.log('標籤順序已變更:', evt.oldIndex, '->', evt.newIndex);
-    }
-  });
 
-  // 防止刪除按鈕觸發拖曳動作
-  document.querySelectorAll('.remove-tag, .remove-acgn').forEach(button => {
-    button.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
-    });
-  });
 
- 
 
-  // 在表單提交時收集並更新順序數據
-  document.querySelector('form').addEventListener('submit', function(e) {
-      const orderData = [];
-      document.querySelectorAll('.price-content-wrapper').forEach((item) => {
-          orderData.push({
-              id: item.dataset.sellId,
-              step: item.dataset.currentStep || item.dataset.originalStep
-          });
-      });
-      
-      // 將排序數據添加到隱藏的輸入欄位
-      let orderInput = document.getElementById('price-order-data');
-      if (!orderInput) {
-          orderInput = document.createElement('input');
-          orderInput.type = 'hidden';
-          orderInput.name = 'price_order_data';
-          orderInput.id = 'price-order-data';
-          this.appendChild(orderInput);
-      }
-      orderInput.value = JSON.stringify(orderData);
-  });
-});
+
 </script>
 
 {% endblock %}

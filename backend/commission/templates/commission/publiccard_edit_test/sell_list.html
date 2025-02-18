@@ -455,6 +455,7 @@
 
 {% block app_script %}
 <!-- 如果應用程式有自己的JAVA Script放這邊 -->
+ <!-- Sortable.js 拖曳排序功能(僅測試，喜好作品、屬性Tag也有用到，建議統一於主頁建立就好) -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
   // <!-- ↓剪取區 -->
@@ -903,7 +904,30 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-
+// // 本來喜好作品、Tag有在裡面加式子，現在切割出來重複寫了document.addEventListener("DOMContentLoaded", function () {});不知道有沒有關係
+// document.addEventListener("DOMContentLoaded", function () {
+//   // 在表單提交時收集並更新順序數據
+//   document.querySelector('form').addEventListener('submit', function(e) {
+//       const orderData = [];
+//       document.querySelectorAll('.sell-content-wrapper').forEach((item) => {
+//           orderData.push({
+//               id: item.dataset.sellId,
+//               step: item.dataset.currentStep || item.dataset.originalStep
+//           });
+//       });
+      
+//       // 將排序數據添加到隱藏的輸入欄位
+//       let orderInput = document.getElementById('sell-order-data');
+//       if (!orderInput) {
+//           orderInput = document.createElement('input');
+//           orderInput.type = 'hidden';
+//           orderInput.name = 'sell_order_data';
+//           orderInput.id = 'sell-order-data';
+//           this.appendChild(orderInput);
+//       }
+//       orderInput.value = JSON.stringify(orderData);
+//   });
+// });
 // <!-- ↑剪取區 -->
 
 </script>

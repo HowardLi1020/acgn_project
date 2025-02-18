@@ -23,6 +23,7 @@ import rarfile
 import tempfile
 from django.views.decorators.csrf import csrf_exempt
 import tempfile
+import os
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -1130,17 +1131,16 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     }
     return render(request, template_name, context)
 
-# 名片頁-過濾公開案件的通用API端點
 @require_POST
 def ViewFn_filter_items(request):
     data = json.loads(request.body)
-    search_term = data.get('searchTerm', '') # 用來存儲用戶在搜尋欄中輸入的關鍵字。是用來過濾資料的主要依據
-    table_type = data.get('tableType', '') # 用來指定要過濾的資料表類型，例如 "need" 或 "work"
-    id_field = data.get('idField', '') # 用來指定要返回的 ID 欄位名稱。對於需求資料表來說，這通常是 need_id，而對於作品資料表則是 work_id
-    search_fields = data.get('searchFields', []) # 對應模板的data-search-fields="資料庫欄位名稱,資料庫欄位名稱,..."，要擴大搜尋範圍直接從template新增前者欄位就好，不用修改views
+    search_term = data.get('searchTerm', '')
+    table_type = data.get('tableType', '')
+    id_field = data.get('idField', '')
+    search_fields = data.get('searchFields', [])
     user_id = data.get('userId', '')  # 添加用戶ID參數
     
-    # print(f"Search parameters: term='{search_term}', table='{table_type}', user_id='{user_id}'")
+    print(f"Search parameters: term='{search_term}', table='{table_type}', user_id='{user_id}'")
     
     model_map = {
         'need': DbNeedInfo,
@@ -1169,6 +1169,6 @@ def ViewFn_filter_items(request):
     
     # 執行查詢
     matching_ids = list(model.objects.filter(query).values_list(id_field, flat=True))
-    # print(f"Found matching IDs for user {user_id}: {matching_ids}")
+    print(f"Found matching IDs for user {user_id}: {matching_ids}")
     
     return JsonResponse(matching_ids, safe=False)

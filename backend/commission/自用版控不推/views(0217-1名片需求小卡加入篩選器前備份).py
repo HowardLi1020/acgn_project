@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.db import transaction
 from django.core.files.storage import default_storage
@@ -23,6 +23,7 @@ import rarfile
 import tempfile
 from django.views.decorators.csrf import csrf_exempt
 import tempfile
+import os
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -1129,46 +1130,3 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
         'ViewKey_DbNeedInfo': view_db_need_info,
     }
     return render(request, template_name, context)
-
-# 名片頁-過濾公開案件的通用API端點
-@require_POST
-def ViewFn_filter_items(request):
-    data = json.loads(request.body)
-    search_term = data.get('searchTerm', '') # 用來存儲用戶在搜尋欄中輸入的關鍵字。是用來過濾資料的主要依據
-    table_type = data.get('tableType', '') # 用來指定要過濾的資料表類型，例如 "need" 或 "work"
-    id_field = data.get('idField', '') # 用來指定要返回的 ID 欄位名稱。對於需求資料表來說，這通常是 need_id，而對於作品資料表則是 work_id
-    search_fields = data.get('searchFields', []) # 對應模板的data-search-fields="資料庫欄位名稱,資料庫欄位名稱,..."，要擴大搜尋範圍直接從template新增前者欄位就好，不用修改views
-    user_id = data.get('userId', '')  # 添加用戶ID參數
-    
-    # print(f"Search parameters: term='{search_term}', table='{table_type}', user_id='{user_id}'")
-    
-    model_map = {
-        'need': DbNeedInfo,
-        'work': DbWorkInfo
-    }
-    
-    model = model_map.get(table_type)
-    if not model:
-        return JsonResponse({'error': 'Invalid table type'}, status=400)
-    
-    # 構建基本查詢，限制只查詢當前用戶的數據
-    base_query = {
-        'need': lambda uid: Q(needer_id=uid),
-        'work': lambda uid: Q(worker_id=uid)
-    }
-    
-    # 先過濾用戶的數據
-    query = base_query[table_type](user_id)
-    
-    # 再加入搜索條件
-    if search_term:
-        search_query = Q()
-        for field in search_fields:
-            search_query |= Q(**{f"{field}__icontains": search_term})
-        query &= search_query
-    
-    # 執行查詢
-    matching_ids = list(model.objects.filter(query).values_list(id_field, flat=True))
-    # print(f"Found matching IDs for user {user_id}: {matching_ids}")
-    
-    return JsonResponse(matching_ids, safe=False)
