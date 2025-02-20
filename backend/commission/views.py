@@ -1138,7 +1138,7 @@ def ViewFn_filter_items(request):
     table_type = data.get('tableType', '') # 用來指定要過濾的資料表類型，例如 "need" 或 "work"
     id_field = data.get('idField', '') # 用來指定要返回的 ID 欄位名稱。對於需求資料表來說，這通常是 need_id，而對於作品資料表則是 work_id
     search_fields = data.get('searchFields', []) # 對應模板的data-search-fields="資料庫欄位名稱,資料庫欄位名稱,..."，要擴大搜尋範圍直接從template新增前者欄位就好，不用修改views
-    user_id = data.get('userId', '')  # 添加用戶ID參數
+    user_id = data.get('userId', '')  # 用戶ID參數
     
     # print(f"Search parameters: term='{search_term}', table='{table_type}', user_id='{user_id}'")
     

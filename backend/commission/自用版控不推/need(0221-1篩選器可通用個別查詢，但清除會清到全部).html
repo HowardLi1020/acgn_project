@@ -429,35 +429,28 @@ function getCookie(name) {
     // console.log('Filter input element:', filterInputs); // [Debug Log Removed]
 
     filterInputs.forEach(filterInput => {
-        let debounceTimer;
-        let storedValue = ''; // 用於存儲先前的輸入值
-        let isFilterActive = false; // 追蹤當前篩選狀態
-
-        // 監聽輸入事件
+        let debounceTimer; // 用於去抖動的計時器
+        
+        // 監聽每個輸入框的輸入事件
         filterInput.addEventListener('input', function(e) {
             const container = e.target.closest('.filter-container');
+            // 切換當前容器內的漏斗圖示
             const filterIconEmpty = container.querySelector('.filter-icon-empty');
             const filterIconFilled = container.querySelector('.filter-icon-filled');
-            const currentValue = e.target.value.trim();
-
-            // 更新篩選狀態和圖示
-            if (currentValue !== '') {
+            
+            if (e.target.value.trim() !== '') {
                 filterIconEmpty.style.display = 'none';
                 filterIconFilled.style.display = 'inline-block';
-                isFilterActive = true;
-                storedValue = currentValue; // 儲存當前輸入值
             } else {
                 filterIconEmpty.style.display = 'inline-block';
                 filterIconFilled.style.display = 'none';
-                isFilterActive = false;
-                storedValue = ''; // 清空儲存值
             }
 
             // 清除之前的計時器以避免重複請求
             clearTimeout(debounceTimer);
             // 設置新的計時器，延遲 300 毫秒執行
             debounceTimer = setTimeout(() => {
-                const searchTerm = currentValue;
+                const searchTerm = e.target.value.trim();
                 // 獲取輸入值並去除前後空白
                 const tableType = e.target.dataset.table;
                 // 從 data-* 屬性獲取篩選參數
@@ -467,7 +460,7 @@ function getCookie(name) {
 
                 // 如果搜尋字串為空，顯示所有卡片並返回
                 if (searchTerm === '') {
-                    document.querySelectorAll(`.commission-card[data-template="${tableType}"]`).forEach(card => {
+                    document.querySelectorAll('.commission-card').forEach(card => {
                         card.style.display = '';
                     });
                     return;
@@ -527,66 +520,18 @@ function getCookie(name) {
                 });
             }, 300); // 去抖動延遲時間
         });
-        // 篩選器輸入框-阻止 Enter預設行為
-        filterInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // 阻止表單提交或任何預設行為
-                this.dispatchEvent(new Event('input')); // 主動觸發篩選
-            }
-        });
-        // 點擊漏斗圖示區域的事件處理
-        const filterIconContainer = filterInput.closest('.filter-container').querySelector('.input-group-text');
-        filterIconContainer.addEventListener('click', function(e) {
-            const currentValue = filterInput.value.trim();
-            
-            // 只在已有輸入值時處理
-            if (storedValue || currentValue) {
-                if (isFilterActive) {
-                    // 切換到空白漏斗(清除狀態)
-                    filterInput.value = '';
-                    isFilterActive = false;
-                    
-                    // 切換圖示
-                    this.querySelector('.filter-icon-empty').style.display = 'inline-block';
-                    this.querySelector('.filter-icon-filled').style.display = 'none';
-                    
-                    // 顯示所有同模板的卡片
-                    const templateType = filterInput.dataset.template;
-                    document.querySelectorAll(`.commission-card[data-template="${templateType}"]`).forEach(card => {
-                        card.style.display = '';
-                    });
-                    
-                    // 隱藏「查無結果」提示
-                    document.querySelector(`.no-results[data-template="${templateType}"]`).style.display = 'none';
-                } else {
-                    // 切換到填滿漏斗(恢復前次值)
-                    filterInput.value = storedValue;
-                    isFilterActive = true;
-                    
-                    // 切換圖示
-                    this.querySelector('.filter-icon-empty').style.display = 'none';
-                    this.querySelector('.filter-icon-filled').style.display = 'inline-block';
-                    
-                    // 觸發篩選
-                    filterInput.dispatchEvent(new Event('input'));
-                }
-            }
-        });
 
-        // 清除按鈕邏輯
+        // 為每個篩選器綁定清除按鈕
         const clearBtn = filterInput.closest('.filter-container').querySelector('.clear-filter-btn');
         clearBtn.addEventListener('click', function(e) {
             const container = e.target.closest('.filter-container');
             const filterInput = container.querySelector('.filter-input');
             const templateType = filterInput.dataset.template;
             
-            // 只重置 UI 狀態，保留 storedValue
-            isFilterActive = !!storedValue;  // 根據儲存值決定篩選狀態
-            
             // 在清除篩選條件時，主動隱藏「查無結果」的提示訊息
             document.querySelector(`.no-results[data-template="${templateType}"]`).style.display = 'none';
             
-            // 清空輸入框但不影響儲存值
+            // 清空輸入框
             filterInput.value = '';
             
             // 切換漏斗圖示
@@ -595,15 +540,13 @@ function getCookie(name) {
             filterIconEmpty.style.display = 'inline-block';
             filterIconFilled.style.display = 'none';
             
-            // 只顯示當前模板所控制的卡片
+            // 顯示所有同模板的卡片
             document.querySelectorAll(`.commission-card[data-template="${templateType}"]`).forEach(card => {
                 card.style.display = '';
             });
             
-            // 手動觸發輸入事件但不影響儲存值
-            const tempValue = storedValue; // 暫存原始值
+            // 觸發篩選事件以同步狀態
             filterInput.dispatchEvent(new Event('input'));
-            storedValue = tempValue; // 還原原始值
         });
     });
 });

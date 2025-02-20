@@ -220,28 +220,29 @@
     </div>
     <div class="expandable-content" id="content-need-list">
       <div class="public-content">
-        <!-- 篩選器容器 -->
-        <div class="mb-3 filter-container" data-template="need">
+        <!-- 加入篩選器輸入框 -->
+        <div class="mb-3" data-template="need">
           <div class="input-group">
-            <span class="input-group-text">
+            <span class="input-group-text" id="basic-addon1">
               <!-- 空白漏斗圖示(顯示) -->
-              <svg class="filter-icon-empty" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#6c757d" viewBox="0 0 16 16">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#6c757d" class="bi bi-funnel" viewBox="0 0 16 16" id="filterIconEmpty">
                 <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"></path>
               </svg>
               <!-- 填滿漏斗圖示(隱藏，並透過JAVAScript控制顯示) -->
-              <svg class="filter-icon-filled" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#6c757d" viewBox="0 0 16 16" style="display: none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#6c757d" class="bi bi-funnel-fill" viewBox="0 0 16 16" id="filterIconFilled" style="display: none;">
                 <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5z"/>
               </svg>
             </span>
             <input type="text" 
-                   class="form-control filter-input" 
+                   class="form-control" 
+                   id="filterInput" 
                    data-template="need"
                    placeholder="輸入關鍵字以篩選關聯項目..."
                    data-table="need"
                    data-id-field="need_id"
                    data-search-fields="need_id,need_title,need_category,need_original_from,need_description,need_price,need_status"
                    data-user-id="{{ ViewKey_DbPublicCardInfo.member_basic_id }}">
-            <button class="btn app-btn-secondary clear-filter-btn" type="button">
+            <button class="btn app-btn-secondary" id="clearFilterBtn" type="button">
               清除
             </button>
           </div>
@@ -382,7 +383,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // 監聽 'DOMContentLoaded' 事件，確保在 HTML 文件完全加載後執行
-    window.handleVisibilityChange = function(container, itemId, status) {
+    window.handleVisibilityChange = function(container, needId, status) {
       // 找到容器內的 radio 按鈕
       const radio = container.querySelector(`input[type="radio"]`);
       
@@ -425,39 +426,28 @@ function getCookie(name) {
 // 通用篩選器-初始化(當document.addEventListener('DOMContentLoaded', function() {}載入完成後)
     // console.log('DOM loaded, initializing filter...'); // [Debug Log Removed]
     // 獲取篩選輸入框元素
-    const filterInputs = document.querySelectorAll('.filter-input');
-    // console.log('Filter input element:', filterInputs); // [Debug Log Removed]
+    const filterInput = document.getElementById('filterInput');
+    // console.log('Filter input element:', filterInput); // [Debug Log Removed]
 
-    filterInputs.forEach(filterInput => {
-        let debounceTimer;
-        let storedValue = ''; // 用於存儲先前的輸入值
-        let isFilterActive = false; // 追蹤當前篩選狀態
-
+    if (filterInput) {
+        let debounceTimer; // 用於去抖動的計時器
         // 監聽輸入事件
         filterInput.addEventListener('input', function(e) {
-            const container = e.target.closest('.filter-container');
-            const filterIconEmpty = container.querySelector('.filter-icon-empty');
-            const filterIconFilled = container.querySelector('.filter-icon-filled');
-            const currentValue = e.target.value.trim();
-
-            // 更新篩選狀態和圖示
-            if (currentValue !== '') {
+            // 切換漏斗圖示
+            const filterIconEmpty = document.getElementById('filterIconEmpty');
+            const filterIconFilled = document.getElementById('filterIconFilled');
+            if (e.target.value.trim() !== '') {
                 filterIconEmpty.style.display = 'none';
                 filterIconFilled.style.display = 'inline-block';
-                isFilterActive = true;
-                storedValue = currentValue; // 儲存當前輸入值
             } else {
                 filterIconEmpty.style.display = 'inline-block';
                 filterIconFilled.style.display = 'none';
-                isFilterActive = false;
-                storedValue = ''; // 清空儲存值
             }
-
             // 清除之前的計時器以避免重複請求
             clearTimeout(debounceTimer);
             // 設置新的計時器，延遲 300 毫秒執行
             debounceTimer = setTimeout(() => {
-                const searchTerm = currentValue;
+                const searchTerm = e.target.value.trim();
                 // 獲取輸入值並去除前後空白
                 const tableType = e.target.dataset.table;
                 // 從 data-* 屬性獲取篩選參數
@@ -465,9 +455,17 @@ function getCookie(name) {
                 const searchFields = e.target.dataset.searchFields.split(',');
                 const userId = e.target.dataset.userId;
 
+                console.log('Search parameters:', { // [Debug Log Removed]
+                    searchTerm,
+                    tableType,
+                    idField,
+                    searchFields,
+                    userId
+                });
+
                 // 如果搜尋字串為空，顯示所有卡片並返回
                 if (searchTerm === '') {
-                    document.querySelectorAll(`.commission-card[data-template="${tableType}"]`).forEach(card => {
+                    document.querySelectorAll('.commission-card').forEach(card => {
                         card.style.display = '';
                     });
                     return;
@@ -495,29 +493,43 @@ function getCookie(name) {
                     })
                 })
                 .then(response => {
+                    // console.log('Response status:', response.status); // [Debug Log Removed]
                     return response.json(); // 解析 JSON 回應
                 })
                 .then(data => {
+                    // console.log('Received data:', data); // [Debug Log Removed]
+                    // 獲取所有卡片元素
+                    // const cards = document.querySelectorAll('.commission-card');
+                    // console.log('Found cards:', cards.length); // [Debug Log Removed]
+
                     const templateType = e.target.dataset.template;
                     const cards = document.querySelectorAll(`.commission-card[data-template="${templateType}"]`);
                     let visibleCount = 0;
 
                     cards.forEach(card => {
+                        // 遍歷所有卡片，根據返回的 ID 更新顯示狀態
                         const debugInfo = card.querySelector('[data-debug]');
                         if (debugInfo) {
-                            // 動態獲取 ID
-                            const itemId = debugInfo.dataset[`${e.target.dataset.table}Id`]; // 使用 data-table 來決定 ID 屬性名稱
+                            // 從 data-need-id 屬性獲取卡片 ID
+                            const itemId = debugInfo.dataset.needId;
+                            // console.log('Processing card:', { // [Debug Log Removed]
+                            //     itemId,
+                            //     visible: data.includes(parseInt(itemId))
+                            // });
+                            // 根據 ID 是否在返回列表中決定顯示或隱藏
                             card.style.display = data.includes(parseInt(itemId)) ? '' : 'none';
                             if (card.style.display !== 'none') visibleCount++;
+                        } else {
+                            // console.warn('Debug info not found for card:', card); // [Debug Log Removed]
                         }
                     });
 
-                    // 控制提示訊息顯示
+                    // 控制提示訊息顯示，若無結果則顯示提示訊息
                     const noResults = document.querySelector(`.no-results[data-template="${templateType}"]`);
                     const searchTermSpan = noResults.querySelector('.search-term');
                     if (visibleCount === 0) {
                         noResults.style.display = 'block';
-                        searchTermSpan.textContent = searchTerm;
+                        searchTermSpan.textContent = `"${searchTerm}"`;
                     } else {
                         noResults.style.display = 'none';
                     }
@@ -527,84 +539,34 @@ function getCookie(name) {
                 });
             }, 300); // 去抖動延遲時間
         });
-        // 篩選器輸入框-阻止 Enter預設行為
-        filterInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // 阻止表單提交或任何預設行為
-                this.dispatchEvent(new Event('input')); // 主動觸發篩選
-            }
-        });
-        // 點擊漏斗圖示區域的事件處理
-        const filterIconContainer = filterInput.closest('.filter-container').querySelector('.input-group-text');
-        filterIconContainer.addEventListener('click', function(e) {
-            const currentValue = filterInput.value.trim();
-            
-            // 只在已有輸入值時處理
-            if (storedValue || currentValue) {
-                if (isFilterActive) {
-                    // 切換到空白漏斗(清除狀態)
-                    filterInput.value = '';
-                    isFilterActive = false;
-                    
-                    // 切換圖示
-                    this.querySelector('.filter-icon-empty').style.display = 'inline-block';
-                    this.querySelector('.filter-icon-filled').style.display = 'none';
-                    
-                    // 顯示所有同模板的卡片
-                    const templateType = filterInput.dataset.template;
-                    document.querySelectorAll(`.commission-card[data-template="${templateType}"]`).forEach(card => {
-                        card.style.display = '';
-                    });
-                    
-                    // 隱藏「查無結果」提示
-                    document.querySelector(`.no-results[data-template="${templateType}"]`).style.display = 'none';
-                } else {
-                    // 切換到填滿漏斗(恢復前次值)
-                    filterInput.value = storedValue;
-                    isFilterActive = true;
-                    
-                    // 切換圖示
-                    this.querySelector('.filter-icon-empty').style.display = 'none';
-                    this.querySelector('.filter-icon-filled').style.display = 'inline-block';
-                    
-                    // 觸發篩選
-                    filterInput.dispatchEvent(new Event('input'));
-                }
-            }
-        });
+    } else {
+        console.error('Filter input element not found!');
+    }
 
-        // 清除按鈕邏輯
-        const clearBtn = filterInput.closest('.filter-container').querySelector('.clear-filter-btn');
-        clearBtn.addEventListener('click', function(e) {
-            const container = e.target.closest('.filter-container');
-            const filterInput = container.querySelector('.filter-input');
-            const templateType = filterInput.dataset.template;
-            
-            // 只重置 UI 狀態，保留 storedValue
-            isFilterActive = !!storedValue;  // 根據儲存值決定篩選狀態
-            
-            // 在清除篩選條件時，主動隱藏「查無結果」的提示訊息
-            document.querySelector(`.no-results[data-template="${templateType}"]`).style.display = 'none';
-            
-            // 清空輸入框但不影響儲存值
-            filterInput.value = '';
-            
-            // 切換漏斗圖示
-            const filterIconEmpty = container.querySelector('.filter-icon-empty');
-            const filterIconFilled = container.querySelector('.filter-icon-filled');
-            filterIconEmpty.style.display = 'inline-block';
-            filterIconFilled.style.display = 'none';
-            
-            // 只顯示當前模板所控制的卡片
-            document.querySelectorAll(`.commission-card[data-template="${templateType}"]`).forEach(card => {
-                card.style.display = '';
-            });
-            
-            // 手動觸發輸入事件但不影響儲存值
-            const tempValue = storedValue; // 暫存原始值
-            filterInput.dispatchEvent(new Event('input'));
-            storedValue = tempValue; // 還原原始值
-        });
+    // 通用篩選器-清除按鈕功能
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+      const filterInput = document.getElementById('filterInput');
+      const templateType = filterInput.dataset.template; // 獲取模板類型
+      
+      // 在清除篩選條件時，主動隱藏「查無結果」的提示訊息
+      document.querySelector(`.no-results[data-template="${templateType}"]`).style.display = 'none';
+      
+      // 清空輸入框
+      filterInput.value = '';
+      
+      // 切換漏斗圖示
+      const filterIconEmpty = document.getElementById('filterIconEmpty');
+      const filterIconFilled = document.getElementById('filterIconFilled');
+      filterIconEmpty.style.display = 'inline-block';
+      filterIconFilled.style.display = 'none';
+      
+      // 顯示所有同模板的卡片
+      document.querySelectorAll(`.commission-card[data-template="${templateType}"]`).forEach(card => {
+        card.style.display = '';
+      });
+      
+      // 觸發篩選事件以同步狀態
+      filterInput.dispatchEvent(new Event('input'));
     });
 });
 </script>
