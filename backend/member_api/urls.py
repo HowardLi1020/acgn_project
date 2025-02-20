@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from .views import  VerifyEmailView, UpdateUserInfoView, UpdateUserLikesView, SendResetLinkView, ResetPasswordView, SendPhoneLinkView, ResetPhoneView, SendEmailLinkView, ResetEmailView, LineLoginView
 from member_api.views import AuthViewSet
+from .web_api_chatbot_openai import ChatBotView
+
 router = DefaultRouter()
 # https://...../profile/
 router.register('profile', views.MemberViewSet)
@@ -20,6 +22,7 @@ router.register(r'auth', AuthViewSet, basename='auth')
 app_name = 'member_api'
 urlpatterns = [
     path('', include(router.urls)),
+    path('chat-bot/', ChatBotView.as_view(), name='chat_bot'),    # 聊天機器人
     path('auth/protected-route/', views.ProtectedRouteView.as_view(), name='protected_route'),
     path('auth/update-info/<int:pk>/', UpdateUserInfoView.as_view(), name='update_user_info'),
     path('auth/update-likes/<int:pk>/', UpdateUserLikesView.as_view(), name='update_user_likes'),
