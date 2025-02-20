@@ -20,6 +20,7 @@ import EmailChangeView from "./views/member/EmailChangeView.vue";
 import EmailVerifyView from "./views/member/EmailVerifyView.vue";
 import EmailResetView from "./views/member/EmailResetView.vue";
 import VerifyLineView from "./views/member/VerifyLineView.vue";
+import ChatBotView from "./views/member/ChatBotView.vue";
 
 
 // Store
@@ -42,7 +43,6 @@ import FruitablesDetailView from "./views/FruitablesDetailView.vue";
 import FruitablesContactView from "./views/FruitablesContactView.vue";
 import FruitablesCartView from "./views/FruitablesCartView.vue";
 import FruitablesCheckoutView from "./views/FruitablesCheckoutView.vue";
-
 
 
 //路由設定 path 比對 URL，比對成功就載入對應的組件
@@ -176,6 +176,12 @@ const routes =[
     path: '/verify-line',
     name: 'VerifyLine',
     component: VerifyLineView,
+},
+{
+    //http://localhost:5173/chat-bot  => 載入 ChatBotView 聊天機器人
+    path: '/chat-bot',
+    name: 'ChatBot',
+    component: ChatBotView,
 },
 
 // Store

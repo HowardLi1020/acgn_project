@@ -56,6 +56,7 @@ const computedRoute = computed(() => {
                                 <router-link to="/store" class="nav-item nav-link" @click="scrollToTop">商店</router-link>
                                 <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link>
                                 <router-link :to="computedRoute" class="nav-item nav-link" @click="scrollToTop">會員專區</router-link>
+                                <router-link to="/chat-bot" class="nav-item nav-link" @click="scrollToTop">聊天室</router-link>
                                 
                             </div>
                         </div>
