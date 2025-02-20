@@ -14,6 +14,13 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+from dotenv import load_dotenv
+load_dotenv()
+
+# 從環境變數獲取 API 金鑰
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY') 
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

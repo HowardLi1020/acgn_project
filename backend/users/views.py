@@ -98,6 +98,7 @@ def edit(request):
         member.user_gender = gender
         member.user_birth = birth
         member.vip_status = vip_status
+        member.user_avatar = upload_file
 
         member.save()
         print(f"Updated user_avatar in database: {member.user_avatar}")

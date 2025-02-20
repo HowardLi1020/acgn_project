@@ -8,3 +8,7 @@ mysqlclient==2.2.6
 pillow==11.0.0
 sqlparse==0.5.3
 tzdata==2024.2
+faiss-cpu==1.9.0.post1
+openai==1.60.0
+PyMySQL==1.1.1
+sentence-transformers==3.3.1
