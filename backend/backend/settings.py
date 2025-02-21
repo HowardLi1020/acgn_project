@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     'Movies',
     'Animations',
     'Discussion_board',
+    'discussion',
+    'entertainment',
 ]
 
 # JWT 配置

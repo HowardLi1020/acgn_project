@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Count, Q
 
 
 class MemberBasic(models.Model):
@@ -28,23 +29,30 @@ class MemberBasic(models.Model):
         db_table = 'member_basic'
         verbose_name = "會員"
         verbose_name_plural = "會員"
-        indexes = [
-            models.Index(fields=['user_email', 'user_phone'], name='idx_user_email_phone'),  # 複合索引
-        ]
 
     def __str__(self):
         return self.user_name
 
 
+class Categories(models.Model):
+    category_id = models.AutoField(primary_key=True)
+    category_name = models.CharField(max_length=50, unique=True)  # 類別名稱 (動畫、遊戲、電影)
+
+    class Meta:
+        db_table = 'Categories'
+        verbose_name = "分類"
+        verbose_name_plural = "分類"
+
+    def __str__(self):
+        return self.category_name
+
+
 class Posts(models.Model):
-    post_id = models.AutoField(primary_key=True)  # 文章 ID
+    post_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)  # 標題
     body = models.TextField()  # 內容
-    author = models.ForeignKey(
-        MemberBasic, 
-        on_delete=models.CASCADE, 
-        related_name='posts'  # 關聯到 MemberBasic
-    )
+    author = models.ForeignKey(MemberBasic, on_delete=models.CASCADE, related_name='posts')
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE, related_name='posts', default=1)  # 新增分類
     created_at = models.DateTimeField(auto_now_add=True)  # 創建時間
     updated_at = models.DateTimeField(auto_now=True)  # 更新時間
 
@@ -58,18 +66,10 @@ class Posts(models.Model):
 
 
 class Replies(models.Model):
-    reply_id = models.AutoField(primary_key=True)  # 回覆 ID
-    post = models.ForeignKey(
-        Posts, 
-        on_delete=models.CASCADE, 
-        related_name='replies'  # 關聯到 Posts
-    )
+    reply_id = models.AutoField(primary_key=True)
+    post = models.ForeignKey(Posts, on_delete=models.CASCADE, related_name='replies')
     body = models.TextField()  # 回覆內容
-    author = models.ForeignKey(
-        MemberBasic, 
-        on_delete=models.CASCADE, 
-        related_name='replies'  # 關聯到 MemberBasic
-    )
+    author = models.ForeignKey(MemberBasic, on_delete=models.CASCADE, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)  # 創建時間
     updated_at = models.DateTimeField(auto_now=True)  # 更新時間
 
@@ -83,17 +83,9 @@ class Replies(models.Model):
 
 
 class Likes(models.Model):
-    like_id = models.AutoField(primary_key=True)  # 按讚 ID
-    post = models.ForeignKey(
-        Posts, 
-        on_delete=models.CASCADE, 
-        related_name='likes'  # 關聯到 Posts
-    )
-    user = models.ForeignKey(
-        MemberBasic, 
-        on_delete=models.CASCADE, 
-        related_name='likes'  # 關聯到 MemberBasic
-    )
+    like_id = models.AutoField(primary_key=True)
+    post = models.ForeignKey(Posts, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(MemberBasic, on_delete=models.CASCADE, related_name='likes')
     created_at = models.DateTimeField(auto_now_add=True)  # 按讚時間
     posts_report = models.BooleanField(default=False)  # 是否被檢舉
 

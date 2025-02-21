@@ -46,7 +46,9 @@ urlpatterns = [
     path('Movies/', include('Movies.urls')),
     path('Games/', include('Games.urls')),
     path('Animations/', include('Animations.urls')),
-    path('Discussion_board/', include('Discussion_board.urls'))
+    path('Discussion_board/', include('Discussion_board.urls')),
+    path("api/", include("discussion.urls")),
+    path('api/', include('entertainment.urls')),
 ]
 
 if settings.DEBUG:

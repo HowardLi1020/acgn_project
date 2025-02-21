@@ -1,5 +1,4 @@
 {% extends '[BASE]ALL.html' %}
-
 {% load static %}
 
 {% block app_title %}
@@ -11,8 +10,18 @@
 
     <form id="filter-form" method="get" action="{% url 'Discussion_board:index' %}" class="mb-4">
         <div class="row justify-content-center">
-            <div class="col-md-4 mb-3">
-                <input type="text" class="form-control" name="keyword" placeholder="搜尋..." value="{{ query }}">
+            <div class="col-md-3 mb-3">
+                <input type="text" class="form-control" id="search-query" name="keyword" placeholder="搜尋標題、內容、作者、日期..." value="{{ query }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <select class="form-select" name="category" onchange="this.form.submit()">
+                    <option value="" {% if category_filter == '' %}selected{% endif %}>所有分類</option>
+                    {% for category in categories %}
+                    <option value="{{ category.category_id }}" {% if category_filter|stringformat:"s" == category.category_id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.category_name }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="col-md-2 mb-3">
                 <select class="form-select" name="reported_filter" onchange="this.form.submit()">
@@ -21,6 +30,9 @@
                     <option value="0" {% if reported_filter == '0' %}selected{% endif %}>未被檢舉</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">搜尋</button>
+            </div>
         </div>
     </form>
 
@@ -28,6 +40,7 @@
         <table class="table table-bordered mt-3">
             <thead>
                 <tr>
+                    <th>分類</th>
                     <th>標題</th>
                     <th>作者名稱</th>
                     <th>內容</th>
@@ -41,6 +54,7 @@
             <tbody>
                 {% for post in page_obj %}
                 <tr>
+                    <td>{{ post.category.category_name }}</td>
                     <td>{{ post.title }}</td>
                     <td>{{ post.author.user_name }}</td>
                     <td>{{ post.body }}</td>
@@ -49,58 +63,49 @@
                     <td>{{ post.likes.count }}</td>
                     <td>
                         {% if post.reported_count > 0 %}
-                        是
-                        <form method="post" action="{% url 'Discussion_board:toggle_report' post.post_id %}" style="display:inline-block;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-warning">撤銷檢舉</button>
-                        </form>
+                            是
+                            <!-- 只有當該文章被檢舉時，才顯示「撤銷檢舉」按鈕 -->
+                            <form method="post" action="{% url 'Discussion_board:toggle_report' post.post_id %}" style="display:inline-block;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning">撤銷檢舉</button>
+                            </form>
                         {% else %}
-                        否
+                            否
                         {% endif %}
                     </td>
                     <td>
-                        {% if post.post_id %}
                         <form method="post" action="{% url 'Discussion_board:delete_post' post.post_id %}" onsubmit="return confirm('您確定要刪除這篇文章嗎？');">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger">刪除</button>
                         </form>
-                        {% else %}
-                        <span>無法刪除</span>
-                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8">沒有找到符合條件的貼文。</td>
+                    <td colspan="9">沒有找到符合條件的貼文。</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
+        <!-- 分頁按鈕 -->
         <nav aria-label="Page navigation" class="mt-4">
             <ul class="pagination justify-content-center">
-                <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-                    <a class="page-link" href="?page=1{% if query %}&keyword={{ query }}{% endif %}{% if reported_filter != '' %}&reported_filter={{ reported_filter }}{% endif %}" aria-label="首頁">首頁</a>
-                </li>
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&keyword={{ query }}{% endif %}{% if reported_filter != '' %}&reported_filter={{ reported_filter }}{% endif %}" aria-label="上一頁">上一頁</a>
+                    <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}&keyword={{ query }}&reported_filter={{ reported_filter }}&category={{ category_filter }}">上一頁</a>
                 </li>
                 {% endif %}
-                {% for num in page_obj.paginator.page_range %}
-                    {% if num == page_obj.number %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                    {% else %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}{% if query %}&keyword={{ query }}{% endif %}{% if reported_filter != '' %}&reported_filter={{ reported_filter }}{% endif %}">{{ num }}</a>
-                    </li>
-                    {% endif %}
+
+                {% for num in page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link page-ajax" href="?page={{ num }}&keyword={{ query }}&reported_filter={{ reported_filter }}&category={{ category_filter }}">{{ num }}</a>
+                </li>
                 {% endfor %}
+
                 {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&keyword={{ query }}{% endif %}{% if reported_filter != '' %}&reported_filter={{ reported_filter }}{% endif %}" aria-label="下一頁">下一頁</a>
+                    <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}&keyword={{ query }}&reported_filter={{ reported_filter }}&category={{ category_filter }}">下一頁</a>
                 </li>
                 {% endif %}
             </ul>

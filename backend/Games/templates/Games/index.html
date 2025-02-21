@@ -16,13 +16,14 @@
         </span>
     </div>
 </form>
+
 <p> </p>
-<p> </p>
+
 <!-- 新增遊戲按鈕 -->
 <a href="{% url 'Games:add_games' %}" class="btn btn-success mb-3">新增遊戲</a>
-<!-- 用來包住遊戲列表和分頁按鈕，方便進行局部更新 -->
+
+<!-- 遊戲列表 -->
 <div style="text-align:center" id="games-list">
-    <!-- 遊戲列表 -->
     <table class="table table-bordered mt-3">
         <thead>
             <tr>
@@ -43,7 +44,7 @@
                     {% if game.poster|slice:"0:4" == "http" %}
                         <img src="{{ game.poster }}" alt="{{ game.game_title }}" width="100"/>
                     {% else %}
-                        <img src="{{MEDIA_URL}}{{ game.poster }}" alt="{{ game.game_title }}" width="100"/>
+                        <img src="{{ MEDIA_URL }}{{ game.poster }}" alt="{{ game.game_title }}" width="100"/>
                     {% endif %}
                 </td>
                 <td>{{ game.game_title }}</td>
@@ -67,33 +68,25 @@
 
     <!-- 分頁按鈕 -->
     <nav aria-label="Page navigation example">
-      <ul class="pagination">
-        <!-- 回首頁按鈕 -->
-        <li class="page-item">
-          <a class="page-link page-ajax" href="/Games/" aria-label="首頁">首頁</a>
-        </li>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}&keyword={{ query }}">上一頁</a>
+            </li>
+            {% endif %}
 
-        <!-- 上一頁 -->
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="上一頁">上一頁</a>
-        </li>
-        {% endif %}
+            {% for num in page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link page-ajax" href="?page={{ num }}&keyword={{ query }}">{{ num }}</a>
+            </li>
+            {% endfor %}
 
-        <!-- 頁碼按鈕 -->
-        {% for num in page_obj.paginator.page_range %}
-        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-          <a class="page-link page-ajax" href="?page={{ num }}{% if query %}&keyword={{ query }}{% endif %}">{{ num }}</a>
-        </li>
-        {% endfor %}
-
-        <!-- 下一頁 -->
-        {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="下一頁">下一頁</a>
-        </li>
-        {% endif %}
-      </ul>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}&keyword={{ query }}">下一頁</a>
+            </li>
+            {% endif %}
+        </ul>
     </nav>
 </div>
 
@@ -102,7 +95,6 @@
 {% block app_script %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- 使用 AJAX 來實現無刷新分頁和搜尋 -->
 <script>
     $(document).ready(function() {
         // 綁定分頁按鈕的點擊事件
@@ -115,8 +107,8 @@
                 url: url,
                 type: 'GET',
                 success: function(response) {
-                    // 使用返回的 HTML 內容更新 games-list 區域
                     $('#games-list').html($(response).find('#games-list').html());
+                    window.history.pushState(null, "", url); // 更新網址
                 },
                 error: function() {
                     alert('頁面載入失敗');
@@ -135,8 +127,8 @@
                 url: url,
                 type: 'GET',
                 success: function(response) {
-                    // 更新 games-list 區域，顯示搜尋結果
                     $('#games-list').html($(response).find('#games-list').html());
+                    window.history.pushState(null, "", url); // 更新網址
                 },
                 error: function() {
                     alert('搜尋失敗');

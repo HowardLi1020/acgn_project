@@ -36,6 +36,23 @@ import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
 import Checkout from "./views/cart/Checkout.vue";
 import OrderList from "./views/cart/OrderList.vue";
 
+
+//Forum
+// import ForumView from "@/views/ForumView.vue"; // 你的首頁
+import ForumView from "./views/Forum/ForumView.vue";
+import GameDetail from "@/views/Forum/GameDetail.vue";  // ✅ 遊戲詳細頁
+import AnimationDetail from "@/views/Forum/AnimationDetail.vue";  // ✅ 動畫詳細頁
+import MovieDetail from "@/views/Forum/MovieDetail.vue";  // ✅ 電影詳細頁
+import Carousel from "@/views/Forum/Carousel.vue"  // 新添加的 Carousel 組件
+import DiscussionBoard from "@/views/Forum/DiscussionBoard.vue";  // 討論區主頁
+import CreatePost from "@/views/Forum/CreatePost.vue";  // <-- 新增：創建文章組件
+
+
+
+
+
+
+
 // 導入 Pages範例模板
 import FruitablesHomeView from "./views/FruitablesHomeView.vue";
 import FruitablesShopView from "./views/FruitablesShopView.vue";
@@ -234,6 +251,107 @@ const routes =[
     name: 'orderlist',
     component: OrderList,
 },
+
+
+
+
+//Forum
+
+
+{
+    path: "/Forum",
+    name: "Forum",
+    component: ForumView,
+    children: [
+      {
+        path: "",  // Forum 的默認子路由
+        component: Carousel,
+      },
+      {
+        path: "discussion",  // 討論區作為Forum的子路由
+        name: "DiscussionBoard",
+        component: DiscussionBoard,
+        meta: {
+          title: '討論區'
+        }
+      }
+    ]
+  },
+  { 
+    path: "/detail/games/:id",
+    name: "GameDetail", 
+    component: GameDetail, 
+    props: true 
+  },
+  {   
+    path: "/detail/animations/:id",
+    name: "AnimationDetail",
+    component: AnimationDetail,
+    props: true 
+  },
+  {   
+    path: "/detail/movies/:id",
+    name: "MovieDetail",
+    component: MovieDetail,
+    props: true 
+  },
+  // 討論區相關路由
+  {
+    path: "/create",
+    name: "CreatePost",
+    component: () => import('@/views/Forum/CreatePost.vue'),  // 需要創建這個組件
+    meta: {
+      title: '發表新文章'
+    }
+  },
+  {
+    path: "/post/:id",
+    name: "PostDetail",
+    component: () => import('@/views/Forum/PostDetail.vue'),  // 需要創建這個組件
+    props: true,
+    meta: {
+      title: '文章詳情'
+    }
+  },
+  {
+    path: "/Forum/discussion/:category",
+    name: "CategoryDiscussion",
+    component: DiscussionBoard,
+    props: true,
+    meta: {
+      title: '分類討論'
+    }
+  },
+  {
+    path: "/",
+    redirect: "/Forum",
+  },
+  // 捕獲所有未匹配的路由
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/Forum'
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 以下為 Pages範例模板 連結
 {

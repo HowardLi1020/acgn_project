@@ -45,7 +45,7 @@ const computedRoute = computed(() => {
                 <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
                     <div class="navbar-nav mx-auto">
                         <router-link to="/" class="nav-item nav-link active" @click="scrollToTop">首頁</router-link>
-                        <router-link to="/" class="nav-item nav-link" @click="scrollToTop">討論區</router-link>
+                        <router-link to="/Forum" class="nav-item nav-link" @click="scrollToTop">討論區</router-link>
                         <router-link to="/store" class="nav-item nav-link" @click="scrollToTop">周邊商店</router-link>
                         <router-link to="/commission" class="nav-item nav-link" @click="scrollToTop">委託專區</router-link>
                         <router-link :to="computedRoute" class="nav-item nav-link" @click="scrollToTop">會員專區</router-link>
