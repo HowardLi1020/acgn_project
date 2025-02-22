@@ -1,4 +1,5 @@
-import datetime
+import random
+import string
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -21,16 +22,16 @@ class ECPayPaymentView(APIView):
             HashKey="pwFHCqoQZGmho4w6",
             HashIV="EkRm7iFT261dpevs"
         )
-
+        random_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
         # 設定 ECPay 付款參數
         order_params = {
-            "MerchantTradeNo": f"{order.order_id}ECPAY",
+            "MerchantTradeNo": f"{order.order_id}ECPAY{random_code}",
             "MerchantTradeDate": order.order_date.strftime("%Y/%m/%d %H:%M:%S"),
             "PaymentType": "aio",
             "TotalAmount": str(int(order.total_amount)),
             "TradeDesc": "商品支付",
             "ItemName": "訂單商品",
-            "ReturnURL": "https://acd8-114-24-138-53.ngrok-free.app/cart_api/ecpay/callback/",
+            "ReturnURL": "https://7793-1-160-29-99.ngrok-free.app/cart_api/ecpay/callback/",
             "ClientBackURL": "http://localhost:5173/orderlist",
             "ChoosePayment": "ALL",
             "EncryptType": 1
@@ -68,7 +69,7 @@ class ECPayCallbackView(APIView):
         if not merchant_trade_no:
             return Response({"error": "缺少 MerchantTradeNo"}, status=status.HTTP_400_BAD_REQUEST)
 
-        order_id = merchant_trade_no.replace("ECPAY", "")  # 移除 "ECPAY" 獲取 order_id
+        order_id = merchant_trade_no.replace("ECPAY", "")[:-4]  # 移除 "ECPAY" 獲取 order_id
         order_id = int(order_id)  # 確保 order_id 是數字
         order = get_object_or_404(Orders, order_id=order_id)
 
