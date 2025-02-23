@@ -15,17 +15,22 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import StreamingHttpResponse
 import json
+from django.core.cache import cache
 
 class ChatBotView(APIView):
     # 類變量，所有實例共享
     movies_data = None
     games_data = None
+    animes_data = None
     movies_index = None
     games_index = None
+    animes_index = None
     movie_ids = None
     game_ids = None
+    anime_ids = None
     movie_bm25 = None
     game_bm25 = None
+    anime_bm25 = None
     model = None
 
     def __init__(self):
@@ -76,34 +81,51 @@ class ChatBotView(APIView):
     def first_time_load(self):
         """首次載入所有必要的數據和索引"""
         try:
-            print("開始載入 所有必要的數據和索引...")
+            # 嘗試從緩存獲取數據
+            cached_data = cache.get('chatbot_data')
+            if cached_data:
+                print("從緩存載入數據...")
+                (ChatBotView.movies_data, ChatBotView.games_data, ChatBotView.animes_data,
+                 ChatBotView.movies_index, ChatBotView.games_index, ChatBotView.animes_index,
+                 ChatBotView.movie_ids, ChatBotView.game_ids, ChatBotView.anime_ids,
+                 ChatBotView.movie_bm25, ChatBotView.game_bm25, ChatBotView.anime_bm25) = cached_data
+                return
+
+            print("開始載入所有必要的數據和索引...")
             # Excel 文件路徑
-            MOVIES_EXCEL = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/data_movies.xlsx'
-            GAMES_EXCEL = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/data_games.xlsx'
-            TOKENIZED_MOVIE_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/tokenized_movies_vector.index'
-            GAMES_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/games_excel_vector.index'
-            TOKENIZED_MOVIE_IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/tokenized_movies_ids.pkl'
-            GAMES_IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/games_excel_ids.pkl'
+            MOVIES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_movies.xlsx')
+            GAMES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_games.xlsx')
+            ANIMES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_animations.xlsx')
+            TOKENIZED_MOVIE_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_vector.index')
+            GAMES_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_vector.index')
+            ANIMES_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/animations_excel_vector.index')
+            TOKENIZED_MOVIE_IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_ids.pkl')
+            GAMES_IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_ids.pkl')
+            ANIMES_IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/animations__excel_ids.pkl')
 
             # 檢查檔案是否存在
-            for path in [MOVIES_EXCEL, GAMES_EXCEL, TOKENIZED_MOVIE_INDEX_PATH, 
-                        GAMES_INDEX_PATH, TOKENIZED_MOVIE_IDS_PATH, GAMES_IDS_PATH]:
+            for path in [MOVIES_EXCEL, GAMES_EXCEL, ANIMES_EXCEL, TOKENIZED_MOVIE_INDEX_PATH, 
+                        GAMES_INDEX_PATH, ANIMES_INDEX_PATH, TOKENIZED_MOVIE_IDS_PATH, GAMES_IDS_PATH, ANIMES_IDS_PATH]:
                 if not os.path.exists(path):
                     raise FileNotFoundError(f"找不到檔案：{path}")
                 print(f"檔案存在: {path}")
 
             ChatBotView.movies_data = pd.read_excel(MOVIES_EXCEL).dropna(subset=['movie_description']).reset_index(drop=True)
             ChatBotView.games_data = pd.read_excel(GAMES_EXCEL).dropna(subset=['game_description']).reset_index(drop=True)
+            ChatBotView.animes_data = pd.read_excel(ANIMES_EXCEL).dropna(subset=['animation_description']).reset_index(drop=True)
 
             print("開始載入向量索引...")
             ChatBotView.movies_index = faiss.read_index(TOKENIZED_MOVIE_INDEX_PATH)
             ChatBotView.games_index = faiss.read_index(GAMES_INDEX_PATH)
+            ChatBotView.animes_index = faiss.read_index(ANIMES_INDEX_PATH)
 
             print("開始載入 ID 映射...")
             with open(TOKENIZED_MOVIE_IDS_PATH, 'rb') as f:
                 ChatBotView.movie_ids = pickle.load(f)
             with open(GAMES_IDS_PATH, 'rb') as f:
                 ChatBotView.game_ids = pickle.load(f)
+            with open(ANIMES_IDS_PATH, 'rb') as f:
+                ChatBotView.anime_ids = pickle.load(f)
 
             print("開始載入 BM25 索引...")
             # 構建電影 BM25
@@ -114,58 +136,110 @@ class ChatBotView(APIView):
             game_corpus = [jieba.lcut(desc) for desc in ChatBotView.games_data['game_description'].astype(str).tolist()]
             ChatBotView.game_bm25 = BM25Okapi(game_corpus)
 
+            # 構建動畫 BM25
+            anime_corpus = [jieba.lcut(desc) for desc in ChatBotView.animes_data['animation_description'].astype(str).tolist()]
+            ChatBotView.anime_bm25 = BM25Okapi(anime_corpus)
+
             print("所有數據和索引載入成功")
+
+            # 將數據存入緩存
+            cache_data = (ChatBotView.movies_data, ChatBotView.games_data, ChatBotView.animes_data,
+                         ChatBotView.movies_index, ChatBotView.games_index, ChatBotView.animes_index,
+                         ChatBotView.movie_ids, ChatBotView.game_ids, ChatBotView.anime_ids,
+                         ChatBotView.movie_bm25, ChatBotView.game_bm25, ChatBotView.anime_bm25)
+            cache.set('chatbot_data', cache_data, timeout=86400)  # 24小時過期
 
         except Exception as e:
             print(f"首次載入數據和索引時發生錯誤: {e}")
             raise
 
-    def hybrid_search(self, query, use_retrieval=True, is_movie=True, top_k=5):
+    def hybrid_search(self, query, use_retrieval=True, is_movie=True, is_game=False, is_anime=False, top_k=5):
         """混合搜索：FuzzyWuzzy + BM25 + FAISS"""
         try:
-            # 檢查是否開啟檢索模式
             if not use_retrieval:
                 return ["檢索模型已關閉，將使用 AI 直接回答問題。"]
+            
+            # 根據類型選擇對應的數據和索引
+            if is_anime:
+                print("查詢動畫數據庫") 
+                data = ChatBotView.animes_data
+                index = ChatBotView.animes_index
+                bm25 = ChatBotView.anime_bm25
+                ids = ChatBotView.anime_ids
+                title_field = 'animation_title'
+                desc_field = 'animation_description'
+                genre_field = 'animation_genre'
+            elif is_game:
+                print("查詢遊戲數據庫") 
+                data = ChatBotView.games_data
+                index = ChatBotView.games_index
+                bm25 = ChatBotView.game_bm25
+                ids = ChatBotView.game_ids
+                title_field = 'game_title'
+                desc_field = 'game_description'
+                genre_field = 'game_genre'
+            else:  # 默認為電影
+                print("查詢電影數據庫") 
+                data = ChatBotView.movies_data
+                index = ChatBotView.movies_index
+                bm25 = ChatBotView.movie_bm25
+                ids = ChatBotView.movie_ids
+                title_field = 'movie_title'
+                desc_field = 'movie_description'
+                genre_field = 'movie_genre'
             
             # 1. 使用結巴分詞處理查詢
             query_words = set(jieba.lcut(query))
             
             # 2. FuzzyWuzzy 進行標題匹配
-            title_matches = self.fuzzy_title_search(query, is_movie)
+            title_matches = self.fuzzy_title_search(query, is_movie=is_movie, is_game=is_game, is_anime=is_anime)
             
             # 3. BM25 + One-Hot 進行類型匹配
-            type_matches = self.type_search(query_words, is_movie)
+            type_matches = self.type_search(query_words, is_movie=is_movie, is_game=is_game, is_anime=is_anime)
             
             # 4. 合併結果並取 top-k
             merged_results = self.merge_search_results(title_matches, type_matches, top_k)
             
             # 5. 使用 FAISS 進行語義搜索
-            final_results = self.semantic_search(merged_results, query, is_movie)
+            final_results = self.semantic_search(merged_results, query, is_movie=is_movie, is_game=is_game, is_anime=is_anime)
             
             return self.format_results(final_results)
         except Exception as e:
             print(f"混合搜索時發生錯誤：{str(e)}")
             return []
 
-    def fuzzy_title_search(self, query, is_movie=True):
+    def fuzzy_title_search(self, query, is_movie=True, is_game=False, is_anime=False):
         """使用 FuzzyWuzzy 進行標題匹配"""
         try:
-            data = ChatBotView.movies_data if is_movie else ChatBotView.games_data
-            title_field = 'movie_title' if is_movie else 'game_title'
+            # 根據類型選擇對應的數據
+            if is_anime:
+                data = ChatBotView.animes_data
+                title_field = 'animation_title'
+                desc_field = 'animation_description'
+                genre_field = 'animation_genre'
+            elif is_game:
+                data = ChatBotView.games_data
+                title_field = 'game_title'
+                desc_field = 'game_description'
+                genre_field = 'game_genre'
+            else:  # 默認為電影
+                data = ChatBotView.movies_data
+                title_field = 'movie_title'
+                desc_field = 'movie_description'
+                genre_field = 'movie_genre'
             
             # 計算每個標題的匹配分數
             matches = []
             for idx, row in data.iterrows():
                 title = str(row[title_field])
-                # 使用 token_set_ratio 來處理部分匹配
                 score = fuzz.token_set_ratio(query, title)
                 if score > 50:  # 設定閾值
                     matches.append({
                         'index': idx,
                         'title': title,
                         'score': score,
-                        'description': row['movie_description' if is_movie else 'game_description'],
-                        'genre': row['movie_genre' if is_movie else 'game_genre']
+                        'description': row[desc_field],
+                        'genre': row[genre_field]
                     })
             
             # 根據分數排序
@@ -175,11 +249,28 @@ class ChatBotView(APIView):
             print(f"標題匹配時發生錯誤：{str(e)}")
             return []
 
-    def type_search(self, query_words, is_movie=True):
+    def type_search(self, query_words, is_movie=True, is_game=False, is_anime=False):
         """使用 BM25 + One-Hot Encoding 進行類型匹配"""
         try:
-            data = ChatBotView.movies_data if is_movie else ChatBotView.games_data
-            genre_field = 'movie_genre' if is_movie else 'game_genre'
+            # 根據類型選擇對應的數據
+            if is_anime:
+                data = ChatBotView.animes_data
+                bm25 = ChatBotView.anime_bm25
+                genre_field = 'animation_genre'
+                title_field = 'animation_title'
+                desc_field = 'animation_description'
+            elif is_game:
+                data = ChatBotView.games_data
+                bm25 = ChatBotView.game_bm25
+                genre_field = 'game_genre'
+                title_field = 'game_title'
+                desc_field = 'game_description'
+            else:  # 默認為電影
+                data = ChatBotView.movies_data
+                bm25 = ChatBotView.movie_bm25
+                genre_field = 'movie_genre'
+                title_field = 'movie_title'
+                desc_field = 'movie_description'
             
             # 將類型轉換為 One-Hot 編碼
             mlb = MultiLabelBinarizer()
@@ -187,24 +278,21 @@ class ChatBotView(APIView):
             genre_matrix = mlb.fit_transform(genres)
             
             # 使用 BM25 進行描述匹配
-            bm25 = ChatBotView.movie_bm25 if is_movie else ChatBotView.game_bm25
             desc_scores = bm25.get_scores(query_words)
             
             # 計算類型相似度
             matches = []
             for idx, (genre_vec, desc_score) in enumerate(zip(genre_matrix, desc_scores)):
-                # 結合 BM25 分數和類型匹配
                 score = desc_score * 0.7 + np.sum(genre_vec) * 0.3
                 if score > 0:
                     matches.append({
                         'index': idx,
-                        'title': data.iloc[idx]['movie_title' if is_movie else 'game_title'],
+                        'title': data.iloc[idx][title_field],
                         'score': float(score),
-                        'description': data.iloc[idx]['movie_description' if is_movie else 'game_description'],
+                        'description': data.iloc[idx][desc_field],
                         'genre': data.iloc[idx][genre_field]
                     })
             
-            # 根據分數排序
             matches.sort(key=lambda x: x['score'], reverse=True)
             return matches
         except Exception as e:
@@ -254,7 +342,7 @@ class ChatBotView(APIView):
             print(f"合併結果時發生錯誤：{str(e)}")
             return []
 
-    def semantic_search(self, candidates, query, is_movie=True):
+    def semantic_search(self, candidates, query, is_movie=True, is_game=False, is_anime=False):
         """對候選結果進行語義搜索"""
         try:
             if not candidates:
@@ -266,8 +354,15 @@ class ChatBotView(APIView):
             # 獲取候選項的索引
             indices = [c['index'] for c in candidates]
             
+            # 根據類型選擇對應的索引
+            if is_anime:
+                index = ChatBotView.animes_index
+            elif is_game:
+                index = ChatBotView.games_index
+            else:  # 默認為電影
+                index = ChatBotView.movies_index
+            
             # 使用 FAISS 搜索
-            index = ChatBotView.movies_index if is_movie else ChatBotView.games_index
             distances, _ = index.search(query_vector.astype('float32'), len(indices))
             
             # 添加語義相似度分數
@@ -284,7 +379,7 @@ class ChatBotView(APIView):
             return results
         except Exception as e:
             print(f"語義搜索時發生錯誤：{str(e)}")
-            return candidates  # 如果語義搜索失敗，返回原始結果
+            return candidates
 
     def format_results(self, results):
         """格式化搜索結果"""
@@ -310,9 +405,9 @@ class ChatBotView(APIView):
         # 直接相關關鍵詞
         direct_keywords = {
             '電影', '遊戲', '動畫', '漫畫', '卡通',
-            '劇情', '角色', '故事', '演員', '導演',
-            '玩法', '關卡', '通關', '打怪', '副本',
-            '動漫', '聲優', '漫畫家', '作者', '製作',
+            '劇情', '主角', '角色', '故事', '演員', '導演',
+            '玩法', '關卡', '通關', '打怪', '副本', '題材',
+            '動漫', '聲優', '漫畫家', '作者', '製作','作品',
             '上映', '發售', '續作', '系列', '評價',
             '推薦', '好看', '好玩', '劇場版', '新作'
         }
@@ -358,58 +453,93 @@ class ChatBotView(APIView):
             yield f"生成響應時發生錯誤: {str(e)}"
 
     def post(self, request):
-        """處理POST請求"""
         try:
             data = json.loads(request.body)
             session_id = data.get('session_id')
-            question = data.get('message')
-            use_retrieval = data.get('use_retrieval', True)
-            top_k = data.get('top_k', 5)
+            original_message = data.get("message", "").strip()  # 保存原始訊息
+            use_retrieval = data.get("use_retrieval", True)
+            top_k = data.get("top_k", 5)
 
-            if not session_id or not question:
+            if not session_id or not original_message:
                 return Response({'error': '缺少必要參數'}, status=400)
-            
-            # 主題範圍過濾
-            if not self.is_entertainment_related(question):
+
+            # 主題範圍過濾（使用原始訊息進行判斷）
+            if not self.is_entertainment_related(original_message):
                 return Response({
-                    'message': '抱歉，我僅限於娛樂相關話題喔！您可以試著詢問關於電影、遊戲、動畫、漫畫等相關內容。',
+                    'message': '抱歉，我僅限於娛樂相關話題喔！您可以試著詢問關於電影、遊戲、動畫等相關內容。',
                     'type': 'entertainment_filter'
                 }, status=200)
 
-            # 構建 prompt
-            if use_retrieval:
-                # 準備上下文
-                movie_results = self.hybrid_search(question, use_retrieval=True, is_movie=True, top_k=top_k)
-                game_results = self.hybrid_search(question, use_retrieval=True, is_movie=False, top_k=top_k)
-                
-                # 整合檢索結果
-                context = []
-                if movie_results:
-                    context.append("\n=== 相關電影資訊 ===")
-                    context.extend(movie_results)
-                if game_results:
-                    context.append("\n=== 相關遊戲資訊 ===")
-                    context.extend(game_results)
-                
-                context = "\n\n".join(context) if context else "未找到相關資料。"
-                
-                prompt = (
-                    "你是一個專業且熟悉電影、遊戲、動畫、漫畫的推薦助理，請根據以下資訊回答問題。\n\n"
-                    "檢索到的相關資訊：\n"
-                    f"{context}\n\n"
-                    "請遵循以下規則回答：\n"
-                    "1. 優先使用上述檢索到的資訊來回答\n"
-                    "2. 簡短總結找到的相關內容\n"
-                    "3. 如果檢索資訊中沒有相關內容，請說明「抱歉，在資料庫中未找到相關資訊」"
-                    f"直接根據你的知識，回答關於「{question}」的相關資訊\n"
-                    "4. 不要編造資訊，清楚區分哪些是來自資料庫，哪些是你的補充說明\n"
-                    "5. 回答要簡潔但要包含重要細節\n"
-                    "6. 如果有多個相關結果，請綜合整理後回答\n\n"
-                    f"用戶問題：{question}\n"
-                    "請根據以上資訊提供答案："
-                )
+            # 預設所有類型為 False
+            is_movie, is_game, is_anime = False, False, False
+            message = original_message  # 用於後續處理的訊息
 
-            # 使用 Gemini 生成回應
+            # 1. 判斷查詢類型
+            if message.startswith("[電影]"):
+                is_movie = True
+                message = message.replace("[電影]", "").strip()
+            elif message.startswith("[遊戲]"):
+                is_game = True
+                message = message.replace("[遊戲]", "").strip()
+            elif message.startswith("[動畫]"):
+                is_anime = True
+                message = message.replace("[動畫]", "").strip()
+            else:
+                # 若未指定類型，則預設查詢電影
+                is_movie = True
+
+            # 2. 準備上下文
+            context = []
+            if use_retrieval:
+                # 只搜索指定的類型
+                if is_movie:
+                    results = self.hybrid_search(message, use_retrieval=True, is_movie=True, is_game=False, is_anime=False, top_k=top_k)
+                    if results:
+                        context.append("\n=== 相關電影資訊 ===")
+                        context.extend(results)
+                elif is_game:
+                    results = self.hybrid_search(message, use_retrieval=True, is_movie=False, is_game=True, is_anime=False, top_k=top_k)
+                    if results:
+                        context.append("\n=== 相關遊戲資訊 ===")
+                        context.extend(results)
+                elif is_anime:
+                    results = self.hybrid_search(message, use_retrieval=True, is_movie=False, is_game=False, is_anime=True, top_k=top_k)
+                    if results:
+                        context.append("\n=== 相關動畫資訊 ===")
+                        context.extend(results)
+
+                context = "\n\n".join(context) if context else "未找到相關資料。"
+
+            # 3. 構建 prompt
+            category_display = {
+                "movie": "電影",
+                "game": "遊戲",
+                "anime": "動畫"
+            }
+
+            # 確定當前查詢類別
+            category = "movie" if is_movie else "game" if is_game else "anime"
+
+            prompt = (
+                "你是一個專業且熟悉電影、遊戲、動畫的推薦和查找助理。\n"
+                "請根據用戶的查詢內容，提供準確且有幫助的回答。\n\n"
+                f"### 用戶查詢類別：{category_display[category]}\n"
+                f"### 用戶問題：{message}\n\n"
+                "### 檢索到的相關資訊：\n"
+                f"{context}\n\n"
+                "### 請遵循以下規則回答：\n"
+                "1. 嚴格遵守用戶選擇的類別範圍\n"
+                "2. 優先使用上述檢索到的資訊來回答\n"
+                "3. 如果檢索資訊中沒有相關內容：\n"
+                "   - 明確說明「在資料庫中未找到相關資訊」\n"
+                "   - 再根據知識庫提供相關資訊\n"
+                "4. 清楚區分資料庫資訊和知識庫補充\n"
+                "5. 回答要簡潔但包含重要細節\n"
+                f"用戶問題：{message}\n"
+                "請根據以上準則提供答案："
+            )
+
+            # 4. 使用 Gemini 生成回應
             try:
                 response = self.chat.send_message_stream(prompt)
                 return StreamingHttpResponse(

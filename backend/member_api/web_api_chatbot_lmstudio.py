@@ -2,12 +2,10 @@ import pandas as pd
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
-from transformers import pipeline
 import os
 import pickle
-import pymysql
+from django.conf import settings
 from openai import OpenAI
-
 from rest_framework.views import APIView
 from django.http import StreamingHttpResponse
 from rest_framework.response import Response
@@ -22,14 +20,14 @@ class ChatBotView(APIView):
         self.client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
         # Excel 文件路徑
-        self.MOVIES_EXCEL = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/data_movies.xlsx'
-        self.GAMES_EXCEL = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/data_games.xlsx'
+        self.MOVIES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_movies.xlsx')
+        self.GAMES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_games.xlsx')
 
         # 索引存放路徑
-        self.TOKENIZED_MOVIE_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/tokenized_movies_vector.index'
-        self.GAMES_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/games_excel_vector.index'
-        self.TOKENIZED_MOVIE_IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/tokenized_movies_ids.pkl'
-        self.GAMES_IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/games_excel_ids.pkl'
+        self.TOKENIZED_MOVIE_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_vector.index')
+        self.GAMES_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_vector.index')
+        self.TOKENIZED_MOVIE_IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_ids.pkl')
+        self.GAMES_IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_ids.pkl')
 
         # 載入資料和索引
         self.load_data_and_indices()
