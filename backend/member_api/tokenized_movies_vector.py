@@ -4,12 +4,13 @@ import pickle
 import numpy as np
 import os
 from sentence_transformers import SentenceTransformer
+from django.conf import settings
 
 # 全局設置
 MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-EXCEL_FILE = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/tokenized_descriptions.xlsx'
-VECTOR_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/tokenized_movies_vector.index'
-IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/tokenized_movies_ids.pkl'
+EXCEL_FILE = os.path.join(settings.BASE_DIR, 'member_api/original_data/tokenized_descriptions.xlsx')
+VECTOR_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_vector.index')
+IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_ids.pkl')
 
 # 讀取斷詞結果 Excel
 def read_tokenized_excel(file_path):

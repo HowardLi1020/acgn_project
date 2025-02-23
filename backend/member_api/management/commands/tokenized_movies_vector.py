@@ -3,7 +3,9 @@ import pandas as pd
 import faiss
 import pickle
 import numpy as np
+import os
 from sentence_transformers import SentenceTransformer
+from django.conf import settings
 
 class Command(BaseCommand):
     help = 'Import Excel files and create FAISS index'
@@ -12,9 +14,9 @@ class Command(BaseCommand):
         super().__init__()
         # 模型名稱與檔案路徑
         self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-        self.EXCEL_FILE = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/data_movies_tokenized.xlsx'
-        self.VECTOR_INDEX_PATH = 'member_api/vector_data/tokenized_movies_vector.index'
-        self.IDS_PATH = 'member_api/vector_data/tokenized_movies_ids.pkl'
+        self.EXCEL_FILE = os.path.join(settings.BASE_DIR, 'member_api/original_data/tokenized_descriptions.xlsx')
+        self.VECTOR_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_vector.index')
+        self.IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_ids.pkl')
 
     def read_tokenized_excel(self, file_path):
         """讀取已經人工檢查的斷詞結果"""

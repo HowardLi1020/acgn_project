@@ -4,19 +4,16 @@ import faiss
 from sentence_transformers import SentenceTransformer
 import os
 import pickle
-from dotenv import load_dotenv
-
-# 載入環境變數
-load_dotenv()
+from django.conf import settings
 
 # 全局設置
 MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-MOVIES_EXCEL = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/data_movies.xlsx'
-GAMES_EXCEL = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/original_data/data_games.xlsx'
+MOVIES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_movies.xlsx')
+GAMES_EXCEL = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_games.xlsx')
 MOVIES_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/movies_excel_vector.index'
 GAMES_INDEX_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/games_excel_vector.index'
 MOVIES_IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/movies_excel_ids.pkl'
-GAMES_IDS_PATH = 'C:/Users/User/Desktop/0215/acgn_project/backend/member_api/vector_data/games_excel_ids.pkl'
+GAMES_IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_ids.pkl')
 
 
 def read_excel_data(file_path, is_movie=True):
