@@ -10,6 +10,7 @@ const msg = ref([]);
 const inputMessage = ref('');
 let sn = 0;
 const isOpen = ref(true); // 控制彈窗顯示
+const selectedCategory = ref('all'); // 新增：用於存儲選擇的類別
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value;
@@ -19,13 +20,24 @@ const sendMessage = async () => {
   const message = inputMessage.value;
   if (!message) return;
 
-  msg.value.push({ content: message, id: `user_${sn}`, isUser: true });
+  // 新增：根據選擇的類別添加前綴
+  let fullMessage = message;
+  if (selectedCategory.value !== 'all') {
+    const categoryText = {
+      'movie': '電影',
+      'game': '遊戲',
+      'anime': '動畫'
+    }[selectedCategory.value];
+    fullMessage = `[${categoryText}] ${message}`;
+  }
+
+  msg.value.push({ content: fullMessage, id: `user_${sn}`, isUser: true });
   sn++;
   inputMessage.value = '';
 
   const payload = {
     session_id: "sess_55663312",
-    message: message,
+    message: fullMessage,
   };
 
   try {
@@ -125,7 +137,15 @@ onMounted(() => {
                 </li>
             </ul>
             <div class="input-area">
-                <textarea v-model="inputMessage" placeholder="請輸入您的訊息"></textarea>
+                <div class="input-container">
+                    <select v-model="selectedCategory" class="category-select">
+                        <option value="all">全部類別</option>
+                        <option value="movie">電影</option>
+                        <option value="game">遊戲</option>
+                        <option value="anime">動畫</option>
+                    </select>
+                    <textarea v-model="inputMessage" placeholder="請輸入您的訊息"></textarea>
+                </div>
                 <button class="button-8" @click="sendMessage">送出</button>
             </div>
         </div>
@@ -136,10 +156,10 @@ onMounted(() => {
 .chat-popup {
   position: fixed;
   bottom: 100px;
-  right: 300px;
-  width: 1000px; /* 初始寬度 */
-  height: 800px; 
-  max-height: 1000px; /* 最大高度 */
+  right: 400px;
+  width: 1200px; /* 初始寬度 */
+  height: 650px; 
+  max-height: 800px; /* 最大高度 */
   border: 1px solid #ccc;
   background-color: rgb(214, 224, 224);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
@@ -204,18 +224,34 @@ ul#msg li:not(.user) {
   border-top: 1px solid #dee2e6;
 }
 
+.input-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.category-select {
+  width: 120px;
+  height: 40px;
+  padding: 5px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: white;
+  cursor: pointer;
+}
+
 textarea {
-  width: 100%;
-  height: 80px; /* 固定高度 */
-  min-height: 80px; /* 最小高度 */
-  max-height: 80px; /* 最大高度 */
-  resize: none; /* 禁止調整大小 */
+  flex: 1;
+  height: 80px;
+  min-height: 80px;
+  max-height: 80px;
+  resize: none;
   font-family: 'Times New Roman', Times, serif;
   font-size: 18px;
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  margin-bottom: 10px;
 }
 
 .button-8 {
