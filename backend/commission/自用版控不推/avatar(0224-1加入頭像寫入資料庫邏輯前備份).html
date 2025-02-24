@@ -8,8 +8,7 @@
     width: 150px;
     height: 150px;
     /* border: 4px solid white; */
-    /* border-radius: 50%;  圓形 */
-    border-radius: 5px; /* 微圓角 */
+    /* border-radius: 50%; */
     overflow: hidden;
     background-color: #f0f0f0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -67,7 +66,7 @@
 
       <!-- 頭像控制項 -->
       <div class="avatar-controls">
-        <div class="form-check form-switch" onclick="this.querySelector('input[type=checkbox]').click()">
+        <div class="form-check form-switch">
           {% if ViewKey_DbPublicCardInfo.user_avatar %}
           <input
             class="form-check-input"
@@ -75,13 +74,10 @@
             id="settings-switch-2"
             {% if not ViewKey_DbPublicCardInfo.use_default_avatar %}checked{% endif %}
             onchange="handleAvatarToggle(this)"
-            name="use_default_avatar"
-            style="pointer-events: none  /* 防止點擊 input 時觸發雙重事件 */"
           />
-          <label class="form-check-label" for="settings-switch-2" style="pointer-events: none">使用自訂圖</label>
+          <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
           {% endif %}
         </div>
-        <input type="file" id="avatarInput" name="avatar" style="display: none;">
         <button class="btn app-btn-primary" onclick="changeAvatar(event)">變更頭像</button>
       </div>
 <!-- </div> -->
@@ -187,9 +183,9 @@ let userSelectedAvatar = null;
 // 使用者頭像-變更頭像按鈕
 window.changeAvatar = function(event) {
   event.preventDefault();
-  const fileInput = document.getElementById('avatarInput');
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
   fileInput.accept = 'image/*';
-  fileInput.click();
 
   fileInput.onchange = function(e) {
     if (e.target.files && e.target.files[0]) {
@@ -203,7 +199,7 @@ window.changeAvatar = function(event) {
           avatarImg.src = userSelectedAvatar;
         }
 
-        // 自動勾選使用自訂圖開關
+        // 顯示並更新頭像開關
         const switchContainer = document.querySelector('.avatar-controls .form-check');
         if (switchContainer) {
           if (!switchContainer.querySelector('input')) {
@@ -215,24 +211,22 @@ window.changeAvatar = function(event) {
                 id="settings-switch-2"
                 onchange="handleAvatarToggle(this)"
                 checked
-                name="use_default_avatar"
-                style="pointer-events: none"
               />
-              <label class="form-check-label" for="settings-switch-2" style="pointer-events: none">使用自訂圖</label>
+              <label class="form-check-label" for="settings-switch-2">使用自訂圖</label>
             `;
           } else {
             // 如果開關已存在，更新其狀態
             const switchInput = switchContainer.querySelector('input');
             switchInput.checked = true;
-            // 觸發開關狀態更新
-            const event = new Event('change');
-            switchInput.dispatchEvent(event);
           }
         }
       };
+
       reader.readAsDataURL(file);
     }
   };
+
+  fileInput.click();
 };
 
 // 使用者頭像-自訂圖切換開關

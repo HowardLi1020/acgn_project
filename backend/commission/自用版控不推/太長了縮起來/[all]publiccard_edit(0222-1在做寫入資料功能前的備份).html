@@ -22,6 +22,48 @@
     overflow: visible; /* 允許內容超出容器 */
   }
 
+  /* 開關樣式 */
+  /* .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  } */
+
+  /* 開關輸入樣式 */
+  /* .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  } */
+
+  /* 開關滑塊樣式 */
+  /* .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+  } */
+
+  /* 開關滑塊前景樣式 */
+  /* .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.4s;
+  } */
+
+
   /* 右側區域容器樣式 */
   .right-section {
     position: static; /* 移除相對定位 */
@@ -29,10 +71,21 @@
     padding-left: 40px; /* 與左側區域保持間距 */
   }
 
+  /* 開關容器樣式 */
+  /* .switches-container { */
+    /* display: grid; */
+    /* grid-template-columns: repeat(2, 1fr); 2x2 網格布局 */
+    /* gap: 15px; */
+  /* } */
+
+  
+
+
   /* 頭像與橫幅-自訂圖開關的字體大小 */
   .form-check-label {
     font-size: 0.85rem; /*  調整字體大小 */
   }
+
 
   /* 右側開關區域的獨立樣式 */
   .right-section .form-check {
@@ -115,11 +168,16 @@
     align-items: center; /* 垂直居中 */
   }
 
+
+
+
   /* 修正 form-check 的樣式 */
   .content-list .form-check.me-3 {
     flex-direction: row; /* 覆蓋 row-reverse */
     justify-content: flex-start; /* 覆蓋 space-between */
   }
+
+
 
   /* 輸入框(含喜好作品、屬性Tag、價目表區)-提示字 placeholder 樣式 */
   .form-control::placeholder {
@@ -128,6 +186,18 @@
     opacity: 0.8;         /* 稍微調整透明度 */
   }
 
+  
+  /* 表單組樣式 */
+  /* .profile-form .form-group {
+    margin-bottom: 1rem;
+  } */
+
+  /* 表單控制樣式 */
+  /* .profile-form .form-control {
+    width: 100%;
+  } */
+
+  
 </style>
 {% endblock %}
 {% block app_title %}
@@ -142,7 +212,6 @@
   style="flex-grow: 1"
 >
   <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
     {% include 'commission/publiccard_edit_test/banner.html' %}
     
 
@@ -155,8 +224,7 @@
     <!-- 新增一個容器來包住兩個區塊 -->
     <div class="sections-container" style="display: flex; margin-top: -90px">
       <!-- 左側區域 -->
-      {#{% include 'commission/publiccard_edit_test/favorite_and_tag.html' %}#}
-
+      {% include 'commission/publiccard_edit_test/favorite_and_tag.html' %}
 
       <!-- 右側區域(分隔線區分兩側) -->
       <div class="right-section" style="border-left: 1px solid #dee2e6;">
@@ -178,48 +246,50 @@
   </form>
 </div>
 
+<!-- </div> -->
+
+<!-- <div class="flex-grow-1"></div> -->
+<!-- </div> -->
+
+<!--//row-->
 {% endblock %} 
 {% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+</script>
+
 <!-- 新增 Sortable.js 拖曳排序功能 -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-// === 全域表單變化監聽 ===
-document.querySelector('form').addEventListener('input', function(e) {
-  const changedField = e.target;
-  // 自動收集所有表單資料
-  const formData = new FormData(this);
-  
-  // 添加自定義識別屬性 (可選)
-  if (changedField.hasAttribute('data-subtemplate')) {
-    formData.append('subtemplate', changedField.getAttribute('data-subtemplate'));
-  }
-});
 
-// === 表單提交處理 ===
-$(document).ready(function() {
-    $('form').submit(function(event) {
-        event.preventDefault(); // 阻止表單的默認提交行為
-        var formData = new FormData(this);
 
-        $.ajax({
-            url: $(this).attr('action'), // 表單的 action 屬性
-            type: $(this).attr('method'), // 表單的 method 屬性
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                alert('儲存成功: ' + response.message); // 彈出成功訊息
-                window.location.reload(); // 重新加載頁面
-            },
-            error: function(response) {
-                alert('儲存失敗: ' + response.responseText); // 彈出失敗訊息
-            }
-        });
-    });
-});
+//   // === 修正其他開關的事件監聽器 ===
+//   const switches = document.querySelectorAll(".form-check-input");
+//   switches.forEach((switchEl) => {
+//     switchEl.addEventListener("change", function () {
+//       const contentId = "content-" + this.id.split("-")[1];
+//       const contentEl = document.getElementById(contentId);
+      
+//       // 加入檢查
+//       if (contentEl) {
+//         if (this.checked) {
+//           contentEl.classList.add("show");
+//         } else {
+//           contentEl.classList.remove("show");
+//         }
+//       }
+//     });
+//   });
 
-// === 右側內容區域開關初始化開關狀態並添加事件監聽器 ===
+// // === 原 toggleContent 函數，處理內容顯示/隱藏 ===
+// window.toggleContent = function(contentId) {
+//   const content = document.getElementById(contentId);
+//   if (content) {
+//     content.classList.toggle("show");
+//   }
+// };
+
+
+// === 右側內容區域開關-初始化開關狀態並添加事件監聽器 ===
 const switchStates = {
   // '開關控制ID': {# {從views.py連動的資料表.資料表欄位|統一轉換為小寫 }#}
   'switch-sell': {{ ViewKey_DbPublicCardInfo.sell_public_status|lower }},
@@ -271,6 +341,15 @@ Object.entries(switchStates).forEach(([switchId, initialState]) => {
     });
   }
 });
+
+
+
+
+
+
+
+
+
 
 </script>
 

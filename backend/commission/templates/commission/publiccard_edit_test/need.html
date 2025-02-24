@@ -220,7 +220,8 @@
     </div>
     <div class="expandable-content" id="content-need-list">
       <div class="public-content">
-        <!-- 篩選器容器 -->
+        <!-- 篩選器容器 (只在有資料時顯示) -->
+        {% if ViewKey_DbNeedInfo %}
         <div class="mb-3 filter-container" data-template="need">
           <div class="input-group">
             <span class="input-group-text">
@@ -246,6 +247,7 @@
             </button>
           </div>
         </div>
+        {% endif %}
         <div class="d-flex flex-row flex-wrap gap-3">
           {% if ViewKey_DbNeedInfo %} 
           {% for HTML_need in ViewKey_DbNeedInfo %}

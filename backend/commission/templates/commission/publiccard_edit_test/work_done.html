@@ -50,7 +50,8 @@
     </div>
     <div class="expandable-content" id="content-work-done">
       <div class="public-content">
-        <!-- 篩選器容器 -->
+        <!-- 篩選器容器 (在原始資料存在時顯示) -->
+        {% if ViewKey_DbWorkInfo %}
         <div class="mb-3 filter-container" data-template="work_done">
           <div class="input-group">
             <span class="input-group-text">
@@ -76,6 +77,7 @@
             </button>
           </div>
         </div>
+        {% endif %}
         <div class="d-flex flex-row flex-wrap gap-3">
           {% with html_filter_work_done=ViewKey_DbWorkInfo|filter_work_status:"已成交" %}
             {% if html_filter_work_done %}
@@ -193,7 +195,8 @@
               </div>
             </div>
           </div>
-          {% endfor %} {% else %}
+          {% endfor %}
+          {% else %}
               <div class="text-muted">尚未有已成交作品</div>
           {% endif %}
           {% endwith %}

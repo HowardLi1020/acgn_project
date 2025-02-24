@@ -12,7 +12,7 @@
       <label
         class="form-check-label form-label me-2"
         for="switch-work-sellnow"
-        >已成交作品<span
+        >公開販售作品<span
           class="ms-2"
           data-bs-container="body"
           data-bs-toggle="popover"
@@ -50,7 +50,8 @@
     </div>
     <div class="expandable-content" id="content-work-sellnow">
       <div class="public-content">
-        <!-- 篩選器容器 -->
+        <!-- 篩選器容器 (在原始資料存在時顯示，與篩選結果無關) -->
+        {% if ViewKey_DbWorkInfo %}
         <div class="mb-3 filter-container" data-template="work_sellnow">
           <div class="input-group">
             <span class="input-group-text">
@@ -76,6 +77,7 @@
             </button>
           </div>
         </div>
+        {% endif %}
         <div class="d-flex flex-row flex-wrap gap-3">
           {% with html_filter_work_sellnow=ViewKey_DbWorkInfo|filter_work_status:"公開販售" %}
             {% if html_filter_work_sellnow %}
@@ -193,8 +195,9 @@
               </div>
             </div>
           </div>
-          {% endfor %} {% else %}
-              <div class="text-muted">尚未有已成交作品</div>
+          {% endfor %}
+          {% else %}
+              <div class="text-muted">尚未有公開販售作品</div>
           {% endif %}
           {% endwith %}
           <!-- 新增篩選無結果提示 -->

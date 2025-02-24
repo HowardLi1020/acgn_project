@@ -1097,7 +1097,6 @@ def ViewFn_publiccard_list(request):
 def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     view_db_publiccard_info = get_object_or_404(DbPublicCardInfo, pk=view_fn_publiccard_id)
 
-    # === 初始化顯示相關 ===
     # 獲取該用戶的價目表資料
     view_db_publiccard_sell = DbPublicCardSell.objects.filter(user=view_db_publiccard_info)
         
@@ -1123,102 +1122,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     else:
         template_name = 'commission/publiccard_edit.html'
 
-    # === 資料寫入相關 ===
-    if request.method == 'POST':
-        try:
-            # 取得主要資料物件
-            public_card = DbPublicCardInfo.objects.get(pk=view_fn_publiccard_id)
-            
-            # 通用欄位處理
-            field_mapping = {
-                'user_nickname': 'user_nickname',
-                'user_introduction': 'user_introduction',
-                # 添加其他需要處理的欄位...
-            }
-            
-            # 通用開關處理(新增部分)
-            switch_mapping = {
-                'use_default_avatar': 'use_default_avatar',
-                # 未來擴展範例：
-                # 'use_default_banner': 'use_default_banner'
-            }
-            
-            # 處理普通文字欄位
-            for form_field, model_field in field_mapping.items():
-                if form_field in request.POST:
-                    setattr(public_card, model_field, request.POST[form_field])
-            
-            # 處理開關欄位(新增部分)
-            for form_field, model_field in switch_mapping.items():
-                # 開關存在於POST數據表示開啟(True)，否則為關閉(False)
-                # 這裡使用bool()轉換確保取得布林值
-                switch_state = form_field in request.POST
-                setattr(public_card, model_field, not switch_state)  # 反向處理
-
-            # 通用檔案處理邏輯
-            file_field_mapping = {
-                'avatar': {  # 需確認前端<input type="file">的name屬性是否為'avatar'
-                    'model_field': 'user_avatar',
-                    'save_path': 'commission/publiccard/avatar',
-                    'filename_pattern': f'{public_card.member_basic_id}_avatar'
-                },
-                # 未來可擴充其他檔案欄位，例如：
-                # 'card_banner': {
-                #     'model_field': 'banner_image',
-                #     'save_path': 'commission/publiccard/banner',
-                #     'filename_pattern': f'{public_card.member_basic.id}_banner'
-                # }
-            }
-            
-            for file_field, config in file_field_mapping.items():
-                if file_field in request.FILES:
-                    uploaded_file = request.FILES[file_field]
-                    
-                    # 刪除舊檔案
-                    old_file = getattr(public_card, config['model_field'])
-                    if old_file:
-                        old_file_path = os.path.join(settings.MEDIA_ROOT, str(old_file))
-                        if os.path.isfile(old_file_path):
-                            os.remove(old_file_path)
-                    
-                    # 生成新檔名
-                    file_ext = uploaded_file.name.split('.')[-1]
-                    new_filename = f"{config['filename_pattern']}.{file_ext}"
-                    
-                    # 組合完整儲存路徑
-                    full_path = os.path.join(settings.MEDIA_ROOT, config['save_path'])
-                    os.makedirs(full_path, exist_ok=True)
-                    
-                    # 儲存檔案
-                    with open(os.path.join(full_path, new_filename), 'wb+') as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-                    
-                    # 更新資料庫欄位(修改部分)
-                    setattr(public_card, config['model_field'], new_filename)  # 只儲存檔名
-
-            # 保存變更
-            public_card.save()
-            
-            # 根據請求類型返回不同回應
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'success', 'message': '儲存成功'})
-            else:
-                return redirect(reverse('commission:Urls_publiccard_edit', args=[view_fn_publiccard_id]))
-            
-        except Exception as e:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-            else:
-                # 處理非AJAX請求的錯誤顯示
-                context = {
-                    'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
-                    'error_message': str(e)
-                }
-                return render(request, template_name, context)
-    
-    # GET請求保持原有邏輯...
-    # ... 保持原有context設定和render部分不變 ...
     context = {
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
         'ViewKey_DbPublicCardSell': view_db_publiccard_sell,
