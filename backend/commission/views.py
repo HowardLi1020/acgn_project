@@ -1133,17 +1133,21 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
             # === 一般資料寫入 ===
             # 通用欄位處理
             field_mapping = {
-                'user_nickname': 'user_nickname',
-                'user_introduction': 'user_introduction',
-                'card_status': 'card_status', # 提交表單-公開/非公開
+                'ViewKey_bd_user_nickname': 'user_nickname',
+                'ViewKey_bd_user_introduction': 'user_introduction',
+                'ViewKey_bd_card_status': 'card_status', # 提交表單-公開/非公開
                 # 添加其他需要處理的欄位...
             }
             
             # 通用開關處理(新增部分)
             # 對應template的<input>開關name屬性
             switch_mapping = {
-                'use_default_avatar': 'use_default_avatar',
-                'use_default_banner': 'use_default_banner',
+                'ViewKey_bd_use_default_avatar': 'use_default_avatar',
+                'ViewKey_bd_use_default_banner': 'use_default_banner',
+                'ViewKey_bd_switch-sell': 'sell_public_status',
+                'ViewKey_bd_switch-work-sellnow': 'work_sellnow_list_public_status',
+                'ViewKey_bd_switch-work-done': 'work_done_list_public_status',
+                'ViewKey_bd_switch-need-list': 'need_list_public_status'
             }
             
             # 處理普通文字欄位
@@ -1151,12 +1155,15 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                 if form_field in request.POST:
                     setattr(public_card, model_field, request.POST[form_field])
             
-            # 處理開關欄位(新增部分)
+            # 處理開關欄位
             for form_field, model_field in switch_mapping.items():
-                # 開關存在於POST數據表示開啟(True)，否則為關閉(False)
-                # 這裡使用bool()轉換確保取得布林值
-                switch_state = form_field in request.POST
-                setattr(public_card, model_field, not switch_state)  # 反向處理
+                # 對於頭像與橫幅的開關，反向處理
+                if form_field in ['ViewKey_bd_use_default_avatar', 'ViewKey_bd_use_default_banner']:
+                    switch_state = form_field not in request.POST  # 反向處理
+                else:
+                    switch_state = form_field in request.POST  # 正常處理
+
+                setattr(public_card, model_field, switch_state)  # 設置狀態
 
             # === 圖檔寫入 ===
             # 通用檔案處理邏輯
@@ -1200,7 +1207,7 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     
                     # 更新資料庫欄位(修改部分)
                     setattr(public_card, config['model_field'], new_filename)  # 只儲存檔名
-                    
+
             # === 小卡公開狀態處理 ===
             # 通用狀態處理邏輯（可擴展到不同類型）
             status_patterns = {
@@ -1226,9 +1233,12 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     except (ValueError, model.DoesNotExist):
                         pass
                     
-            # === 提交表單的設定 ===
+            # === 提交表單按鈕-名片公開/非公開的設定 ===
             card_status = request.POST.get('card_status', '非公開')  # 默認值
             public_card.card_status = card_status
+
+            # 加入最後更新時間
+            public_card.last_update = timezone.now()
 
             # 保存變更
             public_card.save()

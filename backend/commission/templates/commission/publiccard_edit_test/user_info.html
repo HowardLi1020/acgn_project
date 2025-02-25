@@ -63,7 +63,7 @@
     <div class="nickname">
       <input
         type="text"
-        name="user_nickname"
+        name="ViewKey_bd_user_nickname"
         value="{{ ViewKey_DbPublicCardInfo.user_nickname }}"
         placeholder="{% if ViewKey_DbPublicCardInfo.member_basic.user_nickname %}{{ ViewKey_DbPublicCardInfo.member_basic.user_nickname }}{% else %}請輸入暱稱{% endif %}"
         autocomplete="off"
@@ -72,7 +72,7 @@
     </div>
     <div class="introduction">
       <!-- textarea與Django語法要連在一起不得換行排版會跑掉，用Pretter時要留意 -->
-      <textarea name="user_introduction" placeholder="請輸入簡介" autocomplete="off">{{ ViewKey_DbPublicCardInfo.user_introduction }}</textarea>
+      <textarea name="ViewKey_bd_user_introduction" placeholder="請輸入簡介" autocomplete="off">{{ ViewKey_DbPublicCardInfo.user_introduction }}</textarea>
     </div>
   </div>
 <!-- </div> -->

@@ -265,10 +265,10 @@ $(document).ready(function() {
         event.preventDefault(); // 阻止表單的默認提交行為
         var formData = new FormData(this);
         
-        // 添加狀態參數
+        // 小卡相關-寫入公開/非公開狀態
         var clickedButton = $(document.activeElement);
         if(clickedButton.is('button[type="submit"]')) {
-            formData.append('card_status', clickedButton.data('status'));
+            formData.append('ViewKey_bd_card_status', clickedButton.data('status'));
         }
 
         $.ajax({

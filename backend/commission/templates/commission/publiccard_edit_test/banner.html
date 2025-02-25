@@ -47,7 +47,7 @@ style="background-image: url('{{ MEDIA_URL }}{% if ViewKey_DbPublicCardInfo.use_
         type="checkbox"
         id="settings-switch-1"
         {% if not ViewKey_DbPublicCardInfo.use_default_banner %}checked{% endif %}
-        name="use_default_banner"
+        name="ViewKey_bd_use_default_banner"
         style="pointer-events: none  /* 防止點擊 input 時觸發雙重事件 */"
         onchange="handleBannerToggle(this)"
         />
