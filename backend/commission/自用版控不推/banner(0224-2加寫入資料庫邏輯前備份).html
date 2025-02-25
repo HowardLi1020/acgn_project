@@ -40,22 +40,18 @@ style="background-image: url('{{ MEDIA_URL }}{% if ViewKey_DbPublicCardInfo.use_
     </span>
     <!-- 右上角按鈕區域 -->
     <div class="banner-controls d-flex align-items-center">
-    <div class="form-check form-switch mb-0 me-2" onclick="this.querySelector('input[type=checkbox]').click()">
+    <div class="form-check form-switch mb-0 me-2">
         {% if ViewKey_DbPublicCardInfo.card_banner %}
         <input
         class="form-check-input"
         type="checkbox"
         id="settings-switch-1"
         {% if not ViewKey_DbPublicCardInfo.use_default_banner %}checked{% endif %}
-        name="use_default_banner"
-        style="pointer-events: none  /* 防止點擊 input 時觸發雙重事件 */"
         onchange="handleBannerToggle(this)"
         />
         <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
         {% endif %}
     </div>
-    <!-- 隱藏的文件輸入元素抓取使用者上傳的圖片 -->
-    <input type="file" id="bannerInput" name="banner" style="display: none;">
     <button class="btn app-btn-primary" onclick="changeBanner(event)">變更橫幅</button>
     </div>
     <!-- 最後更新時間 -->
@@ -196,50 +192,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // 橫幅-變更橫幅按鈕
 window.changeBanner = function(event) {
-    event.preventDefault();
-    const fileInput = document.getElementById('bannerInput');
-    fileInput.accept = 'image/*';
-    fileInput.click();
+  event.preventDefault();
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
 
-    fileInput.onchange = function(e) {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
+  fileInput.onchange = function(e) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
 
-            reader.onload = function(e) {
-                userSelectedBanner = e.target.result;
-                const bannerHolder = document.querySelector('.app-card-thumb-holder');
-                if (bannerHolder) {
-                    bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
-                }
-
-                // 顯示並更新橫幅開關
-                const switchContainer = document.querySelector('.banner-controls .form-check');
-                if (switchContainer) {
-                    if (!switchContainer.querySelector('input')) {
-                        // 如果開關不存在，創建新的開關
-                        switchContainer.innerHTML = `
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="settings-switch-1"
-                                onchange="handleBannerToggle(this)"
-                                checked
-                                name="use_default_banner"
-                            />
-                            <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
-                        `;
-                    } else {
-                        // 如果開關已存在，更新其狀態
-                        const switchInput = switchContainer.querySelector('input');
-                        switchInput.checked = true;
-                    }
-                }
-            };
-
-            reader.readAsDataURL(file);
+      reader.onload = function(e) {
+        userSelectedBanner = e.target.result;
+        const bannerHolder = document.querySelector('.app-card-thumb-holder');
+        if (bannerHolder) {
+          bannerHolder.style.backgroundImage = `url('${userSelectedBanner}')`;
         }
-    };
+
+        // 顯示並更新橫幅開關
+        const switchContainer = document.querySelector('.banner-controls .form-check');
+        if (switchContainer) {
+          if (!switchContainer.querySelector('input')) {
+            // 如果開關不存在，創建新的開關
+            switchContainer.innerHTML = `
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="settings-switch-1"
+                onchange="handleBannerToggle(this)"
+                checked
+              />
+              <label class="form-check-label" for="settings-switch-1">使用自訂圖</label>
+            `;
+          } else {
+            // 如果開關已存在，更新其狀態
+            const switchInput = switchContainer.querySelector('input');
+            switchInput.checked = true;
+          }
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  fileInput.click();
 };
 
 // 橫幅-自訂圖切換開關

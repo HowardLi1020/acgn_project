@@ -1133,15 +1133,14 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
             field_mapping = {
                 'user_nickname': 'user_nickname',
                 'user_introduction': 'user_introduction',
-                'card_status': 'card_status', # 提交表單-公開/非公開
                 # 添加其他需要處理的欄位...
             }
             
             # 通用開關處理(新增部分)
-            # 對應template的<input>開關name屬性
             switch_mapping = {
                 'use_default_avatar': 'use_default_avatar',
-                'use_default_banner': 'use_default_banner',
+                # 未來擴展範例：
+                # 'use_default_banner': 'use_default_banner'
             }
             
             # 處理普通文字欄位
@@ -1158,17 +1157,17 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
 
             # 通用檔案處理邏輯
             file_field_mapping = {
-                # 以template的隱藏文件輸入元素<input type="file">的name屬性為key
-                'avatar': {
+                'avatar': {  # 需確認前端<input type="file">的name屬性是否為'avatar'
                     'model_field': 'user_avatar',
                     'save_path': 'commission/publiccard/avatar',
                     'filename_pattern': f'{public_card.member_basic_id}_avatar'
                 },
-                'banner': {
-                    'model_field': 'card_banner',
-                    'save_path': 'commission/publiccard/banner',
-                    'filename_pattern': f'{public_card.member_basic_id}_banner'
-                }
+                # 未來可擴充其他檔案欄位，例如：
+                # 'card_banner': {
+                #     'model_field': 'banner_image',
+                #     'save_path': 'commission/publiccard/banner',
+                #     'filename_pattern': f'{public_card.member_basic.id}_banner'
+                # }
             }
             
             for file_field, config in file_field_mapping.items():
@@ -1197,10 +1196,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     
                     # 更新資料庫欄位(修改部分)
                     setattr(public_card, config['model_field'], new_filename)  # 只儲存檔名
-
-            # 提交表單的設定
-            card_status = request.POST.get('card_status', '非公開')  # 默認值
-            public_card.card_status = card_status
 
             # 保存變更
             public_card.save()

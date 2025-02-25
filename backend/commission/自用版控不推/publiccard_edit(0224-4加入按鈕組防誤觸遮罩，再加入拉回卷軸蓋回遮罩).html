@@ -136,7 +136,7 @@
     /* background: rgba(255, 255, 255, 0.233); */
     /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
     padding: 10px;
-    /* backdrop-filter: blur(3px); 毛玻璃效果 */
+    backdrop-filter: blur(3px);
     border-radius: 8px;
   }
 
@@ -151,7 +151,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    right: 8px; /* 同按鈕設定之margin-right */
+    right: 0;
     bottom: 0;
     background: rgba(128, 128, 128, 0.5);
     display: flex;
@@ -160,7 +160,7 @@
     cursor: pointer;
     color: white;
     font-size: 0.9rem;
-    border-radius: 0.4rem; /* 同按鈕圓角 */
+    border-radius: 0.25rem;
     z-index: 1001;
     backdrop-filter: blur(1px);
     transition: all 0.3s ease;
@@ -224,18 +224,11 @@
       </div>
       <div class="button-wrapper">
         <div class="button-overlay" data-target="savePrivateButton">點擊解除保護</div>
-        <button type="submit" id="savePrivateButton" 
-                class="btn app-btn-warning me-2" 
-                style="background-color: #facf4d; border-color: #facf4d" 
-                disabled
-                data-status="非公開">保存非公開</button>
+        <button type="submit" id="savePrivateButton" class="btn app-btn-warning me-2" style="background-color: #facf4d; border-color: #facf4d" disabled>保存非公開</button>
       </div>
       <div class="button-wrapper">
-        <div class="button-overlay" style="right: 0;" data-target="savePublicButton">點擊解除保護</div>
-        <button type="submit" id="savePublicButton" 
-                class="btn app-btn-primary" 
-                disabled
-                data-status="公開">保存並公開</button>
+        <div class="button-overlay" data-target="savePublicButton">點擊解除保護</div>
+        <button type="submit" id="savePublicButton" class="btn app-btn-primary" disabled>保存並公開</button>
       </div>
     </div>
   </form>
@@ -264,16 +257,10 @@ $(document).ready(function() {
     $('form').submit(function(event) {
         event.preventDefault(); // 阻止表單的默認提交行為
         var formData = new FormData(this);
-        
-        // 添加狀態參數
-        var clickedButton = $(document.activeElement);
-        if(clickedButton.is('button[type="submit"]')) {
-            formData.append('card_status', clickedButton.data('status'));
-        }
 
         $.ajax({
-            url: $(this).attr('action'),
-            type: $(this).attr('method'),
+            url: $(this).attr('action'), // 表單的 action 屬性
+            type: $(this).attr('method'), // 表單的 method 屬性
             data: formData,
             processData: false,
             contentType: false,
@@ -344,50 +331,33 @@ Object.entries(switchStates).forEach(([switchId, initialState]) => {
 // === 提交表單按鈕組-按鈕遮罩層-點擊事件 ===
 document.addEventListener('DOMContentLoaded', function() {
     const buttonOverlays = document.querySelectorAll('.button-overlay');
-    const stickyButtons = document.querySelector('.sticky-buttons');
-    const originalButtonsPosition = stickyButtons.offsetTop;
-    let isInOriginalPosition = true; // 追蹤按鈕組是否在原始位置
+    const originalButtonsPosition = document.querySelector('.sticky-buttons').offsetTop;
 
     // 處理遮罩層點擊
     buttonOverlays.forEach(overlay => {
         overlay.addEventListener('click', function() {
-            toggleOverlay(this, false); // 手動點擊時永久移除
+            const targetId = this.getAttribute('data-target');
+            const targetButton = document.getElementById(targetId);
+            
+            // 移除遮罩層
+            this.classList.add('removed');
+            // 啟用按鈕
+            targetButton.disabled = false;
         });
     });
 
     // 監聽頁面滾動
     window.addEventListener('scroll', function() {
-        const currentScroll = window.pageYOffset;
-        const isAtOriginalPos = currentScroll <= originalButtonsPosition;
-
-        // 當滾動狀態改變時才執行
-        if (isAtOriginalPos !== isInOriginalPosition) {
-            isInOriginalPosition = isAtOriginalPos;
-            
+        if (window.pageYOffset >= originalButtonsPosition) {
+            // 當滾動到按鈕組原始位置時
             buttonOverlays.forEach(overlay => {
-                const targetButton = document.getElementById(overlay.dataset.target);
-                if (isAtOriginalPos) {
-                    // 回到原始位置時恢復遮罩
-                    toggleOverlay(overlay, true);
-                } else {
-                    // 離開原始位置時移除遮罩
-                    toggleOverlay(overlay, false);
-                }
+                overlay.classList.add('removed');
+                const targetId = overlay.getAttribute('data-target');
+                const targetButton = document.getElementById(targetId);
+                targetButton.disabled = false;
             });
         }
     });
-
-    // 統一處理遮罩狀態的函數
-    function toggleOverlay(overlay, show) {
-        const targetButton = document.getElementById(overlay.dataset.target);
-        if (show) {
-            overlay.classList.remove('removed');
-            targetButton.disabled = true;
-        } else {
-            overlay.classList.add('removed');
-            targetButton.disabled = false;
-        }
-    }
 });
 </script>
 
