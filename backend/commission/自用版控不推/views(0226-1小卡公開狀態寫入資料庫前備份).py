@@ -1129,8 +1129,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
             # 取得主要資料物件
             public_card = DbPublicCardInfo.objects.get(pk=view_fn_publiccard_id)
             
-
-            # === 一般資料寫入 ===
             # 通用欄位處理
             field_mapping = {
                 'user_nickname': 'user_nickname',
@@ -1158,7 +1156,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                 switch_state = form_field in request.POST
                 setattr(public_card, model_field, not switch_state)  # 反向處理
 
-            # === 圖檔寫入 ===
             # 通用檔案處理邏輯
             file_field_mapping = {
                 # 以template的隱藏文件輸入元素<input type="file">的name屬性為key
@@ -1200,33 +1197,8 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     
                     # 更新資料庫欄位(修改部分)
                     setattr(public_card, config['model_field'], new_filename)  # 只儲存檔名
-                    
-            # === 小卡公開狀態處理 ===
-            # 通用狀態處理邏輯（可擴展到不同類型）
-            status_patterns = {
-                'need': ('needStatus', DbNeedInfo, 'needer_id'),
-                'work': ('workStatus', DbWorkInfo, 'worker_id')  
-            }
-            
-            for prefix, model, user_field in status_patterns.values():
-                # 過濾出符合前綴的POST參數
-                status_fields = [k for k in request.POST if k.startswith(prefix)]
-                for field in status_fields:
-                    item_id = field.replace(prefix, '')
-                    try:
-                        # 驗證資料所屬權限
-                        instance = model.objects.get(
-                            **{f"{model._meta.pk.name}": item_id},
-                            **{f"{user_field}": public_card.member_basic_id}
-                        )
-                        new_status = request.POST[field] == 'public'
-                        if instance.public_status != new_status:
-                            instance.public_status = new_status
-                            instance.save(update_fields=['public_status'])
-                    except (ValueError, model.DoesNotExist):
-                        pass
-                    
-            # === 提交表單的設定 ===
+
+            # 提交表單的設定
             card_status = request.POST.get('card_status', '非公開')  # 默認值
             public_card.card_status = card_status
 

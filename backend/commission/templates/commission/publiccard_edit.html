@@ -348,19 +348,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const originalButtonsPosition = stickyButtons.offsetTop;
     let isInOriginalPosition = true; // 追蹤按鈕組是否在原始位置
 
-    // 處理遮罩層點擊
+    // 提交表單按鈕組-處理遮罩層點擊
     buttonOverlays.forEach(overlay => {
         overlay.addEventListener('click', function() {
             toggleOverlay(this, false); // 手動點擊時永久移除
         });
     });
 
-    // 監聽頁面滾動
+    // 提交表單按鈕組-監聽頁面滾動
     window.addEventListener('scroll', function() {
         const currentScroll = window.pageYOffset;
         const isAtOriginalPos = currentScroll <= originalButtonsPosition;
 
-        // 當滾動狀態改變時才執行
+        // 提交表單按鈕組-當滾動狀態改變時才執行
         if (isAtOriginalPos !== isInOriginalPosition) {
             isInOriginalPosition = isAtOriginalPos;
             
@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 統一處理遮罩狀態的函數
+    // 提交表單按鈕組-統一處理遮罩狀態的函數
     function toggleOverlay(overlay, show) {
         const targetButton = document.getElementById(overlay.dataset.target);
         if (show) {

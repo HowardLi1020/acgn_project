@@ -344,7 +344,6 @@
                   type="radio"
                   name="needStatus{{ HTML_need.need_id }}"
                   id="status{{ HTML_need.need_id }}_public"
-                  value="public"
                   {% if HTML_need.public_status %}checked{% endif %}
                 />
               </div>
@@ -360,7 +359,6 @@
                   type="radio"
                   name="needStatus{{ HTML_need.need_id }}"
                   id="status{{ HTML_need.need_id }}_private"
-                  value="private"
                   {% if not HTML_need.public_status %}checked{% endif %}
                 />
               </div>

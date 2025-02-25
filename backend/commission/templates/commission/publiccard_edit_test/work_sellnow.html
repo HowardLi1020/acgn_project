@@ -175,6 +175,7 @@
                   type="radio"
                         name="workStatus{{ HTML_work.work_id }}"
                         id="status{{ HTML_work.work_id }}_public"
+                        value="public"
                         {% if HTML_work.public_status %}checked{% endif %}
                 />
               </div>
@@ -190,6 +191,7 @@
                   type="radio"
                         name="workStatus{{ HTML_work.work_id }}"
                         id="status{{ HTML_work.work_id }}_private"
+                        value="private"
                         {% if not HTML_work.public_status %}checked{% endif %}
                 />
               </div>
