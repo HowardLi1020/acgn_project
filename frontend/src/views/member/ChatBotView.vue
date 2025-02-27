@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { marked } from 'marked';
 
 const BASE_URL = import.meta.env.VITE_MemberApi
@@ -11,6 +11,7 @@ const inputMessage = ref('');
 let sn = 0;
 const isOpen = ref(true); // 控制彈窗顯示
 const selectedCategory = ref('all'); // 新增：用於存儲選擇的類別
+const msgList = ref(null); // 用於引用消息列表
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value;
@@ -34,6 +35,11 @@ const sendMessage = async () => {
   msg.value.push({ content: fullMessage, id: `user_${sn}`, isUser: true });
   sn++;
   inputMessage.value = '';
+
+  // **新增滾動到底部**
+  nextTick(() => {
+    msgList.value.scrollTop = msgList.value.scrollHeight;
+  });
 
   const payload = {
     session_id: "sess_55663312",
@@ -84,6 +90,13 @@ const sendMessage = async () => {
     }
 
     sn++;
+
+    // 滾動到消息列表底部
+    nextTick(() => {
+      msgList.value.scrollTop = msgList.value.scrollHeight;
+    });
+
+
   } catch (error) {
     console.error('Error:', error);
     msg.value.push({ content: '', id: `ai_${sn}`, isUser: false });
@@ -103,6 +116,12 @@ const typeMessage = (text, callback = null, messageIndex = msg.value.length - 1)
       currentText += text[index];
       index++;
       msg.value[messageIndex].content = marked.parse(currentText); // 動態更新內容
+
+      // 每次更新都滾動到底部
+      nextTick(() => {
+        msgList.value.scrollTop = msgList.value.scrollHeight;
+      });
+      
     } else {
       clearInterval(interval);
       if (callback) callback();
@@ -131,7 +150,7 @@ onMounted(() => {
             <button class="button-8" @click="toggleChat">關閉</button>
         </div>
         <div class="chatroom">
-            <ul id="msg">
+            <ul id="msg" ref="msgList">
                 <li v-for="(message, index) in msg" :key="index" :class="{ user: message.isUser }">
                     <div v-html="message.content"></div>
                 </li>
@@ -156,10 +175,10 @@ onMounted(() => {
 .chat-popup {
   position: fixed;
   bottom: 100px;
-  right: 400px;
-  width: 1200px; /* 初始寬度 */
+  right: 300px;
+  width: 1300px; /* 初始寬度 */
   height: 650px; 
-  max-height: 800px; /* 最大高度 */
+  max-height: 1000px; /* 最大高度 */
   border: 1px solid #ccc;
   background-color: rgb(214, 224, 224);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
