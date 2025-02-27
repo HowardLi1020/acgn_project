@@ -15,7 +15,8 @@ class ChatBotView(APIView):
     def __init__(self):
         super().__init__()
         # 初始化模型和客戶端
-        self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
+        self.model_name = 'BAAI/bge-m3'
+        # self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
         self.model = SentenceTransformer(self.model_name)
         self.client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 

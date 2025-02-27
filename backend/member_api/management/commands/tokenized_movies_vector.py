@@ -3,9 +3,9 @@ import pandas as pd
 import faiss
 import pickle
 import numpy as np
-import os
 from sentence_transformers import SentenceTransformer
 from django.conf import settings
+import os
 
 class Command(BaseCommand):
     help = 'Import Excel files and create FAISS index'
@@ -13,8 +13,9 @@ class Command(BaseCommand):
     def __init__(self):
         super().__init__()
         # 模型名稱與檔案路徑
-        self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-        self.EXCEL_FILE = os.path.join(settings.BASE_DIR, 'member_api/original_data/tokenized_descriptions.xlsx')
+        self.model_name = 'BAAI/bge-m3'
+        # self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
+        self.EXCEL_FILE = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_movies_tokenized.xlsx')
         self.VECTOR_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_vector.index')
         self.IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/tokenized_movies_ids.pkl')
 

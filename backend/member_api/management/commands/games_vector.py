@@ -14,9 +14,9 @@ class Command(BaseCommand):
         # 全局設置
         MODEL_NAME = 'BAAI/bge-m3'
         # MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-        EXCEL_FILE = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_animations.xlsx')
-        VECTOR_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/animations_excel_vector.index')
-        IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/animations__excel_ids.pkl')
+        EXCEL_FILE = os.path.join(settings.BASE_DIR, 'member_api/original_data/data_games.xlsx')
+        VECTOR_INDEX_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_vector.index')
+        IDS_PATH = os.path.join(settings.BASE_DIR, 'member_api/vector_data/games_excel_ids.pkl')
 
         def read_excel_data(file_path):
             """從 Excel 文件讀取數據"""
@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 if data.empty:
                     raise ValueError(f"Excel 文件 {file_path} 中沒有數據。")
                 
-                data = data.dropna(subset=['animation_description'])
+                data = data[data['game_description'] != '無簡介']
 
                 if data.empty:
                     raise ValueError(f"刪除空值後沒有剩餘資料")
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 model = SentenceTransformer(MODEL_NAME)
 
                 texts = [
-                    f"{row['animation_description']}"
+                    f"{row['game_description']}"
                     for _, row in data.iterrows()
                 ]
                 index_path = VECTOR_INDEX_PATH
@@ -78,8 +78,8 @@ class Command(BaseCommand):
                 self.stdout.write("保存 ID 映射...")
                 ids_dict = {
                     row['id']: {
-                        'title': row['animation_title'],
-                        'genre': row['animation_genre'],
+                        'title': row['game_title'],
+                        'genre': row['game_genre'],
                         'type': 'anime'
                     }
                     for _, row in data.iterrows()

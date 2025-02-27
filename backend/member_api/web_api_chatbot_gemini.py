@@ -39,7 +39,8 @@ class ChatBotView(APIView):
         # 如果是第一次初始化，才載入數據
         if ChatBotView.model is None:
             # 初始化模型
-            self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
+            self.model_name = 'BAAI/bge-m3'
+            # self.model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
             ChatBotView.model = SentenceTransformer(self.model_name)
             
             # 初始化結巴斷詞
