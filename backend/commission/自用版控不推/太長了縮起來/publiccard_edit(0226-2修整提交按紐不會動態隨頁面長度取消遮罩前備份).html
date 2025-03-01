@@ -268,7 +268,7 @@ $(document).ready(function() {
         // 小卡相關-寫入公開/非公開狀態
         var clickedButton = $(document.activeElement);
         if(clickedButton.is('button[type="submit"]')) {
-            formData.append('ViewKey_bd_public_card_info_card_status', clickedButton.data('status'));
+            formData.append('ViewKey_bd_card_status', clickedButton.data('status'));
         }
 
         $.ajax({

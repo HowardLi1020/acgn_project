@@ -23,7 +23,6 @@ import rarfile
 import tempfile
 from django.views.decorators.csrf import csrf_exempt
 import tempfile
-import re
 
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
@@ -1101,12 +1100,7 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
     # === 初始化顯示相關 ===
     # 獲取該用戶的價目表資料
     view_db_publiccard_sell = DbPublicCardSell.objects.filter(user=view_db_publiccard_info).order_by('sell_step')
-    
-    # 預處理價目表數據，確保圖片欄位為None時轉換為空列表
-    for item in view_db_publiccard_sell:
-        item.sell_example_image_1 = item.sell_example_image_1 or ""
-        item.sell_example_image_2 = item.sell_example_image_2 or ""
-    
+        
     # 獲取該用戶的作品列表，並預加載相關的圖片
     view_db_work_info = DbWorkInfo.objects.filter(
         worker_id=view_db_publiccard_info.member_basic_id
@@ -1251,6 +1245,18 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
             # === 新增價目表處理部分 ===
             # 處理價目表資料
             try:
+                # 如果存在排序數據，先處理排序信息
+                order_mapping = {}
+                if 'sell_order_data' in request.POST and request.POST['sell_order_data']:
+                    try:
+                        order_data = json.loads(request.POST['sell_order_data'])
+                        print(f"Received order data: {order_data}")  # 調試信息
+                        for item in order_data:
+                            item_id = str(item['id'])
+                            order_mapping[item_id] = item['step']
+                    except (json.JSONDecodeError, KeyError) as e:
+                        print(f"Error parsing order data: {e}")
+                
                 # 1. 獲取提交的所有價目表項目
                 sell_items_data = {}
                 for key in request.POST:
@@ -1260,9 +1266,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                             field_prefix = parts[0]
                             item_id = parts[1]
                             
-                            # 過濾掉臨時ID中的特殊字符
-                            item_id = re.sub(r'[^a-zA-Z0-9_]', '', item_id)
-                            
                             field_name = field_prefix.replace('sell_', '')
                             
                             if item_id not in sell_items_data:
@@ -1270,27 +1273,26 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                             
                             sell_items_data[item_id][field_name] = request.POST[key]
                 
-                # 2. 處理現有的價目表項目
+                print(f"Collected sell items data: {sell_items_data}")  # 調試信息
+                
+                # 3. 處理現有的價目表項目
                 existing_items = {str(item.sell_list_id): item for item in DbPublicCardSell.objects.filter(user=public_card)}
                 
-                # 3. 根據處理順序設置 step 值
+                # 4. 根據處理順序設置 step 值
+                # 直接使用處理順序作為 step 值
                 for step, (item_id, data) in enumerate(sell_items_data.items(), 1):
                     if 'title' not in data or not data['title'].strip():
                         continue
                     
-                    # 判斷是否為新項目
                     is_new_item = item_id.startswith('new')
                     if not is_new_item and item_id in existing_items:
-                        # 更新現有項目
                         sell_item = existing_items[item_id]
                     else:
-                        # 創建新項目
                         sell_item = DbPublicCardSell(user=public_card)
                     
-                    # 設置步驟值
+                    # 直接使用循環索引作為 step 值
                     sell_item.sell_step = step
                     
-                    # 設置其他字段
                     sell_item.sell_title = data.get('title', '')
                     sell_item.sell_description = data.get('description', '')
                     
@@ -1299,10 +1301,11 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     except (ValueError, TypeError):
                         sell_item.sell_price = 0
                     
-                    # 保存項目
+                    print(f"Saving item {item_id}, step={sell_item.sell_step}")  # 調試信息
+                    
                     sell_item.save()
                 
-                # 4. 處理要刪除的項目
+                # 5. 處理要刪除的項目
                 submitted_ids = {k for k in sell_items_data.keys() if not k.startswith('new')}
                 items_to_delete = set(existing_items.keys()) - submitted_ids
                 for item_id in items_to_delete:
@@ -1325,8 +1328,8 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                 context = {
                     'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
                     'ViewKey_DbPublicCardSell': view_db_publiccard_sell,
-                    'ViewKey_DbWorkInfo': view_db_work_info,
-                    'ViewKey_DbNeedInfo': view_db_need_info,
+                    # 'ViewKey_DbWorkInfo': view_db_work_info,
+                    # 'ViewKey_DbNeedInfo': view_db_need_info,
                     'error_message': str(e)
                 }
                 return render(request, template_name, context)

@@ -150,6 +150,15 @@ class DbPublicCardSell(models.Model):
     sell_example_image_1 = models.CharField(max_length=255, blank=True, null=True)
     sell_example_image_2 = models.CharField(max_length=255, blank=True, null=True)
 
+    def get_example_images(self):
+        """將圖片字段轉換為圖片列表"""
+        images = []
+        if self.sell_example_image_1:
+            images.append(self.sell_example_image_1)
+        if self.sell_example_image_2:
+            images.append(self.sell_example_image_2)
+        return images
+
     class Meta:
         managed = False
         db_table = 'db_public_card_sell'
