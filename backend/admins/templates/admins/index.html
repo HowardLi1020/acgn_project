@@ -18,13 +18,11 @@
 <div class="app-card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
     <div class="inner">
         <div class="app-card-body p-3 p-lg-4">
-            <h3 class="mb-3">Welcome 歡迎您回來 , {{ auth.superuser_name }} !~*</h3>
+            <h2 class="mb-3">Welcome 歡迎您回來 , {{ auth.superuser_name }} !~*</h2>
             <div class="row gx-5 gy-3">
                 <div class="col-12 col-lg-9">
-                    <div>這是 ACGN_後台管理頁面...</div>
-                    <div>1...</div>
-                    <div>2...</div>
-                    <div>3...</div>
+                    <!-- <div>ACGN_後台管理頁面 最新消息</div> -->
+                    <img class="logo-icon me-2" width=700px; height=500px src="{% static 'admins\images\demo用.png' %}" alt="logo">
                 </div><!--//col-->
 
                 
@@ -47,7 +45,8 @@
             </div><!--//app-card-header-->
             <div class="app-card-body p-4">					   
                 <div class="chart-container">
-                    <canvas id="chart-line" style="display: block; width: 846px; height: 423px;" class="chartjs-render-monitor"></canvas>
+                    <img class="logo-icon me-2" src="{% static 'admins\images\arealine.png' %}" alt="logo">
+                    <!-- <canvas id="chart-line" style="display: block; width: 846px; height: 423px;" class="chartjs-render-monitor"></canvas> -->
                 </div>
             </div><!--//app-card-body-->
         </div><!--//app-card-->
@@ -59,7 +58,8 @@
             </div><!--//app-card-header-->
             <div class="app-card-body p-4">					   
                 <div class="chart-container">
-                    <canvas id="chart-bar" ></canvas>
+                    <img class="logo-icon me-2" src="{% static 'admins\images\barline.png' %}" alt="logo">
+                    <!-- <canvas id="chart-bar" ></canvas> -->
                 </div>
             </div><!--//app-card-body-->
         </div><!--//app-card-->
@@ -71,7 +71,8 @@
             </div><!--//app-card-header-->
             <div class="app-card-body p-4">					   
                 <div class="chart-container">
-                    <canvas id="chart-pie" ></canvas>
+                    <img class="logo-icon me-2" src="{% static 'admins\images\pie.png' %}" alt="logo">
+                    <!-- <canvas id="chart-bar" ></canvas> -->
                 </div>
             </div><!--//app-card-body-->
         </div><!--//app-card-->
@@ -83,7 +84,8 @@
             </div><!--//app-card-header-->
             <div class="app-card-body p-4">					   
                 <div class="chart-container">
-                    <canvas id="chart-doughnut" ></canvas>
+                    <img class="logo-icon me-2" src="{% static 'admins\images\doughnut.png' %}" alt="logo">
+                    <!-- <canvas id="chart-doughnut" ></canvas> -->
                 </div>
             </div><!--//app-card-body-->
         </div><!--//app-card-->
