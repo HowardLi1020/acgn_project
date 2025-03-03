@@ -12,7 +12,7 @@ import FruitablesHomeTastimonial from '@/components/FruitablesHomeTastimonial.vu
 
 <template>
     <div class="acgn-home">
-        <h1 class="main-title">ACGN Home</h1>
+        <h1 class="main-title"><img class="rounded-circle" src="@/assets/img/acgn.png" alt="Logo" width="" height="50">💡最新資訊 Latest Info💡📕📘📙</h1>
         <!-- 首頁頂端Banner Component (FruitablesHomeTopBanner.vue)-->
         <FruitablesHomeTopBanner />
         <!-- 優勢亮點 Component (FruitablesHomeMerit.vue)-->
@@ -21,16 +21,16 @@ import FruitablesHomeTastimonial from '@/components/FruitablesHomeTastimonial.vu
         <FruitablesHomeShop />
         <!-- 優惠折扣 Component (FruitablesHomeDiscounts.vue)-->
         <FruitablesHomeDiscounts />
-        <!-- 商品輪播 Component (FruitablesHomeRollingShop.vue) 功能炸開^q^-->
-        <FruitablesHomeRollingShop />
+        <!-- 商品輪播 Component (FruitablesHomeRollingShop.vue) 功能炸開^q^  先關閉-->  
+        <!-- <FruitablesHomeRollingShop /> -->
         <!-- 大型橫幅廣告 Component (FruitablesHomeBillboard.vue)-->
         <FruitablesHomeBillboard />
-        <!-- 焦點商品 Component (FruitablesHomeFocusProducts.vue)-->
-        <FruitablesHomeFocusProducts />
-        <!-- 品質保證 Component (FruitablesHomeQualityAssurance.vue)-->
-        <FruitablesHomeQualityAssurance />
-        <!-- 顧客評論輪播 Component (FruitablesHomeTastimonial.vue) 功能炸開^q^-->
-        <FruitablesHomeTastimonial />
+        <!-- 焦點商品 Component (FruitablesHomeFocusProducts.vue)  先關閉-->
+        <!-- <FruitablesHomeFocusProducts /> -->
+        <!-- 品質保證 Component (FruitablesHomeQualityAssurance.vue)  先關閉-->
+        <!-- <FruitablesHomeQualityAssurance /> -->
+        <!-- 顧客評論輪播 Component (FruitablesHomeTastimonial.vue) 功能炸開^q^  先關閉-->  
+        <!-- <FruitablesHomeTastimonial /> -->
     </div>
 </template>
 

@@ -10,8 +10,8 @@
                     <div class="row g-4">
                         <div class="col-lg-3">
                             <a href="#">
-                                <h1 class="text-primary mb-0">ACGN Project</h1>
-                                <p class="text-secondary mb-0">動漫資訊平台</p>
+                                <h1 class="text-primary mb-0">ACGN 綜合論壇</h1>
+                                <p class="text-secondary mb-0">電影 動漫 遊戲 資訊平台</p>
                             </a>
                         </div>
                         <div class="col-lg-6">
@@ -33,41 +33,39 @@
                 <div class="row g-5">
                     <div class="col-lg-3 col-md-6">
                         <div class="footer-item">
-                            <h4 class="text-light mb-3">Why People Like us!</h4>
-                            <p class="mb-4">typesetting, remaining essentially unchanged. It was 
-                                popularised in the 1960s with the like Aldus PageMaker including of Lorem Ipsum.</p>
+                            <h4 class="text-light mb-3">ACGN 綜合論壇</h4>
+                            <p class="mb-4">結合了電影、動畫、遊戲等資源，
+                                並提供購物商城與委託專區，讓用戶可以自由交流與分享。</p>
                             <a href="" class="btn border-secondary py-2 px-4 rounded-pill text-primary">Read More</a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <div class="d-flex flex-column text-start footer-item">
-                            <h4 class="text-light mb-3">Shop Info</h4>
-                            <a class="btn-link" href="">About Us</a>
-                            <a class="btn-link" href="">Contact Us</a>
-                            <a class="btn-link" href="">Privacy Policy</a>
-                            <a class="btn-link" href="">Terms & Condition</a>
-                            <a class="btn-link" href="">Return Policy</a>
-                            <a class="btn-link" href="">FAQs & Help</a>
+                            <h4 class="text-light mb-3">委託資訊</h4>
+                            <a class="btn-link" href="">關於我們 About Us</a>
+                            <a class="btn-link" href="">聯繫我們 Contact Us</a>
+                            <a class="btn-link" href="">隱私政策 Privacy Policy</a>
+                            <a class="btn-link" href="">服務條款 Terms & Condition</a>
+                            <a class="btn-link" href="">問答與幫助 FAQs & Help</a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <div class="d-flex flex-column text-start footer-item">
-                            <h4 class="text-light mb-3">Account</h4>
-                            <a class="btn-link" href="">My Account</a>
-                            <a class="btn-link" href="">Shop details</a>
-                            <a class="btn-link" href="">Shopping Cart</a>
-                            <a class="btn-link" href="">Wishlist</a>
-                            <a class="btn-link" href="">Order History</a>
-                            <a class="btn-link" href="">International Orders</a>
+                            <h4 class="text-light mb-3">帳戶 Account</h4>
+                            <a class="btn-link" href="">我的帳戶 My Account</a>
+                            <a class="btn-link" href="">購物內容 Shop details</a>
+                            <a class="btn-link" href="">購物車 Shopping Cart</a>
+                            <a class="btn-link" href="">我的收藏 Wishlist</a>
+                            <a class="btn-link" href="">訂單歷史 Order History</a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <div class="footer-item">
-                            <h4 class="text-light mb-3">Contact</h4>
-                            <p>Address: 1429 Netus Rd, NY 48247</p>
-                            <p>Email: Example@gmail.com</p>
-                            <p>Phone: +0123 4567 8910</p>
-                            <p>Payment Accepted</p>
+                            <h4 class="text-light mb-3">聯絡方式 Contact</h4>
+                            <p>地址: 1429 Netus Rd, NY 48247</p>
+                            <p>郵箱: ACGN666@gmail.com</p>
+                            <p>手機: +886 912 345 678</p>
+                            <p>可接受的支付方式</p>
                             <img src="@/assets/img/payment.png" class="img-fluid" alt="">
                         </div>
                     </div>
@@ -81,7 +79,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        <span class="text-light"><a href="#"><i class="fas fa-copyright text-light me-2"></i>Your Site Name</a>, All right reserved.</span>
+                        <span class="text-light"><a href="#"><i class="fas fa-copyright text-light me-2"></i>ACGN</a>, All right reserved.</span>
                     </div>
                     <div class="col-md-6 my-auto text-center text-md-end text-white">
                         <!--/*** This template is free as long as you keep the below author’s credit link/attribution link/backlink. ***/-->

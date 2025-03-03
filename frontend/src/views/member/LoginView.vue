@@ -209,11 +209,15 @@ onMounted( async() => {
 		<!-- 放第三方登入圖示 -->
 		<hr />
 		<div class="text-center">或使用第三方登入/註冊
-			<img class="rounded-circle" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
-			<button @click.prevent="handleLineLogin">
-        <img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      <button>
+        <img class="rounded-circle img-float" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
       </button>
-		  <img class="rounded-circle" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
+			<button @click.prevent="handleLineLogin">
+        <img class="rounded-circle img-float" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      </button>
+      <button>
+        <img class="rounded-circle img-float" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
+      </button>
 		</div>
 
         <div class="auth-option text-center pt-5">
@@ -266,5 +270,16 @@ onMounted( async() => {
 
 .rounded-circle {
   border: 2px solid #fff; /* 可選：添加白色邊框 */
+}
+
+button {
+  border: none;        /* 移除圖片邊框 */
+  outline: none;       /* 移除點擊方框 */
+}
+
+.img-float:hover {
+  transform: translateY(-10px);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); /* 加陰影 */
 }
 </style>

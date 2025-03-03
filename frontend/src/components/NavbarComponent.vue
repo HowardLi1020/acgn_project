@@ -27,18 +27,18 @@ const computedRoute = computed(() => {
             <div class="d-flex justify-content-between">
                 <div class="top-info ps-2">
                     <small class="me-3"><i class="fas fa-map-marker-alt me-2 text-secondary"></i> <a href="#" class="text-white">123 Street, New York</a></small>
-                    <small class="me-3"><i class="fas fa-envelope me-2 text-secondary"></i><a href="#" class="text-white">Email@Example.com</a></small>
+                    <small class="me-3"><i class="fas fa-envelope me-2 text-secondary"></i><a href="#" class="text-white">ACGN666@gmail.com</a></small>
                 </div>
                 <div class="top-link pe-2">
-                    <a href="#" class="text-white"><small class="text-white mx-2">Privacy Policy</small>/</a>
-                    <a href="#" class="text-white"><small class="text-white mx-2">Terms of Use</small>/</a>
-                    <a href="#" class="text-white"><small class="text-white ms-2">Sales and Refunds</small></a>
+                    <a href="#" class="text-white"><small class="text-white mx-2">隱私政策</small>/</a>
+                    <a href="#" class="text-white"><small class="text-white mx-2">服務條款</small>/</a>
+                    <a href="#" class="text-white"><small class="text-white ms-2">關於我們</small></a>
                 </div>
             </div>
         </div>
         <div class="container px-0">
             <nav class="navbar navbar-light bg-white navbar-expand-xl">
-                <router-link to="/" class="navbar-brand" @click="scrollToTop"><h1 class="text-primary display-6">ACGN Project</h1></router-link>
+                <router-link to="/" class="navbar-brand" @click="scrollToTop"><h1 class="text-primary display-6">ACGN 綜合論壇</h1></router-link>
                 <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                     <span class="fa fa-bars text-primary"></span>
                 </button>
