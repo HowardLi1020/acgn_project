@@ -640,6 +640,7 @@ def ViewFn_work_edit(request, view_fn_work_id):
                 if 'work_original_from' in request.POST:
                     view_db_work_info_id.work_original_from = request.POST['work_original_from']
                 if 'work_price' in request.POST:
+
                     view_db_work_info_id.work_price = request.POST['work_price']
                 if 'deadline' in request.POST:
                     view_db_work_info_id.deadline = request.POST['deadline']
@@ -1183,9 +1184,19 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     'save_path': 'commission/publiccard/banner',
                     'filename_pattern': f'{public_card.member_basic_id}_banner'
                 },
+                # 新增價目表圖片處理
+                'sell_image_1': {
+                    'model_field': 'sell_example_image_1',
+                    'save_path': 'commission/publiccard/sell_list_img',
+                    'filename_pattern': f'sell_{public_card.member_basic_id}_1'
+                },
+                'sell_image_2': {
+                    'model_field': 'sell_example_image_2',
+                    'save_path': 'commission/publiccard/sell_list_img',
+                    'filename_pattern': f'sell_{public_card.member_basic_id}_2'
+                }
             }
             
-            # 先處理基本圖片上傳（頭像、橫幅）
             for file_field, config in file_field_mapping.items():
                 if file_field in request.FILES:
                     uploaded_file = request.FILES[file_field]
@@ -1210,185 +1221,8 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                         for chunk in uploaded_file.chunks():
                             destination.write(chunk)
                     
-                    # 更新資料庫欄位
-                    setattr(public_card, config['model_field'], os.path.join(config['save_path'], new_filename))
-
-            # 處理價目表相關資料和圖片
-            # 獲取所有價目表項目的 ID 列表
-            sell_items = {}
-            for key in request.POST:
-                if key.startswith('sell_title_item_'):
-                    sell_item_id = key.replace('sell_title_item_', '')
-                    if sell_item_id not in sell_items:
-                        sell_items[sell_item_id] = {'id': sell_item_id}
-
-            # 添加在處理價目表圖片上傳前
-            print("===== 表單提交的所有欄位 =====")
-            for key in request.FILES:
-                print(f"文件欄位: {key}")
-
-            for key in request.POST:
-                if key.startswith('sell_image_') or key.startswith('sell_delete_image_'):
-                    print(f"POST 欄位: {key} = {request.POST[key]}")
-
-            # 處理價目表圖片上傳
-            for key in request.FILES:
-                if key.startswith('sell_image_'):
-                    print(f"正在處理文件欄位: {key}")
-                    # 解析 key 格式
-                    parts = key.split('_')
-                    print(f"欄位名稱拆分: {parts}")
-                    
-                    try:
-                        # 正確解析欄位名稱格式：sell_image_X_item_Y
-                        # 從欄位名稱中提取圖片索引(X)
-                        if len(parts) >= 5 and parts[0] == 'sell' and parts[1] == 'image' and parts[3] == 'item':
-                            raw_image_id = parts[2].lstrip('0')
-                            sell_item_id = parts[4]
-                        else:
-                            # 嘗試舊的解析方式作為後備
-                            raw_image_id = parts[2].lstrip('0') if len(parts) >= 3 else '1'
-                            sell_item_id = key.split('item_')[-1] if 'item_' in key else None
-                        
-                        try:
-                            image_id = int(raw_image_id) if raw_image_id else 1
-                            print(f"提取的圖片索引: {image_id}, 項目ID: {sell_item_id}")
-                            
-                            # 嚴格限制 image_id 只能是 1 或 2
-                            if image_id not in [1, 2]:
-                                print(f"無效的 image_id: {image_id}，跳過此欄位")
-                                continue
-                                
-                            # 確保已正確獲取 sell_item_id
-                            if not sell_item_id:
-                                print(f"無法從欄位名稱中提取 sell_item_id: {key}")
-                                continue
-                            
-                            # 確認價目表項目存在
-                            if sell_item_id in sell_items:
-                                uploaded_file = request.FILES[key]
-                                
-                                # 取得對應的價目表項目模型實例
-                                sell_item = None
-                                if sell_item_id.isdigit() and int(sell_item_id) > 0:
-                                    try:
-                                        sell_item = DbPublicCardSell.objects.get(sell_list_id=sell_item_id)
-                                    except DbPublicCardSell.DoesNotExist:
-                                        print(f"價目表項目不存在: {sell_item_id}，跳過圖片處理")
-                                        continue
-                                else:
-                                    print(f"新項目 ID: {sell_item_id}，跳過圖片處理，等待項目創建後再處理")
-                                    continue
-                                
-                                # 確定模型欄位名稱 (只允許 sell_example_image_1 或 sell_example_image_2)
-                                model_field = f'sell_example_image_{image_id}'
-                                
-                                # 安全檢查：確認欄位存在於模型中
-                                if not hasattr(sell_item, model_field):
-                                    print(f"欄位 {model_field} 不存在於模型中，跳過處理")
-                                    continue
-                                
-                                # 刪除舊檔案
-                                old_file = getattr(sell_item, model_field)
-                                if old_file:
-                                    old_file_path = os.path.join(settings.MEDIA_ROOT, 'commission/publiccard/sell_list_img', str(old_file))
-                                    if os.path.isfile(old_file_path):
-                                        os.remove(old_file_path)
-                                
-                                # 生成新檔名
-                                file_ext = uploaded_file.name.split('.')[-1]
-                                new_filename = f"{public_card.member_basic_id}_sell_{sell_item_id}_{image_id}.{file_ext}"
-                                
-                                # 組合完整儲存路徑
-                                save_path = 'commission/publiccard/sell_list_img'
-                                full_path = os.path.join(settings.MEDIA_ROOT, save_path)
-                                os.makedirs(full_path, exist_ok=True)
-                                
-                                # 儲存檔案
-                                with open(os.path.join(full_path, new_filename), 'wb+') as destination:
-                                    for chunk in uploaded_file.chunks():
-                                        destination.write(chunk)
-                                
-                                # 更新資料庫欄位，僅寫入檔名
-                                setattr(sell_item, model_field, new_filename)
-                                sell_item.save()
-                                print(f"成功處理圖片: {key} -> {model_field}")
-                        except ValueError as ve:
-                            print(f"解析 image_id 時出錯: {ve}, key={key}")
-                            continue
-                    except Exception as e:
-                        # 更詳細的錯誤處理和日誌
-                        print(f"處理圖片上傳時出錯: {e}, key={key}, parts={parts}")
-                        # 這裡不要讓異常傳播，保持操作繼續進行
-                        continue
-
-            # 處理價目表圖片刪除標記
-            for key in request.POST:
-                if key.startswith('sell_delete_image_'):
-                    print(f"處理刪除圖片標記: {key}")
-                    try:
-                        parts = key.split('_')
-                        print(f"刪除圖片欄位拆分: {parts}")
-                        
-                        # 正確解析欄位名稱格式：sell_delete_image_X_item_Y
-                        if len(parts) >= 6 and parts[0] == 'sell' and parts[1] == 'delete' and parts[2] == 'image' and parts[4] == 'item':
-                            # 嚴格解析 image_id，確保是 1 或 2
-                            raw_image_id = parts[3].lstrip('0')
-                            sell_item_id = parts[5]
-                        else:
-                            # 嘗試舊的解析方式作為後備
-                            raw_image_id = parts[3].lstrip('0') if len(parts) >= 4 else '1'
-                            sell_item_id = key.split('item_')[-1] if 'item_' in key else None
-                        
-                        try:
-                            image_id = int(raw_image_id) if raw_image_id else 1
-                            print(f"提取的刪除圖片索引: {image_id}, 項目ID: {sell_item_id}")
-                            
-                            if image_id not in [1, 2]:
-                                print(f"無效的 image_id: {image_id}，跳過此刪除標記")
-                                continue
-                            
-                            # 確保已正確獲取 sell_item_id
-                            if not sell_item_id:
-                                print(f"無法從欄位名稱中提取 sell_item_id: {key}")
-                                continue
-                                
-                            # 只處理已存在的價目表項目
-                            if sell_item_id.isdigit() and int(sell_item_id) > 0:
-                                try:
-                                    sell_item = DbPublicCardSell.objects.get(sell_list_id=sell_item_id)
-                                    
-                                    # 確定模型欄位名稱
-                                    model_field = f'sell_example_image_{image_id}'
-                                    
-                                    # 安全檢查：確認欄位存在於模型中
-                                    if not hasattr(sell_item, model_field):
-                                        print(f"欄位 {model_field} 不存在於模型中，跳過刪除處理")
-                                        continue
-                                    
-                                    # 檢查欄位是否有值
-                                    old_file = getattr(sell_item, model_field)
-                                    if old_file:
-                                        # 刪除實際檔案
-                                        old_file_path = os.path.join(settings.MEDIA_ROOT, 'commission/publiccard/sell_list_img', str(old_file))
-                                        if os.path.isfile(old_file_path):
-                                            os.remove(old_file_path)
-                                            print(f"已刪除檔案: {old_file_path}")
-                                        
-                                        # 更新資料庫欄位為 None
-                                        setattr(sell_item, model_field, None)
-                                        sell_item.save()
-                                        print(f"已清除欄位 {model_field} 的值")
-                                    else:
-                                        print(f"欄位 {model_field} 沒有檔案，無需刪除")
-                                except DbPublicCardSell.DoesNotExist:
-                                    print(f"價目表項目不存在: {sell_item_id}，跳過刪除標記")
-                            else:
-                                print(f"價目表項目 ID 無效: {sell_item_id}")
-                        except ValueError as ve:
-                            print(f"解析 image_id 時出錯: {ve}")
-                    except Exception as e:
-                        print(f"處理刪除圖片標記時出錯: {e}")
+                    # 更新資料庫欄位(修改部分)
+                    setattr(public_card, config['model_field'], new_filename)  # 只儲存檔名
 
             # === 小卡公開狀態處理 ===
             # 通用狀態處理邏輯（可擴展到不同類型）
@@ -1428,57 +1262,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
             # === 新增價目表處理部分 ===
             # 處理價目表資料
             try:
-                # 0. 處理圖片排序數據
-                if 'sell_image_order_data' in request.POST:
-                    try:
-                        image_order_data = json.loads(request.POST['sell_image_order_data'])
-                        print(f"收到的圖片排序數據: {image_order_data}")
-                        
-                        # 處理每個項目的圖片排序
-                        for sell_item_id, images_info in image_order_data.items():
-                            try:
-                                # 檢查 sell_item_id 是否有效
-                                sell_item = DbPublicCardSell.objects.get(sell_list_id=int(sell_item_id), user=public_card)
-                                
-                                # 根據排序信息處理圖片
-                                for img_info in images_info:
-                                    image_id = img_info.get('image_id')
-                                    sort_order = img_info.get('sort_order')
-                                    
-                                    print(f"處理圖片排序: 項目ID={sell_item_id}, 圖片ID={image_id}, 排序={sort_order}")
-                                    
-                                    # 如果排序與索引不一致，需要交換圖片
-                                    if image_id == 1 and sort_order == 2:
-                                        # 圖片1應該在位置2
-                                        print(f"交換圖片: 圖片1移至位置2")
-                                        # 暫存圖片1的內容
-                                        temp_image1 = sell_item.sell_example_image_1
-                                        # 將圖片2複製到圖片1位置
-                                        sell_item.sell_example_image_1 = sell_item.sell_example_image_2
-                                        # 將暫存的圖片1複製到圖片2位置
-                                        sell_item.sell_example_image_2 = temp_image1
-                                        sell_item.save()
-                                        break  # 只需要處理一次交換
-                                    elif image_id == 2 and sort_order == 1:
-                                        # 圖片2應該在位置1
-                                        print(f"交換圖片: 圖片2移至位置1")
-                                        # 暫存圖片2的內容
-                                        temp_image2 = sell_item.sell_example_image_2
-                                        # 將圖片1複製到圖片2位置
-                                        sell_item.sell_example_image_2 = sell_item.sell_example_image_1
-                                        # 將暫存的圖片2複製到圖片1位置
-                                        sell_item.sell_example_image_1 = temp_image2
-                                        sell_item.save()
-                                        break  # 只需要處理一次交換
-                            except DbPublicCardSell.DoesNotExist:
-                                print(f"找不到項目: ID={sell_item_id}")
-                            except Exception as e:
-                                print(f"處理項目圖片排序時出錯: {str(e)}")
-                    except json.JSONDecodeError:
-                        print(f"解析圖片排序數據JSON時出錯")
-                    except Exception as e:
-                        print(f"處理圖片排序時出錯: {str(e)}")
-                
                 # 1. 獲取提交的所有價目表項目
                 sell_items_data = {}
                 for key in request.POST:
@@ -1533,59 +1316,31 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                     
                     # 處理圖片上傳
                     for img_key, uploaded_file in data.get('images', {}).items():
-                        try:
-                            print(f"處理新項目圖片上傳：{img_key} = {uploaded_file}")
-                            # 正確解析欄位名稱格式：sell_image_X_item_Y
-                            # 從欄位名稱中提取圖片索引(X)
-                            name_parts = img_key.split('_')
-                            if len(name_parts) >= 5 and name_parts[0] == 'sell' and name_parts[1] == 'image':
-                                image_index = name_parts[2]  # 圖片索引 (X)
-                                # 可選：提取項目ID (Y)
-                                # item_id = name_parts[4] if len(name_parts) >= 5 and name_parts[3] == 'item' else None
-                            else:
-                                # 嘗試舊的解析方式作為後備
-                                image_index = img_key.split('_')[-1]
-                            
-                            print(f"解析欄位名稱：{img_key}，提取的圖片索引: {image_index}")
-                            
-                            # 確保 image_index 是 1 或 2
-                            if image_index not in ['1', '2']:
-                                print(f"無效的圖片索引: {image_index}，跳過此圖片")
-                                continue
-                                
-                            # 確保模型欄位存在
-                            model_field = f'sell_example_image_{image_index}'
-                            if not hasattr(sell_item, model_field):
-                                print(f"欄位 {model_field} 不存在於模型中，跳過處理")
-                                continue
-                            
-                            # 刪除舊檔案
-                            old_file = getattr(sell_item, model_field)
-                            if old_file:
-                                old_file_path = os.path.join(settings.MEDIA_ROOT, 'commission/publiccard/sell_list_img', str(old_file))
-                                if os.path.isfile(old_file_path):
-                                    os.remove(old_file_path)
-                            
-                            # 生成新檔名
-                            file_ext = uploaded_file.name.split('.')[-1]
-                            new_filename = f"{public_card.member_basic_id}_sell_{item_id}_{image_index}.{file_ext}"
-                            
-                            # 組合完整儲存路徑
-                            save_path = 'commission/publiccard/sell_list_img'
-                            full_path = os.path.join(settings.MEDIA_ROOT, save_path)
-                            os.makedirs(full_path, exist_ok=True)
-                            
-                            # 儲存檔案
-                            with open(os.path.join(full_path, new_filename), 'wb+') as destination:
-                                for chunk in uploaded_file.chunks():
-                                    destination.write(chunk)
-                            
-                            # 更新資料庫欄位，僅寫入檔名
-                            setattr(sell_item, model_field, new_filename)
-                            print(f"成功處理新項目圖片: 項目ID={item_id}, 圖片索引={image_index}")
-                        except Exception as e:
-                            print(f"處理圖片上傳時出錯: {e}, key={img_key}")
-                            continue
+                        image_index = img_key.split('_')[-1]  # 1或2
+                        config = file_field_mapping[f'sell_image_{image_index}']
+                        
+                        # 刪除舊檔案
+                        old_file = getattr(sell_item, config['model_field'])
+                        if old_file:
+                            old_file_path = os.path.join(settings.MEDIA_ROOT, str(old_file))
+                            if os.path.isfile(old_file_path):
+                                os.remove(old_file_path)
+                        
+                        # 生成新檔名
+                        file_ext = uploaded_file.name.split('.')[-1]
+                        new_filename = f"{config['filename_pattern']}_{step}.{file_ext}"
+                        
+                        # 組合完整儲存路徑
+                        full_path = os.path.join(settings.MEDIA_ROOT, config['save_path'])
+                        os.makedirs(full_path, exist_ok=True)
+                        
+                        # 儲存檔案
+                        with open(os.path.join(full_path, new_filename), 'wb+') as destination:
+                            for chunk in uploaded_file.chunks():
+                                destination.write(chunk)
+                        
+                        # 更新資料庫欄位
+                        setattr(sell_item, config['model_field'], new_filename)
 
                     # 設置步驟值
                     sell_item.sell_step = step

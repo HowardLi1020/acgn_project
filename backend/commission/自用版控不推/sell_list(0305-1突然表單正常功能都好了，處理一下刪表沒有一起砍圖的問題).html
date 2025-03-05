@@ -74,7 +74,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1050; /* 確保在導航選單之上 */
+    z-index: 1000;
   }
 
   /* 價目表示意圖檢視原圖效果 - 圖片顯示 */
@@ -266,7 +266,6 @@
                                             placeholder="如：頭像、人設、半身像、上色...等"
                                             style="flex: 1;"
                                             value="{{ sell_item.sell_title }}"
-                                            onkeydown="handleSellItemKeyDown(event)"
                                         />
                                         <!-- 定價容器 -->
                                         <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
@@ -277,7 +276,6 @@
                                                 placeholder="定價"
                                                 style="width: 80px;"
                                                 value="{{ sell_item.sell_price }}"
-                                                onkeydown="handlePriceItemKeyDown(event)"
                                             />
                                             <span>NTD</span>
                                         </div>
@@ -598,7 +596,7 @@
 // 價目表本體-新增次表按鈕
 let newItemCounter = 0;
 
-window.addSellItem = function(event) {
+function addSellItem(event) {
     event.preventDefault();
     const currentItem = event.target.closest('.sell-content-wrapper');
     if (!currentItem) {
@@ -625,11 +623,15 @@ window.addSellItem = function(event) {
     // 重置圖片區域
     const imageContainer = newItem.querySelector('.d-flex[style*="gap: 10px; height: 85%"]');
     if (imageContainer) {
-        // 清除現有圖片
+        console.log('重置圖片區域');
+        // 移除所有圖片預覽
+        imageContainer.querySelectorAll('.image-preview-wrapper').forEach(wrapper => wrapper.remove());
+        // 添加兩個初始佔位符
         imageContainer.innerHTML = `
             <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                 data-image-id="1"
+                 data-sell-item-id="${newId}"
                  style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
-                 data-image-id="1" data-sell-item-id="${newId}"
                  onclick="triggerFileInput(this)">
                 <div class="text-center text-muted">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
@@ -638,10 +640,13 @@ window.addSellItem = function(event) {
                     </svg>
                     <p>上傳示意圖1</p>
                 </div>
+                <input type="file" name="sell_image_1_item_${newId}" id="sell_image_1_item_${newId}" 
+                       style="display: none;" accept="image/*">
             </div>
             <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                 data-image-id="2"
+                 data-sell-item-id="${newId}"
                  style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
-                 data-image-id="2" data-sell-item-id="${newId}"
                  onclick="triggerFileInput(this)">
                 <div class="text-center text-muted">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
@@ -650,6 +655,8 @@ window.addSellItem = function(event) {
                     </svg>
                     <p>上傳示意圖2</p>
                 </div>
+                <input type="file" name="sell_image_2_item_${newId}" id="sell_image_2_item_${newId}" 
+                       style="display: none;" accept="image/*">
             </div>
         `;
     }
@@ -686,15 +693,7 @@ window.addSellItem = function(event) {
     
     // 更新排序按鈕狀態
     updateOrderButtonsState();
-
-    // 自動聚焦到新項目的販售項目輸入框
-    const titleInput = newItem.querySelector('input[name^="sell_title_item_"]');
-    if (titleInput) {
-        setTimeout(() => {
-            titleInput.focus();
-        }, 100); // 添加短暫延遲確保DOM已更新
-    }
-};
+}
 
 // 價目表本體-刪除本表按鈕
 window.deleteSellItem = function(button, event) {
@@ -717,20 +716,8 @@ window.deleteSellItem = function(button, event) {
         // 檢查是否有上傳的圖片
         const imageWrappers = sellContentWrapper.querySelectorAll('.image-preview-wrapper');
         if (imageWrappers.length > 0) {
-            // 增加更精確的圖片檢查
-            const hasRealImages = Array.from(imageWrappers).some(wrapper => {
-                const img = wrapper.querySelector('img');
-                const placeholderContainer = wrapper.querySelector('.placeholder-container');
-                
-                // 如果存在真實圖片，或者佔位符容器不可見，則視為有內容
-                return (img && img.src && !img.src.includes('data:image/gif')) || 
-                       (placeholderContainer && placeholderContainer.style.display !== 'none');
-            });
-
-            if (hasRealImages) {
-                hasContent = true;
-                console.log(`發現真實圖片預覽: ${imageWrappers.length} 個`);
-            }
+            hasContent = true;
+            console.log(`發現圖片預覽: ${imageWrappers.length} 個`);
         }
 
         if (hasContent) {
@@ -765,7 +752,7 @@ window.deleteSellItem = function(button, event) {
             // 清空圖片預覽區域並重置為預設狀態
             const imageContainer = sellContentWrapper.querySelector('.d-flex[style*="gap: 10px"]');
             if (imageContainer) {
-                imageContainer.innerHTML = ''; // 清空容器
+                imageContainer.innerHTML = '';
                 console.log('清空圖片容器');
 
                 // 創建兩個新的上傳佔位符
@@ -775,27 +762,19 @@ window.deleteSellItem = function(button, event) {
                     placeholder.style.cssText = 'flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;';
                     placeholder.setAttribute('onclick', 'triggerFileInput(this)');
 
-                    const imageId = i + 1; // 為每個佔位符添加編號
-                    placeholder.setAttribute('data-image-id', imageId);
-
                     placeholder.innerHTML = `
-                        <div class="placeholder-container text-center text-muted">
+                        <div class="text-center text-muted">
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
                             </svg>
                             <p>上傳示意圖${imageId}</p>
-                            <input type="file" name="sell_image_${imageId}" accept="image/*" style="display: none;" onchange="previewImage(this)">
                         </div>
                     `;
 
                     imageContainer.appendChild(placeholder);
                 }
-                console.log('重新生成兩個示意圖佔位符');
             }
-
-            // 更新排序按鈕狀態
-            updateOrderButtonsState();
         }
     }
     updateOrderButtonsState();
@@ -898,9 +877,6 @@ function triggerFileInput(placeholder) {
                     
                     // 初始化新的圖片控制項
                     initializeImageControls(previewWrapper);
-                    
-                    // 重要：移除點擊事件，防止圖片上傳後仍然可點擊觸發選檔器
-                    previewWrapper.removeAttribute('onclick');
                 };
                 
                 reader.readAsDataURL(file);
@@ -918,10 +894,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // --- 價目表示意圖 - 初始化所有圖片控制項 ---
   const imageWrappers = document.querySelectorAll('.image-preview-wrapper');
   imageWrappers.forEach(wrapper => {
-    // 檢查是否已有圖片，如果有則移除點擊事件
-    if (wrapper.querySelector('img')) {
-      wrapper.removeAttribute('onclick');
-    }
     initializeImageControls(wrapper);
   });
 });
@@ -930,11 +902,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeImageControls(wrapper) {
     const iconContainer = wrapper.querySelector('.icon-container');
     if (!iconContainer) return;
-
-    // 確保包含圖片的容器不會觸發檔案選擇器
-    if (wrapper.querySelector('img')) {
-        wrapper.removeAttribute('onclick');
-    }
 
    // --- 價目表示意圖 - 檢視原圖按鈕事件監聽器 ---
     const viewBtn = iconContainer.querySelector('[title="檢視原圖"]');
@@ -1391,126 +1358,5 @@ function triggerFileInput(element) {
     input.click();
 }
 
-// 處理輸入欄位導航（Enter鍵跳到下一個輸入框）
-document.addEventListener('DOMContentLoaded', function() {
-    // 為所有表單綁定事件處理
-    document.addEventListener('keydown', function(event) {
-        // 檢查是否按下的是Enter鍵
-        if (event.key === 'Enter') {
-            const target = event.target;
-            
-            // 如果當前輸入欄位是販售項目輸入框
-            if (target.name && target.name.startsWith('sell_title_item_')) {
-                event.preventDefault(); // 阻止預設行為
-                
-                // 找到當前販售項目所在的容器
-                const wrapper = target.closest('.sell-content-wrapper');
-                if (wrapper) {
-                    // 找到該容器中的定價輸入框並聚焦
-                    const priceInput = wrapper.querySelector('input[name^="sell_price_item_"]');
-                    if (priceInput) {
-                        priceInput.focus();
-                    }
-                }
-            }
-            // 如果當前輸入欄位是定價輸入框
-            else if (target.name && target.name.startsWith('sell_price_item_')) {
-                event.preventDefault(); // 阻止預設行為
-                
-                // 找到當前定價所在的容器
-                const wrapper = target.closest('.sell-content-wrapper');
-                if (wrapper) {
-                    // 找到該容器中的接單規則textarea並聚焦
-                    const descTextarea = wrapper.querySelector('textarea[name^="sell_description_item_"]');
-                    if (descTextarea) {
-                        descTextarea.focus();
-                    }
-                }
-            }
-            // 在textarea中不阻止Enter鍵的預設行為（允許換行）
-        }
-    });
-    
-    // 修改addSellItem函數，使其在添加新項目後自動聚焦到新項目的販售項目輸入框
-    const originalAddSellItem = window.addSellItem;
-    window.addSellItem = function(event) {
-        // 調用原始函數
-        originalAddSellItem(event);
-        
-        // 獲取剛剛創建的新項目（當前項目的下一個兄弟元素）
-        const currentItem = event.target.closest('.sell-content-wrapper');
-        const newItem = currentItem.nextElementSibling;
-        
-        if (newItem) {
-            // 找到新項目中的販售項目輸入框並聚焦
-            const titleInput = newItem.querySelector('input[name^="sell_title_item_"]');
-            if (titleInput) {
-                setTimeout(() => {
-                    titleInput.focus();
-                }, 100); // 添加短暫延遲確保DOM已更新
-            }
-        }
-    };
-});
-
-// 處理販售項目輸入框的Enter鍵
-function handleSellItemKeyDown(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault(); // 阻止預設行為
-        
-        // 找到當前販售項目所在的容器
-        const wrapper = event.target.closest('.sell-content-wrapper');
-        if (wrapper) {
-            // 找到該容器中的定價輸入框並聚焦
-            const priceInput = wrapper.querySelector('input[name^="sell_price_item_"]');
-            if (priceInput) {
-                priceInput.focus();
-            }
-        }
-    }
-}
-
-// 處理定價輸入框的Enter鍵
-function handlePriceItemKeyDown(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault(); // 阻止預設行為
-        
-        // 找到當前定價所在的容器
-        const wrapper = event.target.closest('.sell-content-wrapper');
-        if (wrapper) {
-            // 找到該容器中的接單規則textarea並聚焦
-            const descTextarea = wrapper.querySelector('textarea[name^="sell_description_item_"]');
-            if (descTextarea) {
-                descTextarea.focus();
-            }
-        }
-    }
-}
-
-// 修改addSellItem函數，使其在添加新項目後自動聚焦到新項目的販售項目輸入框
-const originalAddSellItem = window.addSellItem;
-window.addSellItem = function(event) {
-    // 調用原始函數
-    originalAddSellItem(event);
-    
-    // 獲取剛剛創建的新項目（當前項目的下一個兄弟元素）
-    const currentItem = event.target.closest('.sell-content-wrapper');
-    const newItem = currentItem.nextElementSibling;
-    
-    if (newItem) {
-        // 找到新項目中的販售項目輸入框並聚焦
-        const titleInput = newItem.querySelector('input[name^="sell_title_item_"]');
-        if (titleInput) {
-            setTimeout(() => {
-                titleInput.focus();
-            }, 100); // 添加短暫延遲確保DOM已更新
-        }
-    }
-};
-
-// 移除之前的全局事件監聽器
-document.removeEventListener('keydown', function(event) {
-    // 之前的全局事件處理邏輯
-});
 </script>
 {% endblock %}

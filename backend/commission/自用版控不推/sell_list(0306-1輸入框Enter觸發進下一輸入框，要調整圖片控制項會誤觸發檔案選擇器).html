@@ -898,9 +898,6 @@ function triggerFileInput(placeholder) {
                     
                     // 初始化新的圖片控制項
                     initializeImageControls(previewWrapper);
-                    
-                    // 重要：移除點擊事件，防止圖片上傳後仍然可點擊觸發選檔器
-                    previewWrapper.removeAttribute('onclick');
                 };
                 
                 reader.readAsDataURL(file);
@@ -918,10 +915,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // --- 價目表示意圖 - 初始化所有圖片控制項 ---
   const imageWrappers = document.querySelectorAll('.image-preview-wrapper');
   imageWrappers.forEach(wrapper => {
-    // 檢查是否已有圖片，如果有則移除點擊事件
-    if (wrapper.querySelector('img')) {
-      wrapper.removeAttribute('onclick');
-    }
     initializeImageControls(wrapper);
   });
 });
@@ -930,11 +923,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeImageControls(wrapper) {
     const iconContainer = wrapper.querySelector('.icon-container');
     if (!iconContainer) return;
-
-    // 確保包含圖片的容器不會觸發檔案選擇器
-    if (wrapper.querySelector('img')) {
-        wrapper.removeAttribute('onclick');
-    }
 
    // --- 價目表示意圖 - 檢視原圖按鈕事件監聽器 ---
     const viewBtn = iconContainer.querySelector('[title="檢視原圖"]');

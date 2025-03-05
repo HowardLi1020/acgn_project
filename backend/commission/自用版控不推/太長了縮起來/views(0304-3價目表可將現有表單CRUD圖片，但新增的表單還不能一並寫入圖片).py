@@ -1428,57 +1428,6 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
             # === 新增價目表處理部分 ===
             # 處理價目表資料
             try:
-                # 0. 處理圖片排序數據
-                if 'sell_image_order_data' in request.POST:
-                    try:
-                        image_order_data = json.loads(request.POST['sell_image_order_data'])
-                        print(f"收到的圖片排序數據: {image_order_data}")
-                        
-                        # 處理每個項目的圖片排序
-                        for sell_item_id, images_info in image_order_data.items():
-                            try:
-                                # 檢查 sell_item_id 是否有效
-                                sell_item = DbPublicCardSell.objects.get(sell_list_id=int(sell_item_id), user=public_card)
-                                
-                                # 根據排序信息處理圖片
-                                for img_info in images_info:
-                                    image_id = img_info.get('image_id')
-                                    sort_order = img_info.get('sort_order')
-                                    
-                                    print(f"處理圖片排序: 項目ID={sell_item_id}, 圖片ID={image_id}, 排序={sort_order}")
-                                    
-                                    # 如果排序與索引不一致，需要交換圖片
-                                    if image_id == 1 and sort_order == 2:
-                                        # 圖片1應該在位置2
-                                        print(f"交換圖片: 圖片1移至位置2")
-                                        # 暫存圖片1的內容
-                                        temp_image1 = sell_item.sell_example_image_1
-                                        # 將圖片2複製到圖片1位置
-                                        sell_item.sell_example_image_1 = sell_item.sell_example_image_2
-                                        # 將暫存的圖片1複製到圖片2位置
-                                        sell_item.sell_example_image_2 = temp_image1
-                                        sell_item.save()
-                                        break  # 只需要處理一次交換
-                                    elif image_id == 2 and sort_order == 1:
-                                        # 圖片2應該在位置1
-                                        print(f"交換圖片: 圖片2移至位置1")
-                                        # 暫存圖片2的內容
-                                        temp_image2 = sell_item.sell_example_image_2
-                                        # 將圖片1複製到圖片2位置
-                                        sell_item.sell_example_image_2 = sell_item.sell_example_image_1
-                                        # 將暫存的圖片2複製到圖片1位置
-                                        sell_item.sell_example_image_1 = temp_image2
-                                        sell_item.save()
-                                        break  # 只需要處理一次交換
-                            except DbPublicCardSell.DoesNotExist:
-                                print(f"找不到項目: ID={sell_item_id}")
-                            except Exception as e:
-                                print(f"處理項目圖片排序時出錯: {str(e)}")
-                    except json.JSONDecodeError:
-                        print(f"解析圖片排序數據JSON時出錯")
-                    except Exception as e:
-                        print(f"處理圖片排序時出錯: {str(e)}")
-                
                 # 1. 獲取提交的所有價目表項目
                 sell_items_data = {}
                 for key in request.POST:

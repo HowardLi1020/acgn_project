@@ -177,8 +177,6 @@
     pointer-events: none;
   }
 
-  
-
 </style>
 {% endblock %}
 {% block app_title %}
@@ -263,49 +261,6 @@ document.querySelector('form').addEventListener('input', function(e) {
 
 // === 表單提交處理 ===
 $(document).ready(function() {
-    // 初始化圖片拖曳排序功能
-    function initializeImageSortable(container) {
-        new Sortable(container, {
-            animation: 150,  // 恢復原始動畫時間
-            handle: '.image-preview-wrapper', // 只能拖曳圖片預覽區
-            ghostClass: 'sell-item-ghost',    // 使用與價目表相同的樣式
-            chosenClass: 'sell-item-chosen',
-            dragClass: 'sell-item-drag',
-            forceFallback: false,  // 關閉強制回退模式
-            fallbackTolerance: 3, 
-            swapThreshold: 0.5,   
-            direction: 'horizontal', // 限制為水平方向拖動
-            scroll: true,  // 啟用滾動
-            bubbleScroll: true, // 允許冒泡滾動
-            scrollSensitivity: 30, // 觸發滾動的敏感度
-            scrollSpeed: 10, // 滾動速度
-            onStart: function(evt) {
-                // 添加拖動開始時的樣式
-                evt.item.classList.add('sortable-dragging');
-            },
-            onEnd: function(evt) {
-                // 移除拖動結束時的樣式
-                evt.item.classList.remove('sortable-dragging');
-                
-                // 更新圖片順序標記
-                const images = container.querySelectorAll('.image-preview-wrapper');
-                images.forEach((img, index) => {
-                    // 使用 index + 1 作為 sort_order，確保從 1 開始
-                    img.setAttribute('data-sort-order', index + 1);
-                    console.log(`更新圖片排序: ID=${img.getAttribute('data-image-id')}, 順序=${index + 1}`);
-                });
-            }
-        });
-    }
-
-    // 為所有現有圖片容器初始化
-    $('.sell-content-wrapper').each(function() {
-        const imageContainer = $(this).find('.d-flex[style*="gap: 10px"]')[0];
-        if (imageContainer) {
-            initializeImageSortable(imageContainer);
-        }
-    });
-    
     $('form').submit(function(event) {
         event.preventDefault(); // 阻止表單的默認提交行為
         var formData = new FormData(this);
@@ -335,11 +290,11 @@ $(document).ready(function() {
 
 // === 右側內容區域開關初始化開關狀態並添加事件監聽器 ===
 const switchStates = {
-    // '開關控制ID': 從views.py連動的資料表.資料表欄位
-    'switch-sell': JSON.parse('{{ ViewKey_DbPublicCardInfo.sell_public_status|lower|default:"false"|escapejs }}'.toLowerCase()),
-    'switch-work-sellnow': JSON.parse('{{ ViewKey_DbPublicCardInfo.work_sellnow_list_public_status|lower|default:"false"|escapejs }}'.toLowerCase()),
-    'switch-work-done': JSON.parse('{{ ViewKey_DbPublicCardInfo.work_done_list_public_status|lower|default:"false"|escapejs }}'.toLowerCase()),
-    'switch-need-list': JSON.parse('{{ ViewKey_DbPublicCardInfo.need_list_public_status|lower|default:"false"|escapejs }}'.toLowerCase())
+  // '開關控制ID': {# {從views.py連動的資料表.資料表欄位|統一轉換為小寫 }#}
+  'switch-sell': {{ ViewKey_DbPublicCardInfo.sell_public_status|lower }},
+  'switch-work-sellnow': {{ ViewKey_DbPublicCardInfo.work_sellnow_list_public_status|lower }},
+  'switch-work-done': {{ ViewKey_DbPublicCardInfo.work_done_list_public_status|lower }},
+  'switch-need-list': {{ ViewKey_DbPublicCardInfo.need_list_public_status|lower }}
 };
 
 // 右側內容區域開關-初始化每個開關的狀態
@@ -502,19 +457,6 @@ $(document).on('change', 'input[type="file"][name^="sell_image_"]', function() {
             $fileInput.attr('name', `sell_image_${imageId}_item_${sellItemId}`);
             $fileInput.attr('id', `sell_image_${imageId}_item_${sellItemId}`);
             $previewContainer.append($fileInput);
-            
-            // 修改：移除點擊事件但保持按鈕功能
-            // 只移除 onclick 屬性，而不是將 onclick 設為 null
-            $previewContainer.css('cursor', 'default').removeAttr('onclick');
-            
-            // 確保更換圖片按鈕的事件能被正確觸發
-            $replaceButton.on('click', function(e) {
-                e.stopPropagation(); // 阻止事件冒泡
-                const imageId = $(this).data('image-id');
-                const sellItemId = $(this).data('sell-item-id');
-                const inputId = `sell_image_${imageId}_item_${sellItemId}`;
-                $(`#${inputId}`).click();
-            });
         };
         
         // 讀取文件
@@ -565,15 +507,10 @@ $(document).on('click', '.delete-image', function() {
             'cursor': 'pointer'
         });
     
-    // 直接添加點擊處理函數（不使用.on方法），但只為佔位符添加
+    // 直接添加點擊處理函數（不使用.on方法）
     $placeholderWrapper[0].onclick = function(e) {
         // 阻止事件冒泡以避免遞迴
         e.stopPropagation();
-        
-        // 檢查是否含有圖片，如果有則不觸發檔案選擇
-        if (this.querySelector('img')) {
-            return;
-        }
         
         const sellItemId = this.getAttribute('data-sell-item-id');
         const imageId = parseInt(this.getAttribute('data-image-id')); // 確保 imageId 是整數 1 或 2
@@ -643,15 +580,9 @@ function updatePlaceholderNumbers($container) {
             $fileInput.attr('name', `sell_image_${newImageId}_item_${sellItemId}`);
             $fileInput.attr('id', `sell_image_${newImageId}_item_${sellItemId}`);
             
-            // 更新onclick函數的imageId，但只為佔位符添加
+            // 更新onclick函數的imageId
             this.onclick = function(e) {
                 e.stopPropagation();
-                
-                // 檢查是否含有圖片，如果有則不觸發檔案選擇
-                if (this.querySelector('img')) {
-                    return;
-                }
-                
                 const sellItemId = this.getAttribute('data-sell-item-id');
                 const imageId = newImageId; // 使用新分配的ID
                 const inputId = `sell_image_${imageId}_item_${sellItemId}`;
@@ -685,100 +616,101 @@ $('form').on('submit', function(event) {
     // 建立一個映射來跟踪已使用的索引
     const usedIndices = {};
     
-    // 收集圖片排序數據
-    const imageOrderData = {};
-    
-    // 遍歷所有價目表項目的圖片容器
-    $('.sell-content-wrapper').each(function() {
-        const sellItemId = $(this).data('sell-id');
-        const imageContainer = $(this).find('.d-flex[style*="gap: 10px"]');
-        
-        if (imageContainer.length > 0) {
-            // 獲取該項目下所有圖片元素
-            const images = imageContainer.find('.image-preview-wrapper');
-            
-            // 如果有多張圖片，記錄它們的順序
-            if (images.length > 1) {
-                const orderInfo = [];
-                images.each(function(index) {
-                    const imageId = parseInt($(this).data('image-id'), 10);
-                    // 使用 data-sort-order 屬性，如果不存在則使用當前索引 + 1
-                    const sortOrder = parseInt($(this).data('sort-order') || (index + 1), 10);
-                    console.log(`收集圖片順序: ID=${imageId}, 順序=${sortOrder}`);
-                    orderInfo.push({
-                        image_id: imageId,
-                        sort_order: sortOrder
-                    });
-                });
-                
-                // 確保按照 sort_order 排序
-                orderInfo.sort((a, b) => a.sort_order - b.sort_order);
-                
-                // 將排序信息添加到數據對象中
-                if (orderInfo.length > 0) {
-                    imageOrderData[sellItemId] = orderInfo;
-                }
-            }
-        }
-    });
-    
-    // 如果有排序信息，創建一個隱藏輸入欄位將其添加到表單中
-    if (Object.keys(imageOrderData).length > 0) {
-        // 將排序數據轉換為 JSON 字符串
-        const imageOrderJson = JSON.stringify(imageOrderData);
-        console.log('圖片排序數據:', imageOrderJson);
-        
-        // 檢查是否已存在此隱藏欄位，如果存在則更新值
-        let orderInput = $('input[name="sell_image_order_data"]');
-        if (orderInput.length === 0) {
-            // 不存在則創建新欄位
-            orderInput = $('<input>').attr({
-                'type': 'hidden',
-                'name': 'sell_image_order_data'
-            });
-            $(this).append(orderInput);
-        }
-        
-        // 設置欄位值
-        orderInput.val(imageOrderJson);
-    }
-    
-    // 原有的欄位名稱修正邏輯，但不要改變圖片索引的順序，以免影響排序
     $('input[type="file"][name^="sell_image_"]').each(function() {
         const originalName = $(this).attr('name');
-        // 僅標準化名稱格式，不重新分配索引
+        // 將數字解析為正確的索引（01->1, 11->2, 2->2, 1->1, 02->2, 等等）
         const correctedName = originalName.replace(/sell_image_(\d+)_item_(\d+)/, function(match, p1, p2) {
-            // 保持原始的圖片索引
+            // 將圖片索引轉換為數字
             let imageId = parseInt(p1, 10);
             
-            // 確保索引值為1或2
-            imageId = (imageId === 1 || imageId === 2) ? imageId : (imageId > 1 ? 2 : 1);
+            // 為了追踪修正，使用 item_id 作為鍵
+            const itemKey = `item_${p2}`;
+            if (!usedIndices[itemKey]) {
+                usedIndices[itemKey] = {};
+            }
             
-            return `sell_image_${imageId}_item_${p2}`;
+            let finalImageId;
+            
+            // 檢查是否為兩位數
+            if (imageId >= 10) {
+                // 11 應該對應到 2，以此類推
+                finalImageId = 2;
+            } else {
+                // 1, 01 等應該對應到 1
+                finalImageId = 1;
+            }
+            
+            // 如果此索引已被使用，則使用另一個可用索引
+            if (usedIndices[itemKey][finalImageId]) {
+                finalImageId = (finalImageId === 1) ? 2 : 1;
+                
+                // 如果兩個索引都已使用，則保持原始索引以避免衝突
+                if (usedIndices[itemKey][finalImageId]) {
+                    console.error(`警告：項目 ${p2} 已有兩個圖片，無法添加更多`);
+                    finalImageId = parseInt(p1, 10); // 保持原始索引
+                }
+            }
+            
+            // 標記此索引已被使用
+            usedIndices[itemKey][finalImageId] = true;
+            
+            console.log(`修正圖片索引：${p1} -> ${finalImageId} (for ${itemKey})`);
+            return `sell_image_${finalImageId}_item_${p2}`;
         });
         
         if (originalName !== correctedName) {
-            console.log(`標準化輸入欄位名稱：${originalName} -> ${correctedName}`);
+            console.log(`修正輸入欄位名稱：${originalName} -> ${correctedName}`);
             $(this).attr('name', correctedName);
             $(this).attr('id', correctedName);
         }
     });
     
-    // 同樣處理刪除標記的欄位名稱
+    // 重置映射以處理刪除標記
+    const usedDeleteIndices = {};
+    
+    // 同樣修正刪除標記的欄位名稱
     $('input[type="hidden"][name^="sell_delete_image_"]').each(function() {
         const originalName = $(this).attr('name');
         const correctedName = originalName.replace(/sell_delete_image_(\d+)_item_(\d+)/, function(match, p1, p2) {
-            // 保持原始的圖片索引
             let imageId = parseInt(p1, 10);
             
-            // 確保索引值為1或2
-            imageId = (imageId === 1 || imageId === 2) ? imageId : (imageId > 1 ? 2 : 1);
+            // 為了追踪修正，使用 item_id 作為鍵
+            const itemKey = `item_${p2}`;
+            if (!usedDeleteIndices[itemKey]) {
+                usedDeleteIndices[itemKey] = {};
+            }
             
-            return `sell_delete_image_${imageId}_item_${p2}`;
+            let finalImageId;
+            
+            // 檢查是否為兩位數
+            if (imageId >= 10) {
+                // 11 應該對應到 2，以此類推
+                finalImageId = 2;
+            } else {
+                // 1, 01 等應該對應到 1
+                finalImageId = 1;
+            }
+            
+            // 如果此索引已被使用，則使用另一個可用索引
+            if (usedDeleteIndices[itemKey][finalImageId]) {
+                finalImageId = (finalImageId === 1) ? 2 : 1;
+                
+                // 如果兩個索引都已使用，則保持原始索引以避免衝突
+                if (usedDeleteIndices[itemKey][finalImageId]) {
+                    console.error(`警告：項目 ${p2} 已有兩個刪除標記，無法添加更多`);
+                    finalImageId = parseInt(p1, 10); // 保持原始索引
+                }
+            }
+            
+            // 標記此索引已被使用
+            usedDeleteIndices[itemKey][finalImageId] = true;
+            
+            console.log(`修正刪除標記索引：${p1} -> ${finalImageId} (for ${itemKey})`);
+            return `sell_delete_image_${finalImageId}_item_${p2}`;
         });
         
         if (originalName !== correctedName) {
-            console.log(`標準化刪除標記欄位名稱：${originalName} -> ${correctedName}`);
+            console.log(`修正刪除標記欄位名稱：${originalName} -> ${correctedName}`);
             $(this).attr('name', correctedName);
         }
     });
@@ -789,22 +721,6 @@ $('form').on('submit', function(event) {
         console.log(`最終欄位名稱：${$(this).attr('name')}`);
     });
 });
-
-// 增加全局更換圖片按鈕事件處理程序，確保按鈕功能永遠有效
-// $(document).on('click', '.replace-image', function(e) {
-//     e.stopPropagation(); // 阻止事件冒泡
-//     const imageId = $(this).data('image-id');
-//     const sellItemId = $(this).data('sell-item-id');
-//     const inputId = `sell_image_${imageId}_item_${sellItemId}`;
-    
-//     // 使用尋找元素而不是直接透過 ID 獲取，以增加穩定性
-//     const fileInput = document.getElementById(inputId) || $(`input[name="${inputId}"]`)[0];
-//     if (fileInput) {
-//         fileInput.click();
-//     } else {
-//         console.error(`找不到文件輸入元素: ${inputId}`);
-//     }
-// });
 </script>
 
 {% endblock %}

@@ -502,19 +502,6 @@ $(document).on('change', 'input[type="file"][name^="sell_image_"]', function() {
             $fileInput.attr('name', `sell_image_${imageId}_item_${sellItemId}`);
             $fileInput.attr('id', `sell_image_${imageId}_item_${sellItemId}`);
             $previewContainer.append($fileInput);
-            
-            // 修改：移除點擊事件但保持按鈕功能
-            // 只移除 onclick 屬性，而不是將 onclick 設為 null
-            $previewContainer.css('cursor', 'default').removeAttr('onclick');
-            
-            // 確保更換圖片按鈕的事件能被正確觸發
-            $replaceButton.on('click', function(e) {
-                e.stopPropagation(); // 阻止事件冒泡
-                const imageId = $(this).data('image-id');
-                const sellItemId = $(this).data('sell-item-id');
-                const inputId = `sell_image_${imageId}_item_${sellItemId}`;
-                $(`#${inputId}`).click();
-            });
         };
         
         // 讀取文件
@@ -565,15 +552,10 @@ $(document).on('click', '.delete-image', function() {
             'cursor': 'pointer'
         });
     
-    // 直接添加點擊處理函數（不使用.on方法），但只為佔位符添加
+    // 直接添加點擊處理函數（不使用.on方法）
     $placeholderWrapper[0].onclick = function(e) {
         // 阻止事件冒泡以避免遞迴
         e.stopPropagation();
-        
-        // 檢查是否含有圖片，如果有則不觸發檔案選擇
-        if (this.querySelector('img')) {
-            return;
-        }
         
         const sellItemId = this.getAttribute('data-sell-item-id');
         const imageId = parseInt(this.getAttribute('data-image-id')); // 確保 imageId 是整數 1 或 2
@@ -643,15 +625,9 @@ function updatePlaceholderNumbers($container) {
             $fileInput.attr('name', `sell_image_${newImageId}_item_${sellItemId}`);
             $fileInput.attr('id', `sell_image_${newImageId}_item_${sellItemId}`);
             
-            // 更新onclick函數的imageId，但只為佔位符添加
+            // 更新onclick函數的imageId
             this.onclick = function(e) {
                 e.stopPropagation();
-                
-                // 檢查是否含有圖片，如果有則不觸發檔案選擇
-                if (this.querySelector('img')) {
-                    return;
-                }
-                
                 const sellItemId = this.getAttribute('data-sell-item-id');
                 const imageId = newImageId; // 使用新分配的ID
                 const inputId = `sell_image_${imageId}_item_${sellItemId}`;
@@ -789,22 +765,6 @@ $('form').on('submit', function(event) {
         console.log(`最終欄位名稱：${$(this).attr('name')}`);
     });
 });
-
-// 增加全局更換圖片按鈕事件處理程序，確保按鈕功能永遠有效
-// $(document).on('click', '.replace-image', function(e) {
-//     e.stopPropagation(); // 阻止事件冒泡
-//     const imageId = $(this).data('image-id');
-//     const sellItemId = $(this).data('sell-item-id');
-//     const inputId = `sell_image_${imageId}_item_${sellItemId}`;
-    
-//     // 使用尋找元素而不是直接透過 ID 獲取，以增加穩定性
-//     const fileInput = document.getElementById(inputId) || $(`input[name="${inputId}"]`)[0];
-//     if (fileInput) {
-//         fileInput.click();
-//     } else {
-//         console.error(`找不到文件輸入元素: ${inputId}`);
-//     }
-// });
 </script>
 
 {% endblock %}
