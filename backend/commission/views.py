@@ -1140,6 +1140,8 @@ def ViewFn_publiccard_edit(request, view_fn_publiccard_id):
                 'ViewKey_bd_public_card_info_user_nickname': 'user_nickname',
                 'ViewKey_bd_public_card_info_user_introduction': 'user_introduction',
                 'ViewKey_bd_public_card_info_card_status': 'card_status', # 提交表單-公開/非公開
+                'involved_acgn': 'involved_acgn',  # 新增喜好作品欄位映射
+                'key_tags': 'key_tags',  # 新增屬性Tag欄位映射
                 # 添加其他需要處理的欄位...
             }
             

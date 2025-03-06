@@ -206,7 +206,7 @@
     <!-- 新增一個容器來包住兩個區塊 -->
     <div class="sections-container" style="display: flex; margin-top: -90px">
       <!-- 左側區域 -->
-      {#{% include 'commission/publiccard_edit_test/favorite_and_tag.html' %}#}
+      {% include 'commission/publiccard_edit_test/favorite_and_tag.html' %}
 
 
       <!-- 右側區域(分隔線區分兩側) -->
@@ -308,6 +308,23 @@ $(document).ready(function() {
     
     $('form').submit(function(event) {
         event.preventDefault(); // 阻止表單的默認提交行為
+        
+        // 喜好作品-收集並存儲喜好作品數據
+        var acgnItems = [];
+        $('#favoriteAcgnList li .acgn-text').each(function() {
+            acgnItems.push($(this).text().trim());
+        });
+        $('#involved_acgn_hidden').val(acgnItems.join(','));
+        
+        // 屬性Tag-收集並存儲屬性標籤數據
+        var tagItems = [];
+        $('#tagsContainer .tag').each(function() {
+            // 取得標籤文本，去除刪除按鈕的 '×' 字符
+            var tagText = $(this).clone().children().remove().end().text().trim();
+            tagItems.push(tagText);
+        });
+        $('#key_tags_hidden').val(tagItems.join(','));
+        
         var formData = new FormData(this);
         
         // 小卡相關-寫入公開/非公開狀態

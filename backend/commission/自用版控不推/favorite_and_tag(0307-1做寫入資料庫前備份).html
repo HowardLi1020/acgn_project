@@ -154,67 +154,64 @@
         <!-- 新增分隔線 -->
         <!-- <div style="position: absolute; width: 80%; height: 1px; background-color: #dee2e6; left: 50%; transform: translateX(-50%); margin-top: -5px;"></div> -->
         
-        <ul class="form-list">
-          <li>
-            <!-- 未來展望：區分平台分類/作品名 (如：NS/寶可夢朱紫、手遊/FGO) -->
-            <label class="form-label mb-3 mt-3"
-              >喜好作品
-              <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
-            </label
-            >
-            <div class="favorite-acgn-container">
-              <!-- 喜好作品清單會在這裡動態生成 -->
-              <ul class="favorite-acgn-list" id="favoriteAcgnList"></ul>
-            </div>
-            <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                id="acgnInput"
-                placeholder="如：寶可夢朱紫,鬼滅之刃..."
-              />
-              <button
-                type="button"
-                class="btn btn-primary add-tag-btn"
-                id="addAcgnBtn"
+        <form class="profile-form">
+          <ul class="form-list">
+            <li>
+              <!-- 未來展望：區分平台分類/作品名 (如：NS/寶可夢朱紫、手遊/FGO) -->
+              <label class="form-label mb-3 mt-3"
+                >喜好作品
+                <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
+              </label
               >
-                新增
-              </button>
-            </div>
-          </li>
+              <div class="favorite-acgn-container">
+                <!-- 喜好作品清單會在這裡動態生成 -->
+                <ul class="favorite-acgn-list" id="favoriteAcgnList"></ul>
+              </div>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="acgnInput"
+                  placeholder="如：寶可夢朱紫,鬼滅之刃..."
+                />
+                <button
+                  type="button"
+                  class="btn btn-primary add-tag-btn"
+                  id="addAcgnBtn"
+                >
+                  新增
+                </button>
+              </div>
+            </li>
 
-          <li>
-            <label class="form-label mb-3 mt-5"
-              >屬性Tag
-              <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
-            </label
-            >
-            <div class="tags-container" id="tagsContainer">
-              <!-- 標籤會在這裡動態生成 -->
-            </div>
-            <div class="input-group mt-1">
-              <input
-                type="text"
-                class="form-control"
-                id="tagInput"
-                placeholder="如：獸控,夢向,BL,犬派,自耕農..."
-              />
-              <button
-                type="button"
-                class="btn btn-primary add-tag-btn"
-                id="addTagBtn"
+            <li>
+              <label class="form-label mb-3 mt-5"
+                >屬性Tag
+                <span class="text-muted small ms-2" style="font-weight: normal; font-size: 0.8em;">以半形逗號,加入多筆</span>
+              </label
               >
-                新增
-              </button>
-            </div>
-          </li>
-        </ul>
+              <div class="tags-container" id="tagsContainer">
+                <!-- 標籤會在這裡動態生成 -->
+              </div>
+              <div class="input-group mt-1">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="tagInput"
+                  placeholder="如：獸控,夢向,BL,犬派,自耕農..."
+                />
+                <button
+                  type="button"
+                  class="btn btn-primary add-tag-btn"
+                  id="addTagBtn"
+                >
+                  新增
+                </button>
+              </div>
+            </li>
+          </ul>
+        </form>
       </div>
-          
-    <!-- 添加隱藏輸入欄位用來存儲喜好作品和屬性標籤 -->
-    <input type="hidden" name="involved_acgn" id="involved_acgn_hidden" value="{{ ViewKey_DbPublicCardInfo.involved_acgn|default:'' }}">
-    <input type="hidden" name="key_tags" id="key_tags_hidden" value="{{ ViewKey_DbPublicCardInfo.key_tags|default:'' }}">
-    
 {% endblock %}
 
 
