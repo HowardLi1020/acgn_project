@@ -830,19 +830,11 @@ window.handleVisibilityChange = function(container, itemId, status) {
                 changedFields.add(fieldType);
                 console.log(`欄位 ${fieldName} 與初始狀態不同，添加到變更集合 ${fieldType}`);
             }
-            
-            // 更新初始狀態，確保下次比較時使用正確的值
-            initialFormData[fieldName] = currentValue;
-            console.log(`更新初始狀態: ${fieldName} = ${currentValue}`);
         } else {
             // 如果沒有初始值記錄，添加到變更集合
             if (fieldType) {
                 changedFields.add(fieldType);
                 console.log(`無法找到欄位 ${fieldName} 的初始值，添加到變更集合 ${fieldType}`);
-                
-                // 更新初始狀態，確保下次比較時使用正確的值
-                initialFormData[fieldName] = currentFormData[fieldName];
-                console.log(`設置初始狀態: ${fieldName} = ${currentFormData[fieldName]}`);
             }
         }
         
@@ -1291,13 +1283,10 @@ $(document).ready(function() {
                 const needId = card.querySelector('[data-debug]')?.dataset.needId;
                 if (needId) {
                     const publicRadio = card.querySelector('input[value="public"]');
-                    const privateRadio = card.querySelector('input[value="private"]');
-                    if (publicRadio && privateRadio) {
+                    if (publicRadio) {
                         const fieldName = `needStatus${needId}`;
-                        const publicStatus = publicRadio.checked;
-                        const privateStatus = privateRadio.checked;
-                        formData[fieldName] = publicStatus;
-                        console.log(`需求小卡 #${index}: ID=${needId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
+                        formData[fieldName] = publicRadio.checked;
+                        console.log(`需求小卡 #${index}: ID=${needId}, 公開狀態=${publicRadio.checked}, 欄位名稱=${fieldName}`);
                     }
                 }
             });
@@ -1308,25 +1297,10 @@ $(document).ready(function() {
                 const workId = card.querySelector('[data-debug]')?.dataset.workId;
                 if (workId) {
                     const publicRadio = card.querySelector('input[value="public"]');
-                    const privateRadio = card.querySelector('input[value="private"]');
-                    if (publicRadio && privateRadio) {
+                    if (publicRadio) {
                         const fieldName = `workStatus${workId}`;
-                        const publicStatus = publicRadio.checked;
-                        const privateStatus = privateRadio.checked;
-                        formData[fieldName] = publicStatus;
-                        console.log(`已成交作品小卡 #${index}: ID=${workId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
-                        
-                        // 檢查 data-debug 元素的 data-public-status 屬性
-                        const debugElement = card.querySelector('[data-debug]');
-                        if (debugElement) {
-                            const dataPublicStatus = debugElement.dataset.publicStatus;
-                            console.log(`已成交作品小卡 #${index} data-public-status: ${dataPublicStatus}`);
-                            
-                            // 檢查是否與 radio 按鈕狀態一致
-                            const isConsistent = (dataPublicStatus === 'true' && publicStatus) || 
-                                                (dataPublicStatus === 'false' && !publicStatus);
-                            console.log(`已成交作品小卡 #${index} 狀態一致性: ${isConsistent}`);
-                        }
+                        formData[fieldName] = publicRadio.checked;
+                        console.log(`已成交作品小卡 #${index}: ID=${workId}, 公開狀態=${publicRadio.checked}, 欄位名稱=${fieldName}`);
                     }
                 }
             });
@@ -1337,25 +1311,10 @@ $(document).ready(function() {
                 const workId = card.querySelector('[data-debug]')?.dataset.workId;
                 if (workId) {
                     const publicRadio = card.querySelector('input[value="public"]');
-                    const privateRadio = card.querySelector('input[value="private"]');
-                    if (publicRadio && privateRadio) {
+                    if (publicRadio) {
                         const fieldName = `workSellnowStatus${workId}`;
-                        const publicStatus = publicRadio.checked;
-                        const privateStatus = privateRadio.checked;
-                        formData[fieldName] = publicStatus;
-                        console.log(`公開販售作品小卡 #${index}: ID=${workId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
-                        
-                        // 檢查 data-debug 元素的 data-public-status 屬性
-                        const debugElement = card.querySelector('[data-debug]');
-                        if (debugElement) {
-                            const dataPublicStatus = debugElement.dataset.publicStatus;
-                            console.log(`公開販售作品小卡 #${index} data-public-status: ${dataPublicStatus}`);
-                            
-                            // 檢查是否與 radio 按鈕狀態一致
-                            const isConsistent = (dataPublicStatus === 'true' && publicStatus) || 
-                                                (dataPublicStatus === 'false' && !publicStatus);
-                            console.log(`公開販售作品小卡 #${index} 狀態一致性: ${isConsistent}`);
-                        }
+                        formData[fieldName] = publicRadio.checked;
+                        console.log(`公開販售作品小卡 #${index}: ID=${workId}, 公開狀態=${publicRadio.checked}, 欄位名稱=${fieldName}`);
                     }
                 }
             });
@@ -1413,54 +1372,6 @@ $(document).ready(function() {
             
             // 輸出小卡狀態的初始狀態
             console.log('初始小卡狀態:');
-            
-            // 檢查並修正已成交作品小卡的初始狀態
-            console.log('檢查並修正已成交作品小卡的初始狀態:');
-            document.querySelectorAll('.commission-card[data-template="work_done"]').forEach((card, index) => {
-                const workId = card.querySelector('[data-debug]')?.dataset.workId;
-                if (workId) {
-                    const fieldName = `workStatus${workId}`;
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    if (publicRadio) {
-                        const publicStatus = publicRadio.checked;
-                        initialFormData[fieldName] = publicStatus;
-                        console.log(`修正已成交作品小卡 #${index}: ID=${workId}, 初始公開狀態=${publicStatus}`);
-                    }
-                }
-            });
-            
-            // 檢查並修正公開販售作品小卡的初始狀態
-            console.log('檢查並修正公開販售作品小卡的初始狀態:');
-            document.querySelectorAll('.commission-card[data-template="work_sellnow"]').forEach((card, index) => {
-                const workId = card.querySelector('[data-debug]')?.dataset.workId;
-                if (workId) {
-                    const fieldName = `workSellnowStatus${workId}`;
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    if (publicRadio) {
-                        const publicStatus = publicRadio.checked;
-                        initialFormData[fieldName] = publicStatus;
-                        console.log(`修正公開販售作品小卡 #${index}: ID=${workId}, 初始公開狀態=${publicStatus}`);
-                    }
-                }
-            });
-            
-            // 檢查並修正需求小卡的初始狀態
-            console.log('檢查並修正需求小卡的初始狀態:');
-            document.querySelectorAll('.commission-card[data-template="need"]').forEach((card, index) => {
-                const needId = card.querySelector('[data-debug]')?.dataset.needId;
-                if (needId) {
-                    const fieldName = `needStatus${needId}`;
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    if (publicRadio) {
-                        const publicStatus = publicRadio.checked;
-                        initialFormData[fieldName] = publicStatus;
-                        console.log(`修正需求小卡 #${index}: ID=${needId}, 初始公開狀態=${publicStatus}`);
-                    }
-                }
-            });
-            
-            // 輸出修正後的小卡狀態
-            console.log('修正後的小卡狀態:');
             for (const key in initialFormData) {
                 if (key.startsWith('workStatus')) {
                     console.log(`- ${key}: ${initialFormData[key]}`);
@@ -1603,46 +1514,8 @@ $(document).ready(function() {
                 (JSON.stringify(initialValue) !== JSON.stringify(currentValue))) {
                 
                 console.log(`檢測到 ${fieldType} 變更: ${key}, 從 [${initialValue}] 變更為 [${currentValue}]`);
-                
-                // 檢查是否是真實的變更
-                if (prefix === 'workStatus') {
-                    // 檢查對應的小卡是否存在
-                    const cardId = key.replace('workStatus', '');
-                    const card = document.querySelector(`.commission-card[data-template="work_done"] [data-debug][data-work-id="${cardId}"]`);
-                    if (card) {
-                        console.log(`找到對應的已成交作品小卡: ID=${cardId}`);
-                        changedFields.add(fieldType);
-                        hasChanges = true;
-                    } else {
-                        console.log(`未找到對應的已成交作品小卡: ID=${cardId}，忽略此變更`);
-                    }
-                } else if (prefix === 'workSellnowStatus') {
-                    // 檢查對應的小卡是否存在
-                    const cardId = key.replace('workSellnowStatus', '');
-                    const card = document.querySelector(`.commission-card[data-template="work_sellnow"] [data-debug][data-work-id="${cardId}"]`);
-                    if (card) {
-                        console.log(`找到對應的公開販售作品小卡: ID=${cardId}`);
-                        changedFields.add(fieldType);
-                        hasChanges = true;
-                    } else {
-                        console.log(`未找到對應的公開販售作品小卡: ID=${cardId}，忽略此變更`);
-                    }
-                } else if (prefix === 'needStatus') {
-                    // 檢查對應的小卡是否存在
-                    const cardId = key.replace('needStatus', '');
-                    const card = document.querySelector(`.commission-card[data-template="need"] [data-debug][data-need-id="${cardId}"]`);
-                    if (card) {
-                        console.log(`找到對應的需求小卡: ID=${cardId}`);
-                        changedFields.add(fieldType);
-                        hasChanges = true;
-                    } else {
-                        console.log(`未找到對應的需求小卡: ID=${cardId}，忽略此變更`);
-                    }
-                } else {
-                    // 其他類型的欄位，直接添加
-                    changedFields.add(fieldType);
-                    hasChanges = true;
-                }
+                changedFields.add(fieldType);
+                hasChanges = true;
             } else {
                 console.log(`${fieldType} 欄位 ${key} 未變更: 當前值=${currentValue}, 初始值=${initialValue}`);
             }

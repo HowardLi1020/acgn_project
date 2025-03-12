@@ -91,11 +91,6 @@ INSERT INTO db_need_images (need_id, step, image_url) VALUES
 (3, 1, '3_sketch1.png'),(3, 2, '3_sketch2.png'),(3, 3, '3_sketch3.png'),(3, 4, '3_sketch4.png'),(3, 5, '3_sketch5.png'),
 (4, 1, '4_sketch1.png'),(4, 2, '4_sketch2.png'),(4, 3, '4_sketch3.png'),(4, 4, '4_sketch4.png'),(4, 5, '4_sketch5.png'),
 (5, 1, '5_sketch1.png'),(5, 2, '5_sketch2.png'),(5, 3, '5_sketch3.png'),(5, 4, '5_sketch4.png'),(5, 5, '5_sketch5.png'),
-(6, 1, '6_sketch1.png'),(6, 2, '6_sketch2.png'),(6, 3, '6_sketch3.png'),(6, 4, '6_sketch4.png'),(6, 5, '6_sketch5.png'),
-(7, 1, '7_sketch1.png'),(7, 2, '7_sketch2.png'),(7, 3, '7_sketch3.png'),(7, 4, '7_sketch4.png'),(7, 5, '7_sketch5.png'),
-(8, 1, '8_sketch1.png'),(8, 2, '8_sketch2.png'),(8, 3, '8_sketch3.png'),(8, 4, '8_sketch4.png'),(8, 5, '8_sketch5.png'),
-(9, 1, '9_sketch1.png'),(9, 2, '9_sketch2.png'),(9, 3, '9_sketch3.png'),(9, 4, '9_sketch4.png'),(9, 5, '9_sketch5.png'),
-(10, 1, '10_sketch1.png'),(10, 2, '10_sketch2.png'),(10, 3, '10_sketch3.png'),(10, 4, '10_sketch4.png'),(10, 5, '10_sketch5.png'),
 (11, 1, '11_sketch1.png'),(11, 2, '11_sketch2.png'),(11, 3, '11_sketch3.png'),(11, 4, '11_sketch4.png'),(11, 5, '11_sketch5.png'),
 (12, 1, '12_sketch1.png'),(12, 2, '12_sketch2.png'),(12, 3, '12_sketch3.png'),(12, 4, '12_sketch4.png'),(12, 5, '12_sketch5.png'),
 (13, 1, '13_sketch1.png'),(13, 2, '13_sketch2.png'),(13, 3, '13_sketch3.png'),(13, 4, '13_sketch4.png'),(13, 5, '13_sketch5.png'),
@@ -124,7 +119,13 @@ INSERT INTO db_work_info (worker_id, work_title, work_category, work_original_fr
 INSERT INTO db_work_original_file (work_id, original_file_url) VALUES
 (10, 'document_preview_archive.ico'),(10, '統計數據202308中文版.pdf'),(10, '極簡風meme.zip');
 
-
+-- 5-2-2 作品預覽圖
+INSERT INTO db_work_images (work_id, step, image_url) VALUES
+(6, 1, '6_sketch1.png'),(6, 2, '6_sketch2.png'),(6, 3, '6_sketch3.png'),(6, 4, '6_sketch4.png'),(6, 5, '6_sketch5.png'),
+(7, 1, '7_sketch1.png'),(7, 2, '7_sketch2.png'),(7, 3, '7_sketch3.png'),(7, 4, '7_sketch4.png'),(7, 5, '7_sketch5.png'),
+(8, 1, '8_sketch1.png'),(8, 2, '8_sketch2.png'),(8, 3, '8_sketch3.png'),(8, 4, '8_sketch4.png'),(8, 5, '8_sketch5.png'),
+(9, 1, '9_sketch1.png'),(9, 2, '9_sketch2.png'),(9, 3, '9_sketch3.png'),(9, 4, '9_sketch4.png'),(9, 5, '9_sketch5.png'),
+(10, 1, '10_sketch1.png'),(10, 2, '10_sketch2.png'),(10, 3, '10_sketch3.png'),(10, 4, '10_sketch4.png'),(10, 5, '10_sketch5.png');
 
 -- 5-3 公開名片表導入會員資料
 INSERT INTO db_public_card_info (user_id, user_nickname, user_avatar, user_introduction)

@@ -330,32 +330,12 @@ def ViewFn_need_edit(request, view_fn_need_id):
     # 計算剩餘的灰色加號DIV數量
     remaining_placeholders = max(0, 5 - view_db_need_sketches.count())
 
-    # 檢查是否有媒合的作品
-    matched_work = None
-    print(f"Debug - 需求 ID: {view_fn_need_id}, case_by_work 值: {view_db_need_info_id.case_by_work}")
-    
-    if view_db_need_info_id.case_by_work:
-        try:
-            matched_work = DbWorkInfo.objects.get(work_id=view_db_need_info_id.case_by_work)
-            print(f"Debug - 成功找到媒合作品: ID={matched_work.work_id}, 標題={matched_work.work_title}")
-        except DbWorkInfo.DoesNotExist:
-            print(f"Debug - 未找到媒合作品: ID={view_db_need_info_id.case_by_work}")
-            matched_work = None
-        except Exception as e:
-            print(f"Debug - 查詢媒合作品時發生錯誤: {str(e)}")
-            matched_work = None
-
     context = {
         'ViewKey_DbNeedInfo_need_id': view_db_need_info_id,
         'ViewKey_DbPublicCardInfo': view_db_publiccard_info,
         'ViewKey_DbNeedEdit_sketches': view_db_need_sketches,
         'remaining_placeholders': range(remaining_placeholders),
-        'matched_work': matched_work,
     }
-    
-    print(f"Debug - context 包含 matched_work: {matched_work is not None}")
-    if matched_work:
-        print(f"Debug - matched_work 標題: {matched_work.work_title}")
 
     return render(request, 'commission/need_edit.html', context)
 
@@ -373,68 +353,6 @@ def ViewFn_need_delete(request, view_fn_need_id):
     
     return HttpResponseRedirect(referer_url)
 
-# 需求編輯頁-選擇媒合案件
-def ViewFn_need_case_chose(request):
-    need_id = request.GET.get('need_id', '')
-    view_db_need_info = None
-    related_works = []
-    matched_work = None
-
-    if need_id:
-        try:
-            view_db_need_info = DbNeedInfo.objects.get(need_id=need_id)
-            # 獲取 case_by_need 等於當前 need_id 的 DbWorkInfo 記錄
-            related_works = DbWorkInfo.objects.filter(case_by_need=need_id)
-
-            # 預先獲取每個 work 的圖片
-            for work in related_works:
-                work.images = DbWorkImages.objects.filter(work_id=work.work_id).values_list('image_url', flat=True)
-            
-            # 如果有已選擇的作品，獲取其資訊
-            if view_db_need_info.case_by_work:
-                try:
-                    matched_work = DbWorkInfo.objects.get(work_id=view_db_need_info.case_by_work)
-                except DbWorkInfo.DoesNotExist:
-                    matched_work = None
-
-        except DbNeedInfo.DoesNotExist:
-            view_db_need_info = None
-
-    context = {
-        'ViewKey_DbNeedInfo_need_id': view_db_need_info,
-        'related_works': related_works, # 將相關作品傳遞給模板
-        'matched_work': matched_work, # 傳遞已媒合的作品資訊
-    }
-    return render(request, 'commission/need_case_chose.html', context)
-
-# 需求編輯頁-更新媒合案件
-@require_http_methods(["POST"])
-def ViewFn_update_case_by_work(request):
-    try:
-        data = json.loads(request.body)
-        need_id = data.get('need_id')
-        work_id = data.get('work_id')
-
-        # 更新資料庫
-        need_info = DbNeedInfo.objects.get(need_id=need_id)
-        need_info.case_by_work = work_id
-        need_info.save()
-
-        return JsonResponse({
-            'status': 'success',
-            'message': '成功更新媒合案件'
-        })
-    except DbNeedInfo.DoesNotExist:
-        return JsonResponse({
-            'status': 'error',
-            'message': '找不到對應的需求案件'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=500)
-    
 def ViewFn_work_list(request):
     # 資料提取與顯示
     view_db_work_info = DbWorkInfo.objects.all()  # 保持為 QuerySet
@@ -1767,7 +1685,3 @@ def ViewFn_filter_items(request):
     # print(f"Found matching IDs for user {user_id}: {matching_ids}")
     
     return JsonResponse(matching_ids, safe=False)
-
-
-    
-

@@ -12,6 +12,8 @@ urlpatterns = [
     # path('need_edit/', views.ViewFn_need_edit, name='Urls_need_edit'),
     path('need/edit/<int:view_fn_need_id>/', views.ViewFn_need_edit, name='Urls_need_edit'),
     path('need/delete/<int:view_fn_need_id>/', views.ViewFn_need_delete, name='Urls_need_delete'),
+    path('need/case_chose/', views.ViewFn_need_case_chose, name='Urls_need_case_chose'),
+    path('update_case_by_work/', views.ViewFn_update_case_by_work, name='Urls_update_case_by_work'), # 更新媒合案件
 
     # 接案頁
     path('work_list/', views.ViewFn_work_list, name='Urls_work_list'),

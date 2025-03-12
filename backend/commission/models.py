@@ -25,6 +25,7 @@ class DbNeedInfo(models.Model):
     last_update = models.DateTimeField(blank=True, null=True)
     need_status = models.CharField(max_length=50, blank=True, null=True)
     public_status = models.BooleanField(default=True)
+    case_by_work = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False

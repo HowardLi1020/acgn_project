@@ -334,6 +334,7 @@ CREATE TABLE db_need_info (
     last_update DATETIME,                           -- 最後更新
     need_status VARCHAR(10),                        -- 需求狀態
     public_status BOOLEAN DEFAULT TRUE,             -- 是否於名片頁公開
+    case_by_work INT,                               -- 配對投稿作品id
 
     reviewer_id INT,                                -- 評價人id（關聯資料表：使用者資訊表member_basic)
     reviewer_nickname VARCHAR(50),                  -- 評價人暱稱（關聯資料表：公開名片表db_public_card_info)

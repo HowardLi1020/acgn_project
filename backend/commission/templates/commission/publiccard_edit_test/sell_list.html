@@ -504,15 +504,15 @@
                                         </svg>
                                     </div> -->
                                     <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
-                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
-                                                data-image-id="2" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
-                                    <div class="text-center text-muted>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
-                                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
-                                        </svg>
-                                        <p>上傳示意圖${imageId}</p>
-                                    </div>
+                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px; cursor: pointer;"
+                                                data-image-id="{{ i }}" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}" onclick="triggerFileInput(this)">
+                                        <div class="text-center text-muted">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                            </svg>
+                                            <p>上傳示意圖{{ i }}</p>
+                                        </div>
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -772,7 +772,7 @@ window.deleteSellItem = function(button, event) {
                 for (let i = 0; i < 2; i++) {
                     const placeholder = document.createElement('div');
                     placeholder.className = 'd-flex align-items-center justify-content-center image-preview-wrapper';
-                    placeholder.style.cssText = 'flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;';
+                    placeholder.style.cssText = 'flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px; cursor: pointer;';
                     placeholder.setAttribute('onclick', 'triggerFileInput(this)');
 
                     const imageId = i + 1; // 為每個佔位符添加編號
@@ -784,7 +784,7 @@ window.deleteSellItem = function(button, event) {
                                 <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
                             </svg>
-                            <p>上傳示意圖${imageId}</p>
+                            <p>上傳示意圖\${imageId}</p>
                             <input type="file" name="sell_image_${imageId}" accept="image/*" style="display: none;" onchange="previewImage(this)">
                         </div>
                     `;
@@ -823,8 +823,16 @@ function triggerFileInput(placeholder) {
         // 將 currentPlaceholder 存儲為數字
         fileInput.dataset.currentPlaceholder = parseInt(Array.from(placeholder.parentElement.children).indexOf(placeholder), 10);
         
-        // 將新創建的文件輸入元素添加到 DOM
-        placeholder.closest('.d-flex').appendChild(fileInput);
+        // 【修改點1】：找到主表單，而不是將輸入元素添加到局部容器
+        const mainForm = document.querySelector('form[method="post"]');
+        if (mainForm) {
+            // 將新創建的文件輸入元素添加到主表單DOM
+            mainForm.appendChild(fileInput);
+        } else {
+            // 如果找不到主表單，則退回到原來的方法
+            placeholder.closest('.d-flex').appendChild(fileInput);
+            console.warn('未找到主表單，文件上傳可能無法正確提交');
+        }
         
         // 添加 onchange 事件處理器
         fileInput.onchange = function(e) {
@@ -873,23 +881,25 @@ function triggerFileInput(placeholder) {
                         </button>
                     `;
                     
-                    // 創建隱藏的文件輸入元素
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'file';
-                    hiddenInput.name = `sell_image_${fileInput.dataset.currentPlaceholder + 1}_item_${sellItemId}`;
-                    hiddenInput.id = `sell_image_${fileInput.dataset.currentPlaceholder + 1}_item_${sellItemId}`;
-                    hiddenInput.style.display = 'none';
-                    hiddenInput.accept = 'image/*';
+                    // 【修改點2】：不再創建額外的隱藏文件輸入元素，而是使用已經添加到主表單的元素
+                    // 原代碼：
+                    // const hiddenInput = document.createElement('input');
+                    // hiddenInput.type = 'file';
+                    // hiddenInput.name = `sell_image_${fileInput.dataset.currentPlaceholder + 1}_item_${sellItemId}`;
+                    // hiddenInput.id = `sell_image_${fileInput.dataset.currentPlaceholder + 1}_item_${sellItemId}`;
+                    // hiddenInput.style.display = 'none';
+                    // hiddenInput.accept = 'image/*';
                     
                     // 組合元素
                     previewWrapper.appendChild(img);
                     previewWrapper.appendChild(iconContainer);
-                    previewWrapper.appendChild(hiddenInput);
+                    // previewWrapper.appendChild(hiddenInput); // 不再將隱藏輸入元素添加到預覽容器
                     
-                    // 添加FormData
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(file);
-                    hiddenInput.files = dataTransfer.files;
+                    // 【修改點3】：不再為額外創建的輸入元素設置文件，而使用已經添加到主表單的元素
+                    // 原代碼：
+                    // const dataTransfer = new DataTransfer();
+                    // dataTransfer.items.add(file);
+                    // hiddenInput.files = dataTransfer.files;
                     
                     // 替換佔位符
                     const index = parseInt(fileInput.dataset.currentPlaceholder);
@@ -901,6 +911,10 @@ function triggerFileInput(placeholder) {
                     
                     // 重要：移除點擊事件，防止圖片上傳後仍然可點擊觸發選檔器
                     previewWrapper.removeAttribute('onclick');
+                    
+                    // 【修改點4】：添加數據屬性以跟蹤文件上傳狀態
+                    previewWrapper.dataset.hasFile = 'true';
+                    previewWrapper.dataset.fileInputId = fileInput.id;
                 };
                 
                 reader.readAsDataURL(file);
@@ -1044,7 +1058,7 @@ function updatePlaceholders(container) {
           <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
           <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
         </svg>
-        <p>上傳示意圖${imageId}</p>
+        <p>上傳示意圖\${imageId}</p>
       </div>
     `;
 
@@ -1511,6 +1525,32 @@ window.addSellItem = function(event) {
 // 移除之前的全局事件監聽器
 document.removeEventListener('keydown', function(event) {
     // 之前的全局事件處理邏輯
+});
+
+// 【新增函數】：在表單提交前確保所有上傳的文件都包含在表單中
+document.addEventListener('DOMContentLoaded', function() {
+    // 找到主表單
+    const mainForm = document.querySelector('form[method="post"]');
+    if (mainForm) {
+        mainForm.addEventListener('submit', function(e) {
+            // 輸出調試信息
+            console.log('表單提交中，檢查文件上傳狀態...');
+            
+            // 檢查所有圖片預覽容器
+            const imageWrappers = document.querySelectorAll('.image-preview-wrapper[data-has-file="true"]');
+            imageWrappers.forEach(wrapper => {
+                const fileInputId = wrapper.dataset.fileInputId;
+                if (fileInputId) {
+                    const fileInput = document.getElementById(fileInputId);
+                    if (fileInput && fileInput.files.length > 0) {
+                        console.log(`檢測到文件上傳: ${fileInputId}, 確保表單包含此元素`);
+                    } else {
+                        console.warn(`警告: 文件輸入 ${fileInputId} 沒有文件或不存在`);
+                    }
+                }
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

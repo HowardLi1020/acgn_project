@@ -756,120 +756,13 @@ $(document).on('click', '.view-image', function() {
 });
 
 // === 頁面變更追蹤 ===
-// 追蹤表單變更的狀態
-let formChanged = false;
-// 儲存已變更欄位的名稱
-const changedFields = new Set();
-
-// 定義 handleVisibilityChange 函數，使其在小卡公開狀態切換時觸發變更偵測
-window.handleVisibilityChange = function(container, itemId, status) {
-    console.log(`===== 開始處理小卡公開狀態切換: itemId=${itemId}, status=${status} =====`);
-    
-    // 找到容器內的 radio 按鈕
-    const radio = container.querySelector(`input[type="radio"]`);
-    
-    // 如果 radio 尚未被選中，則模擬點擊
-    if (!radio.checked) {
-        // 保存舊值
-        const oldValue = radio.checked;
-        // 設置新值
-        radio.checked = true;
-        
-        console.log(`小卡狀態變更: 從 ${oldValue} 變更為 ${radio.checked}`);
-        
-        // 觸發遮罩效果
-        const cardContainer = container.closest('.commission-card').querySelector('.commission-card-container');
-        if (cardContainer) {
-            if (status === 'private') {
-                cardContainer.classList.add('private');
-            } else {
-                cardContainer.classList.remove('private');
-            }
-        }
-        
-        // 獲取卡片類型（需求、作品等）
-        const cardType = container.closest('.commission-card').getAttribute('data-template');
-        console.log(`小卡類型: ${cardType}`);
-        
-        // 根據卡片類型添加相應的變更標記
-        let fieldName = '';
-        let fieldType = '';
-        
-        if (cardType && cardType.includes('need')) {
-            fieldType = 'need_';
-            fieldName = `needStatus${itemId}`;
-            console.log('需求卡片公開狀態已變更');
-        } else if (cardType && cardType.includes('work_sellnow')) {
-            fieldType = 'work_sellnow_';
-            fieldName = `workSellnowStatus${itemId}`;
-            console.log('公開販售作品卡片公開狀態已變更');
-        } else if (cardType && cardType.includes('work_done')) {
-            fieldType = 'work_done_';
-            fieldName = `workStatus${itemId}`;
-            console.log('已成交作品卡片公開狀態已變更');
-        }
-        
-        console.log(`欄位名稱: ${fieldName}, 欄位類型: ${fieldType}`);
-        
-        // 獲取當前表單狀態
-        const currentFormData = getFormSnapshot();
-        
-        // 檢查是否與初始狀態相同
-        if (fieldName && initialFormData[fieldName] !== undefined) {
-            const currentValue = currentFormData[fieldName];
-            const initialValue = initialFormData[fieldName];
-            
-            console.log(`檢查欄位 ${fieldName}: 當前值=${currentValue}, 初始值=${initialValue}`);
-            
-            if (currentValue === initialValue) {
-                // 如果當前值與初始值相同，從變更集合中移除
-                changedFields.delete(fieldType);
-                console.log(`欄位 ${fieldName} 已恢復到初始狀態，從變更集合中移除 ${fieldType}`);
-            } else {
-                // 如果當前值與初始值不同，添加到變更集合
-                changedFields.add(fieldType);
-                console.log(`欄位 ${fieldName} 與初始狀態不同，添加到變更集合 ${fieldType}`);
-            }
-            
-            // 更新初始狀態，確保下次比較時使用正確的值
-            initialFormData[fieldName] = currentValue;
-            console.log(`更新初始狀態: ${fieldName} = ${currentValue}`);
-        } else {
-            // 如果沒有初始值記錄，添加到變更集合
-            if (fieldType) {
-                changedFields.add(fieldType);
-                console.log(`無法找到欄位 ${fieldName} 的初始值，添加到變更集合 ${fieldType}`);
-                
-                // 更新初始狀態，確保下次比較時使用正確的值
-                initialFormData[fieldName] = currentFormData[fieldName];
-                console.log(`設置初始狀態: ${fieldName} = ${currentFormData[fieldName]}`);
-            }
-        }
-        
-        // 更新表單變更狀態
-        formChanged = changedFields.size > 0;
-        console.log('表單變更狀態更新: formChanged =', formChanged, '變更欄位清單:', Array.from(changedFields));
-        
-        // 如果 debounceCheck 函數已定義，則觸發變更檢測
-        if (typeof debounceCheck === 'function') {
-            console.log('觸發變更檢測');
-            debounceCheck();
-        } else {
-            console.log('debounceCheck 函數未定義，無法觸發變更檢測');
-        }
-        
-        // 這裡可以加入原本的 AJAX 請求邏輯
-        // fetch(...)
-    } else {
-        console.log(`小卡狀態未變更: radio 已經是 ${radio.checked}`);
-    }
-    
-    console.log(`===== 結束處理小卡公開狀態切換 =====`);
-};
-
 $(document).ready(function() {
     console.log('變更檢測系統：開始初始化');
     
+    // 追蹤表單變更的狀態
+    let formChanged = false;
+    // 儲存已變更欄位的名稱
+    const changedFields = new Set();
     // 欄位名稱對應的顯示名稱
     const fieldDisplayNames = {
         'banner_image': '橫幅圖片',
@@ -902,10 +795,7 @@ $(document).ready(function() {
         'switch-sell': 'switch-sell',
         'switch-work-sellnow': 'switch-work-sellnow',
         'switch-work-done': 'switch-work-done',
-        'switch-need-list': 'switch-need-list',
-        'workStatus': 'work_done_',       // 已成交作品狀態
-        'workSellnowStatus': 'work_sellnow_', // 公開販售作品狀態
-        'needStatus': 'need_'             // 發起過的需求狀態
+        'switch-need-list': 'switch-need-list'
     };
 
     // 標記變更檢測系統是否已初始化
@@ -969,30 +859,7 @@ $(document).ready(function() {
     
     // 根據欄位名稱識別標準欄位類型
     function identifyFieldType(fieldName) {
-        console.log(`嘗試識別欄位類型: ${fieldName}`);
-        
-        if (!fieldName) {
-            console.log('欄位名稱為空，無法識別');
-            return null;
-        }
-        
-        // 特殊處理 workStatus 數字後綴欄位（例如 workStatus11）- 已成交作品
-        if (/^workStatus\d+$/.test(fieldName)) {
-            console.log(`欄位 [${fieldName}] 識別為 [work_done_] 類型 (已成交作品狀態)`);
-            return 'work_done_';
-        }
-        
-        // 特殊處理 workSellnowStatus 數字後綴欄位（例如 workSellnowStatus11）- 公開販售作品
-        if (/^workSellnowStatus\d+$/.test(fieldName)) {
-            console.log(`欄位 [${fieldName}] 識別為 [work_sellnow_] 類型 (公開販售作品狀態)`);
-            return 'work_sellnow_';
-        }
-        
-        // 特殊處理 needStatus 數字後綴欄位（例如 needStatus11）- 發起過的需求
-        if (/^needStatus\d+$/.test(fieldName)) {
-            console.log(`欄位 [${fieldName}] 識別為 [need_] 類型 (需求狀態)`);
-            return 'need_';
-        }
+        if (!fieldName) return null;
         
         // 直接遍歷關鍵詞映射，檢查欄位名稱是否包含任何關鍵詞
         for (const [keyword, standardField] of Object.entries(fieldNameKeywords)) {
@@ -1004,16 +871,12 @@ $(document).ready(function() {
         
         // 特殊處理 sell_, work_sellnow_, work_done_, need_ 前綴
         if (fieldName.includes('sell_')) {
-            console.log(`欄位 [${fieldName}] 識別為 [sell_] 類型 (包含前綴: sell_)`);
             return 'sell_';
         } else if (fieldName.includes('work_sellnow_')) {
-            console.log(`欄位 [${fieldName}] 識別為 [work_sellnow_] 類型 (包含前綴: work_sellnow_)`);
             return 'work_sellnow_';
         } else if (fieldName.includes('work_done_')) {
-            console.log(`欄位 [${fieldName}] 識別為 [work_done_] 類型 (包含前綴: work_done_)`);
             return 'work_done_';
         } else if (fieldName.includes('need_')) {
-            console.log(`欄位 [${fieldName}] 識別為 [need_] 類型 (包含前綴: need_)`);
             return 'need_';
         }
         
@@ -1282,86 +1145,6 @@ $(document).ready(function() {
             
             formData['image_orders'] = JSON.stringify(imageOrders);
             
-            // 9. 收集小卡公開狀態
-            console.log('===== 開始收集小卡公開狀態 =====');
-            
-            // 收集需求小卡的公開狀態
-            console.log('收集需求小卡的公開狀態:');
-            document.querySelectorAll('.commission-card[data-template="need"]').forEach((card, index) => {
-                const needId = card.querySelector('[data-debug]')?.dataset.needId;
-                if (needId) {
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    const privateRadio = card.querySelector('input[value="private"]');
-                    if (publicRadio && privateRadio) {
-                        const fieldName = `needStatus${needId}`;
-                        const publicStatus = publicRadio.checked;
-                        const privateStatus = privateRadio.checked;
-                        formData[fieldName] = publicStatus;
-                        console.log(`需求小卡 #${index}: ID=${needId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
-                    }
-                }
-            });
-            
-            // 收集已成交作品小卡的公開狀態
-            console.log('收集已成交作品小卡的公開狀態:');
-            document.querySelectorAll('.commission-card[data-template="work_done"]').forEach((card, index) => {
-                const workId = card.querySelector('[data-debug]')?.dataset.workId;
-                if (workId) {
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    const privateRadio = card.querySelector('input[value="private"]');
-                    if (publicRadio && privateRadio) {
-                        const fieldName = `workStatus${workId}`;
-                        const publicStatus = publicRadio.checked;
-                        const privateStatus = privateRadio.checked;
-                        formData[fieldName] = publicStatus;
-                        console.log(`已成交作品小卡 #${index}: ID=${workId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
-                        
-                        // 檢查 data-debug 元素的 data-public-status 屬性
-                        const debugElement = card.querySelector('[data-debug]');
-                        if (debugElement) {
-                            const dataPublicStatus = debugElement.dataset.publicStatus;
-                            console.log(`已成交作品小卡 #${index} data-public-status: ${dataPublicStatus}`);
-                            
-                            // 檢查是否與 radio 按鈕狀態一致
-                            const isConsistent = (dataPublicStatus === 'true' && publicStatus) || 
-                                                (dataPublicStatus === 'false' && !publicStatus);
-                            console.log(`已成交作品小卡 #${index} 狀態一致性: ${isConsistent}`);
-                        }
-                    }
-                }
-            });
-            
-            // 收集公開販售作品小卡的公開狀態
-            console.log('收集公開販售作品小卡的公開狀態:');
-            document.querySelectorAll('.commission-card[data-template="work_sellnow"]').forEach((card, index) => {
-                const workId = card.querySelector('[data-debug]')?.dataset.workId;
-                if (workId) {
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    const privateRadio = card.querySelector('input[value="private"]');
-                    if (publicRadio && privateRadio) {
-                        const fieldName = `workSellnowStatus${workId}`;
-                        const publicStatus = publicRadio.checked;
-                        const privateStatus = privateRadio.checked;
-                        formData[fieldName] = publicStatus;
-                        console.log(`公開販售作品小卡 #${index}: ID=${workId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
-                        
-                        // 檢查 data-debug 元素的 data-public-status 屬性
-                        const debugElement = card.querySelector('[data-debug]');
-                        if (debugElement) {
-                            const dataPublicStatus = debugElement.dataset.publicStatus;
-                            console.log(`公開販售作品小卡 #${index} data-public-status: ${dataPublicStatus}`);
-                            
-                            // 檢查是否與 radio 按鈕狀態一致
-                            const isConsistent = (dataPublicStatus === 'true' && publicStatus) || 
-                                                (dataPublicStatus === 'false' && !publicStatus);
-                            console.log(`公開販售作品小卡 #${index} 狀態一致性: ${isConsistent}`);
-                        }
-                    }
-                }
-            });
-            
-            console.log('===== 結束收集小卡公開狀態 =====');
-            
             return formData;
         } catch (error) {
             console.error('獲取表單快照時出錯:', error);
@@ -1372,8 +1155,6 @@ $(document).ready(function() {
     // 初始化狀態
     function initializeFormTracking() {
         try {
-            console.log('===== 開始初始化表單跟蹤 =====');
-            
             // 確保頁面已經完全載入
             initialFormData = getFormSnapshot();
             
@@ -1411,68 +1192,7 @@ $(document).ready(function() {
             console.log('- 接案價目表順序:', initialSortOrder.sellItems);
             console.log('- 示意圖順序(標準化):', initialSortOrder.imageOrders);
             
-            // 輸出小卡狀態的初始狀態
-            console.log('初始小卡狀態:');
-            
-            // 檢查並修正已成交作品小卡的初始狀態
-            console.log('檢查並修正已成交作品小卡的初始狀態:');
-            document.querySelectorAll('.commission-card[data-template="work_done"]').forEach((card, index) => {
-                const workId = card.querySelector('[data-debug]')?.dataset.workId;
-                if (workId) {
-                    const fieldName = `workStatus${workId}`;
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    if (publicRadio) {
-                        const publicStatus = publicRadio.checked;
-                        initialFormData[fieldName] = publicStatus;
-                        console.log(`修正已成交作品小卡 #${index}: ID=${workId}, 初始公開狀態=${publicStatus}`);
-                    }
-                }
-            });
-            
-            // 檢查並修正公開販售作品小卡的初始狀態
-            console.log('檢查並修正公開販售作品小卡的初始狀態:');
-            document.querySelectorAll('.commission-card[data-template="work_sellnow"]').forEach((card, index) => {
-                const workId = card.querySelector('[data-debug]')?.dataset.workId;
-                if (workId) {
-                    const fieldName = `workSellnowStatus${workId}`;
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    if (publicRadio) {
-                        const publicStatus = publicRadio.checked;
-                        initialFormData[fieldName] = publicStatus;
-                        console.log(`修正公開販售作品小卡 #${index}: ID=${workId}, 初始公開狀態=${publicStatus}`);
-                    }
-                }
-            });
-            
-            // 檢查並修正需求小卡的初始狀態
-            console.log('檢查並修正需求小卡的初始狀態:');
-            document.querySelectorAll('.commission-card[data-template="need"]').forEach((card, index) => {
-                const needId = card.querySelector('[data-debug]')?.dataset.needId;
-                if (needId) {
-                    const fieldName = `needStatus${needId}`;
-                    const publicRadio = card.querySelector('input[value="public"]');
-                    if (publicRadio) {
-                        const publicStatus = publicRadio.checked;
-                        initialFormData[fieldName] = publicStatus;
-                        console.log(`修正需求小卡 #${index}: ID=${needId}, 初始公開狀態=${publicStatus}`);
-                    }
-                }
-            });
-            
-            // 輸出修正後的小卡狀態
-            console.log('修正後的小卡狀態:');
-            for (const key in initialFormData) {
-                if (key.startsWith('workStatus')) {
-                    console.log(`- ${key}: ${initialFormData[key]}`);
-                } else if (key.startsWith('workSellnowStatus')) {
-                    console.log(`- ${key}: ${initialFormData[key]}`);
-                } else if (key.startsWith('needStatus')) {
-                    console.log(`- ${key}: ${initialFormData[key]}`);
-                }
-            }
-            
             isInitialized = true;
-            console.log('===== 結束初始化表單跟蹤 =====');
         } catch (error) {
             console.error('初始化表單跟蹤時出錯:', error);
         }
@@ -1486,9 +1206,6 @@ $(document).ready(function() {
         }
         
         try {
-            console.log('===== 開始檢測表單變更 =====');
-            
-            // 清空 changedFields，重新檢測所有變更
             changedFields.clear();
             const currentFormData = getFormSnapshot();
             
@@ -1516,21 +1233,9 @@ $(document).ready(function() {
                 currentFormData['image_orders'] = normalizedCurrent;
             }
             
-            // 分別檢測不同類型的小卡狀態變更
-            const workDoneChanged = checkCardTypeChanges(currentFormData, initialFormData, 'workStatus', 'work_done_');
-            const workSellnowChanged = checkCardTypeChanges(currentFormData, initialFormData, 'workSellnowStatus', 'work_sellnow_');
-            const needChanged = checkCardTypeChanges(currentFormData, initialFormData, 'needStatus', 'need_');
-            
-            // 檢測其他欄位變更（排除已處理的小卡狀態和示意圖排序）
-            console.log('檢測其他欄位變更:');
+            // 檢測變更（排除已處理的示意圖排序）
             for (const key in currentFormData) {
-                // 跳過已處理的欄位
-                if (key === 'image_orders' || 
-                    key.startsWith('workStatus') || 
-                    key.startsWith('workSellnowStatus') || 
-                    key.startsWith('needStatus')) {
-                    continue;
-                }
+                if (key === 'image_orders') continue; // 跳過已處理的示意圖排序
                 
                 const currentValue = currentFormData[key];
                 const initialValue = initialFormData[key];
@@ -1562,94 +1267,19 @@ $(document).ready(function() {
                             console.log(`添加變更欄位: ${fieldType} (來源: ${key})`);
                         }
                     }
-                } else {
-                    // 如果是小卡狀態欄位，輸出調試信息
-                    if (key.startsWith('workStatus') || key.startsWith('workSellnowStatus') || key.startsWith('needStatus')) {
-                        console.log(`欄位 ${key} 未變更: 當前值=${currentValue}, 初始值=${initialValue}`);
-                    }
                 }
             }
             
-            // 更新表單變更狀態
             formChanged = changedFields.size > 0;
             
             console.log('檢測到的變更欄位清單:', Array.from(changedFields));
             console.log('最終表單變更檢測結果:', formChanged);
-            console.log('===== 結束檢測表單變更 =====');
             
             return formChanged;
         } catch (error) {
             console.error('檢測表單變更時出錯:', error);
             return false;
         }
-    }
-    
-    // 檢測特定類型的小卡狀態變更
-    function checkCardTypeChanges(currentFormData, initialFormData, prefix, fieldType) {
-        console.log(`檢測 ${fieldType} 類型的小卡狀態變更:`);
-        let hasChanges = false;
-        
-        // 收集所有相關欄位
-        const relevantKeys = Object.keys(currentFormData).filter(key => key.startsWith(prefix));
-        console.log(`找到 ${relevantKeys.length} 個 ${prefix} 欄位`);
-        
-        // 檢查每個欄位是否有變更
-        for (const key of relevantKeys) {
-            const currentValue = currentFormData[key];
-            const initialValue = initialFormData[key];
-            
-            // 如果初始值不存在但當前值存在，或兩者不相等，則視為變更
-            if ((initialValue === undefined && currentValue) || 
-                (JSON.stringify(initialValue) !== JSON.stringify(currentValue))) {
-                
-                console.log(`檢測到 ${fieldType} 變更: ${key}, 從 [${initialValue}] 變更為 [${currentValue}]`);
-                
-                // 檢查是否是真實的變更
-                if (prefix === 'workStatus') {
-                    // 檢查對應的小卡是否存在
-                    const cardId = key.replace('workStatus', '');
-                    const card = document.querySelector(`.commission-card[data-template="work_done"] [data-debug][data-work-id="${cardId}"]`);
-                    if (card) {
-                        console.log(`找到對應的已成交作品小卡: ID=${cardId}`);
-                        changedFields.add(fieldType);
-                        hasChanges = true;
-                    } else {
-                        console.log(`未找到對應的已成交作品小卡: ID=${cardId}，忽略此變更`);
-                    }
-                } else if (prefix === 'workSellnowStatus') {
-                    // 檢查對應的小卡是否存在
-                    const cardId = key.replace('workSellnowStatus', '');
-                    const card = document.querySelector(`.commission-card[data-template="work_sellnow"] [data-debug][data-work-id="${cardId}"]`);
-                    if (card) {
-                        console.log(`找到對應的公開販售作品小卡: ID=${cardId}`);
-                        changedFields.add(fieldType);
-                        hasChanges = true;
-                    } else {
-                        console.log(`未找到對應的公開販售作品小卡: ID=${cardId}，忽略此變更`);
-                    }
-                } else if (prefix === 'needStatus') {
-                    // 檢查對應的小卡是否存在
-                    const cardId = key.replace('needStatus', '');
-                    const card = document.querySelector(`.commission-card[data-template="need"] [data-debug][data-need-id="${cardId}"]`);
-                    if (card) {
-                        console.log(`找到對應的需求小卡: ID=${cardId}`);
-                        changedFields.add(fieldType);
-                        hasChanges = true;
-                    } else {
-                        console.log(`未找到對應的需求小卡: ID=${cardId}，忽略此變更`);
-                    }
-                } else {
-                    // 其他類型的欄位，直接添加
-                    changedFields.add(fieldType);
-                    hasChanges = true;
-                }
-            } else {
-                console.log(`${fieldType} 欄位 ${key} 未變更: 當前值=${currentValue}, 初始值=${initialValue}`);
-            }
-        }
-        
-        console.log(`${fieldType} 類型的小卡狀態變更檢測結果: ${hasChanges}`);
-        return hasChanges;
     }
     
     // 獲取變更欄位的顯示名稱
@@ -1676,39 +1306,19 @@ $(document).ready(function() {
     let lastChangeResult = false; // 最後一次變更檢測結果
     
     function debounceCheck(delay = 300) {
-        console.log('===== 開始防抖動檢測 =====');
-        console.log('當前防抖動計時器狀態:', debounceTimer ? '已設置' : '未設置');
-        
-        if (debounceTimer) {
-            console.log('清除現有防抖動計時器');
-            clearTimeout(debounceTimer);
-        }
-        
-        console.log('設置新的防抖動計時器，延遲:', delay, 'ms');
+        if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(function() {
-            console.log('防抖動計時器觸發，執行檢測');
             lastChangeResult = checkFormChanges();
-            console.log('檢測結果:', lastChangeResult);
-            console.log('===== 結束防抖動檢測 =====');
         }, delay);
     }
     
     // 強制立即檢查是否有變更，不使用防抖動
     function forceCheck() {
-        console.log('===== 開始強制檢測 =====');
-        
         if (debounceTimer) {
-            console.log('清除現有防抖動計時器');
             clearTimeout(debounceTimer);
             debounceTimer = null;
         }
-        
-        console.log('執行立即檢測');
-        const result = checkFormChanges();
-        console.log('檢測結果:', result);
-        
-        console.log('===== 結束強制檢測 =====');
-        return result;
+        return checkFormChanges();
     }
     
     // 頁面載入時初始化
@@ -1749,12 +1359,6 @@ $(document).ready(function() {
         
         try {
             const elName = this.name || this.id || '未命名元素';
-            // 排除篩選文字輸入框
-            if (this.classList.contains('filter-input')) {
-                console.log('篩選文字輸入框變更，不觸發變更偵測:', elName);
-                isProcessingEvent = false;
-                return;
-            }
             console.log('輸入元素變更:', elName);
             debounceCheck();
         } finally {
@@ -1957,36 +1561,7 @@ $(document).ready(function() {
     });
     
     console.log('變更檢測系統初始化完成');
-    
-    // 所有輸入元素的變更事件
-    $(document).on('input.formTracking change.formTracking', 'input, textarea, select', function(e) {
-        // 防止重複處理同一事件
-        if (isProcessingEvent) {
-            console.log('防止重複處理事件');
-            return;
-        }
-        
-        isProcessingEvent = true;
-        
-        try {
-            const elName = this.name || this.id || '未命名元素';
-            
-            // 排除篩選文字輸入框
-            if (this.classList.contains('filter-input')) {
-                console.log('篩選文字輸入框變更，不觸發變更偵測:', elName);
-                isProcessingEvent = false;
-                return;
-            }
-            
-            console.log('輸入元素變更:', elName);
-            debounceCheck();
-        } finally {
-            // 使用短延時重置標記，避免阻塞後續事件
-            setTimeout(() => { isProcessingEvent = false; }, 50);
-        }
-    });
 });
-// ... existing code ...
 </script>
 
 {% endblock %}

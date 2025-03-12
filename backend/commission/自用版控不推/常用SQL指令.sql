@@ -36,6 +36,10 @@ SET
 WHERE 
     user_id IN (4);
 
+UPDATE db_work_info
+SET case_by_need = '20'
+WHERE work_id BETWEEN 6 AND 10;    
+
 -- data 先
 -- py manage.py inspectdb shopping db_need_info db_need_images db_works_info works_preview db_public_card_info db_public_card_sell > commission/models.py
 

@@ -12,14 +12,6 @@
       padding-top: 0 !important;
     }
 
-    /* 抬頭已選擇之媒合案件文字樣式 */
-    .status-text {
-      margin: 0;
-      font-size: 0.9rem;
-      color: #5d6778;
-      font-weight: 500;
-    }
-
     .needer-info-card {
       background: linear-gradient(45deg, #f5fdfc, #eefaf1, #edf0c5);
       border: 2px dashed #c4c4c4;
@@ -154,21 +146,12 @@
 <!-- 直接打文字即可替換各自應用程式的標題 -->
 <div class="d-flex justify-content-between align-items-center">
     需求編輯 (案件ID：{{ ViewKey_DbNeedInfo_need_id.need_id }})
-    <div class="d-flex align-items-center gap-3">
-        <p class="status-text" {% if matched_work %}style="color: #198754"{% endif %}>
-            {% if matched_work %}
-                已媒合：{{ matched_work.work_title }}
-            {% else %}
-                尚未選擇媒合案件
-            {% endif %}
-        </p>
-        <a href="{% url 'commission:Urls_need_case_chose' %}?need_id={{ ViewKey_DbNeedInfo_need_id.need_id }}" class="btn btn-sm app-btn-primary" >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-90deg-right" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M14.854 4.854a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 4H3.5A2.5 2.5 0 0 0 1 6.5v8a.5.5 0 0 0 1 0v-8A1.5 1.5 0 0 1 3.5 5h9.793l-3.147 3.146a.5.5 0 0 0 .708.708z"/>
-            </svg>
-            選擇媒合案件
-        </a>
-    </div>
+    <a href="{% url 'commission:Urls_need_case_chose' %}?need_id={{ ViewKey_DbNeedInfo_need_id.need_id }}" class="btn btn-sm app-btn-primary" >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-90deg-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M14.854 4.854a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 4H3.5A2.5 2.5 0 0 0 1 6.5v8a.5.5 0 0 0 1 0v-8A1.5 1.5 0 0 1 3.5 5h9.793l-3.147 3.146a.5.5 0 0 0 .708.708z"/>
+        </svg>
+        選擇媒合案件
+    </a>
 </div>
 {% endblock %} 
 {% block app_content %}
