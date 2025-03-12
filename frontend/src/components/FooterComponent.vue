@@ -11,7 +11,7 @@
                         <div class="col-lg-3">
                             <a href="#">
                                 <h1 class="text-primary mb-0">ACGN 綜合論壇</h1>
-                                <p class="text-secondary mb-0">電影 動漫 遊戲 資訊平台</p>
+                                <p class="text-secondary mb-0">電影 動畫 遊戲 資訊平台</p>
                             </a>
                         </div>
                         <div class="col-lg-6">

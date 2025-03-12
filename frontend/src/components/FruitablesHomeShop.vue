@@ -6,6 +6,7 @@ import FruitablesShopCard from "@/components/FruitablesShopCard.vue";
 // 假設從 API 獲取的商品小卡資料，對應FruitablesShopCard.vue
 const products = ref([
 {
+    id: 4,
     imageSrc: "http://127.0.0.1:8000/media/products/aot_mikasa_main.jpg",
     category: "公仔",
     title: "三笠 公仔",
@@ -14,6 +15,7 @@ const products = ref([
     price: "NT$ 899",
   },
   {
+    id: 2,
     imageSrc: "http://127.0.0.1:8000/media/products/knys_tanjiro_main.jpg",
     category: "模型",
     title: "炭治郎 模型",
@@ -22,6 +24,7 @@ const products = ref([
     price: "NT$ 1500",
   },
   {
+    id: 3,
     imageSrc: "http://127.0.0.1:8000/media/products/op_luffy_keychain.jpg",
     category: "鑰匙圈",
     title: "魯夫 鑰匙圈",
@@ -30,6 +33,7 @@ const products = ref([
     price: "NT$ 199",
   },
   {
+    id: 6,
     imageSrc: "http://127.0.0.1:8000/media/products/op_zoro_keychain.jpg",
     category: "鑰匙圈",
     title: "索隆 鑰匙圈",
@@ -39,6 +43,7 @@ const products = ref([
   },
 
   {
+    id: 1,
     imageSrc: "http://127.0.0.1:8000/media/products/aot_eren_main.jpg",
     category: "公仔",
     title: "艾倫·葉卡 公仔",
@@ -48,6 +53,7 @@ const products = ref([
   },
 
   {
+    id: 5,
     imageSrc: "http://127.0.0.1:8000/media/products/knys_nezuko_main.jpg",
     category: "模型",
     title: "禰豆子 模型",
@@ -132,6 +138,7 @@ const filteredProducts = computed(() => {
                       class="col-xl-3"
                       v-for="(product, index) in filteredProducts"
                       :key="index"
+                      :id="product.id"
                       :imageSrc="product.imageSrc"
                       :category="product.category"
                       :title="product.title"
