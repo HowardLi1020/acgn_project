@@ -222,6 +222,7 @@ const handleSubmit = async (event) => {
 
 .app-link:hover {
   text-decoration: underline;
+  color: rgb(102, 102, 241);
 }
 
 .alert {
