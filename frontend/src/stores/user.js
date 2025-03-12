@@ -1,6 +1,42 @@
 import { defineStore } from 'pinia';
 import api from '@/utils/api';
 
+const BASE_URL = import.meta.env.VITE_MemberApi;
+const API_URL = `${BASE_URL}auth/update-likes/`;
+
+export const fetchPersonalLikes = async () => {
+  const userStore = useUserStore();
+  const userId = userStore.user?.user_id;
+
+  if (!userId) {
+    console.error('無法加載個人喜好：用戶ID不存在');
+    alert('用戶未登入或ID丟失');
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${API_URL}${userId}/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${userStore.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error('獲取個人喜好失敗:', response.status);
+      return [];
+    }
+
+    const responseData = await response.json();
+    console.log('獲取個人喜好成功:', responseData);
+
+    return responseData.personal_likes ?? [];
+  } catch (error) {
+    console.error('獲取個人喜好失敗:', error);
+    return [];
+  }
+};
+
 export const useUserStore = defineStore('user', {
   state: () => ({
     user: null, // 用戶資料
@@ -125,33 +161,6 @@ export const useUserStore = defineStore('user', {
         throw error;
       }
     },
-
-    // // 刷新 Token
-    // async refreshTokenIfNeeded() {
-    //   if (!this.refreshToken) {
-    //     console.error("Refresh Token 不存在，無法刷新");
-    //     return false;
-    //   }
-
-    //   try {
-    //     // 使用 api.post 發送刷新 Token 請求
-    //     const response = await api.post('/member_api/auth/refresh_token/', {
-    //       refresh: this.refreshToken,
-    //     });
-
-    //     // 更新新的 Access Token 並存儲到本地
-    //     this.accessToken = response.data.access;
-    //     localStorage.setItem('access_token', response.data.access);
-
-    //     console.log('Token 刷新成功:', response.data.access);
-    //     return true;
-    //   } catch (error) {
-    //     // 錯誤處理，登出用戶並返回 false
-    //     console.error('刷新 Token 發生錯誤:', error);
-    //     this.logout(); // 如果需要登出邏輯
-    //     return false;
-    //   }
-    // },
 
     // 刷新 Token
     async refreshTokenIfNeeded() {

@@ -633,42 +633,44 @@ class UpdateUserLikesView(APIView):
             # 檢查 Token 中的 user_id 是否匹配
             if str(decoded_token["user_id"]) != str(pk):
                 return Response({"error": "用戶 ID 與 Token 不匹配"}, status=status.HTTP_403_FORBIDDEN)
-
+            
             # 獲取用戶
             user = MemberBasic.objects.get(user_id=pk)
-
+            
+            # 獲取請求數據
             personal_likes = request.data.get("personal_likes", [])
-            if not isinstance(personal_likes, list):
-                return Response({"error": "personal_likes 必須為列表格式"}, status=status.HTTP_400_BAD_REQUEST)
-
+            user_address = request.data.get("user_address")  # 獲取新地址
+            
             # 使用事務確保數據一致性
             with transaction.atomic():
-                # 刪除現有喜好
-                MemberIndextype.objects.filter(user=user).delete()  # 使用模型進行查詢
+                # 更新地址
+                if user_address is not None:
+                    user.user_address = user_address
+                    user.save()
 
-                # 過濾重複的 type_name
-                unique_likes = list(set(personal_likes))
+                # 處理個人喜好數據
+                MemberIndextype.objects.filter(user=user).delete()
+                for item in personal_likes:
+                    if isinstance(item, dict) and 'type_name' in item and 'sort_order' in item:
+                        MemberIndextype.objects.create(
+                            user=user,
+                            type_name=item['type_name'],
+                            sort_order=item['sort_order'],
+                            created_at=now(),
+                            updated_at=now()
+                        )
 
-                # 創建新的喜好記錄，避免插入重複資料
-                for sort_order, type_name in enumerate(unique_likes, 1):
-                    # 創建新記錄
-                    MemberIndextype.objects.create(
-                        user=user,
-                        type_name=type_name,
-                        sort_order=sort_order,
-                        created_at=now(),
-                        updated_at=now()
-                    )
-
-            # 查詢並使用序列化器返回更新後的喜好數據
-            updated_likes = MemberIndextype.objects.filter(user=user).order_by('sort_order')  # 使用模型進行查詢
+            # 查詢並返回更新後的數據
+            updated_likes = MemberIndextype.objects.filter(user=user).order_by('sort_order')
             updated_likes_data = MemberIndextypeSerializer(updated_likes, many=True).data
 
-            # 返回用戶 ID 和更新後的喜好列表
             return Response({
                 "user_id": user.user_id,
-                "personal_likes": updated_likes_data
+                "personal_likes": updated_likes_data,
+                "user_address": user.user_address,  # 返回更新後的地址
+                "message": "資料更新成功"
             }, status=status.HTTP_200_OK)
+
         except AuthenticationFailed as e:
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
         except MemberBasic.DoesNotExist:

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import make_password, check_password
-from users.models import MemberBasic, MemberVerify, MemberPrivacy, MemberPhotos, MemberLogin
+from users.models import MemberBasic, MemberVerify, MemberPrivacy, MemberPhotos, MemberLogin, MemberIndextype
 from django.core.files.storage import FileSystemStorage
 import os
 from django.conf import settings
@@ -155,19 +155,39 @@ def hand_verify(request):
 
 # 1.2 後台-用戶個人資料頁面(總覽)
 def personal(request):
-    id = request.GET.get("id", 1)
-    member = MemberBasic.objects.get(user_id=id)
-    if member.user_avatar:
-            # 解碼 URL
+    try:
+        id = request.GET.get("id", 1)
+        member = MemberBasic.objects.get(user_id=id)
+        
+        # 處理頭像
+        if member.user_avatar:
             decoded_avatar = unquote(member.user_avatar.url)
-
             if decoded_avatar.startswith('/media/https:/'):
                 member.avatar_url = decoded_avatar.replace('/media/', '')
             else:
-                member.avatar_url = decoded_avatar  # 不修改
-                
-    account, created = MemberPrivacy.objects.get_or_create(user_id=id)
-    return render(request, "users/personal.html", {"member": member, "account": account})
+                member.avatar_url = decoded_avatar
+        
+        # 獲取個人喜好
+        personal_likes = MemberIndextype.objects.filter(user=member).order_by('sort_order')
+        
+        # 獲取隱私設定
+        account, created = MemberPrivacy.objects.get_or_create(user_id=id)
+        
+        # 打印調試信息
+        print(f"用戶 ID: {id}")
+        print(f"個人喜好數量: {personal_likes.count()}")
+        for like in personal_likes:
+            print(f"喜好: {like.type_name}, 排序: {like.sort_order}")
+        
+        context = {
+            'member': member,
+            'account': account,
+            'personal_likes': personal_likes,
+        }
+        
+        return render(request, "users/personal.html", context)
+    except MemberBasic.DoesNotExist:
+        return render(request, 'error.html', {'message': '用戶不存在'})
 
 # 前台-用戶忘記密碼 1. 輸入電子郵箱
 def reset(request):
