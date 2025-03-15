@@ -94,6 +94,11 @@ const handleDelete = async (productId) => {
     }
 };
 
+// 返回商店頁面
+const backToStore = () => {
+  router.push('/store');
+};
+
 onMounted(() => {
     fetchUserProducts();
 });
@@ -102,6 +107,7 @@ onMounted(() => {
 <template>
     <div class="my-products">
         <h1>我的產品</h1>
+        <button @click="backToStore" class="back-button">返回商店</button>
         <div v-if="loading" class="loading">加載中...</div>
         <div v-else-if="error" class="error">{{ error }}</div>
         <!-- 商品列表 -->
@@ -254,5 +260,19 @@ onMounted(() => {
     text-align: center;
     padding: 20px;
     color: #666;
+}
+
+.back-button {
+  margin-bottom: 20px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #45a049;
 }
 </style>

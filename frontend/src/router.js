@@ -35,6 +35,7 @@ import PurchasedProducts from "./views/Store/PurchasedProducts.vue";
 import CartView from '@/views/cart/CartView.vue'; // 確保 @ 指向 src/
 import Checkout from "./views/cart/Checkout.vue";
 import OrderList from "./views/cart/OrderList.vue";
+import Wishlist from "./views/Store/Wishlist.vue";
 
 
 //Forum
@@ -250,6 +251,11 @@ const routes =[
     path: '/orderlist',
     name: 'orderlist',
     component: OrderList,
+},
+{
+  path: '/store/wishlist',
+  name: 'Wishlist',
+  component: Wishlist,
 },
 
 

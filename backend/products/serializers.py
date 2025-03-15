@@ -55,3 +55,18 @@ class ReviewSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.user_id == request.user.id
         return False
+    
+class ProductDetailSerializer(serializers.ModelSerializer):
+    brand_name = serializers.CharField(source='brand.brand_name', read_only=True)
+    category_name = serializers.CharField(source='category.category_name', read_only=True)
+    series_name = serializers.CharField(source='series.series_name', read_only=True)
+    images = ProductImageSerializer(many=True, source='productimages_set')
+    
+    class Meta:
+        model = Products
+        fields = [
+            'product_id', 'product_name', 'description_text', 
+            'brand', 'brand_name', 'series', 'series_name', 
+            'category', 'category_name', 'price', 'stock',
+            'images', 'created_at', 'updated_at'
+        ]

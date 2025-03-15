@@ -31,8 +31,8 @@ const fetchProduct = async () => {
             error.value = "商品資料錯誤";
         }
     } catch (err) {
-        console.error("获取商品信息失败:", err);
-        error.value = "获取商品信息失败";
+        console.error("獲取商品信息失败:", err);
+        error.value = "獲取商品信息失败";
     } finally {
         loading.value = false;
         window.scrollTo(0, 0);
@@ -132,6 +132,7 @@ onMounted(async () => {
 
 <template>
     <div class="product-detail" :key="route.params.id">
+        <button @click="backToStore" class="back-button">返回商店</button>
         <div v-if="loading" class="loading">加载中...</div>
         <div v-else-if="error" class="error">{{ error }}</div>
 
@@ -170,13 +171,13 @@ onMounted(async () => {
 
                 <div class="details">
                     <p v-if="product.brand">
-                        <strong>品牌：</strong>{{ product.brand }}
+                        <strong>品牌：</strong>{{ product.brand_name }}
                     </p>
                     <p v-if="product.category">
-                        <strong>分類：</strong>{{ product.category }}
+                        <strong>分類：</strong>{{ product.category_name }}
                     </p>
                     <p v-if="product.series">
-                        <strong>系列：</strong>{{ product.series }}
+                        <strong>系列：</strong>{{ product.series_name }}
                     </p>
                     <p>
                         <strong>庫存：</strong>

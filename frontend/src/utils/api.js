@@ -134,6 +134,42 @@ export const storeAPI = {
     },
     getProductDetail: (productId) => getPublic(`/store/products/${productId}/`),
 
+    createCategory: async (data) => {
+        try {
+            const response = await api.post("/store/create_category/", data);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error("登入已過期，請重新登入");
+            }
+            throw new Error(error.response?.data?.detail || "創建分類失敗");
+        }
+    },
+    
+    createBrand: async (data) => {
+        try {
+            const response = await api.post("/store/create_brand/", data);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error("登入已過期，請重新登入");
+            }
+            throw new Error(error.response?.data?.detail || "創建品牌失敗");
+        }
+    },
+    
+    createSeries: async (data) => {
+        try {
+            const response = await api.post("/store/create_series/", data);
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error("登入已過期，請重新登入");
+            }
+            throw new Error(error.response?.data?.detail || "創建系列失敗");
+        }
+    },
+
     // 需要認證的 API
     createProduct: async (formData) => {
         try {
@@ -160,6 +196,19 @@ export const storeAPI = {
 
     toggleWishlist: (productId) =>
         postWithAuth(`/store/wishlist/toggle/${productId}/`),
+
+    // 獲取用戶收藏的商品
+    getWishlist: async () => {
+        try {
+            const response = await api.get("/store/wishlist/list/");
+            return response.data;
+        } catch (error) {
+            if (error.response?.status === 401) {
+                throw new Error("登入已過期，請重新登入");
+            }
+            throw new Error(error.response?.data?.detail || "獲取收藏商品失敗");
+        }
+    },
 
     getRecommendations: async (productId, type = "similar") => {
         try {
