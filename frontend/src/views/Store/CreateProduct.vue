@@ -309,6 +309,41 @@ onMounted(async () => {
             </div>
 
             <div class="form-group">
+                <label for="brand">品牌</label>
+                <select
+                    id="brand"
+                    v-model="formData.brand"
+                    class="form-control"
+                    required
+                >
+                    <option
+                        v-for="brand in brands"
+                        :key="brand.brand_id"
+                        :value="brand.brand_id"
+                    >
+                        {{ brand.brand_name }}
+                    </option>
+                </select>
+
+                <!-- 新增品牌 -->
+                <div class="add-new-item">
+                    <input
+                        v-model="newBrand"
+                        type="text"
+                        class="form-control"
+                        placeholder="新增品牌"
+                    />
+                    <button
+                        type="button"
+                        @click="addBrand"
+                        class="btn btn-secondary"
+                    >
+                        新增
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="category">分類</label>
                 <select
                     id="category"
@@ -343,40 +378,7 @@ onMounted(async () => {
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="brand">品牌</label>
-                <select
-                    id="brand"
-                    v-model="formData.brand"
-                    class="form-control"
-                    required
-                >
-                    <option
-                        v-for="brand in brands"
-                        :key="brand.brand_id"
-                        :value="brand.brand_id"
-                    >
-                        {{ brand.brand_name }}
-                    </option>
-                </select>
-
-                <!-- 新增品牌 -->
-                <div class="add-new-item">
-                    <input
-                        v-model="newBrand"
-                        type="text"
-                        class="form-control"
-                        placeholder="新增品牌"
-                    />
-                    <button
-                        type="button"
-                        @click="addBrand"
-                        class="btn btn-secondary"
-                    >
-                        新增
-                    </button>
-                </div>
-            </div>
+            
 
             <div class="form-group">
                 <label for="series">系列</label>

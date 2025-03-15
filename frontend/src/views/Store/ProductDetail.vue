@@ -132,7 +132,6 @@ onMounted(async () => {
 
 <template>
     <div class="product-detail" :key="route.params.id">
-        <button @click="backToStore" class="back-button">返回商店</button>
         <div v-if="loading" class="loading">加载中...</div>
         <div v-else-if="error" class="error">{{ error }}</div>
 
