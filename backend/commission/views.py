@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import *
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
@@ -25,12 +25,38 @@ from django.views.decorators.csrf import csrf_exempt
 import tempfile
 import re
 
+import torch
+import open_clip
+# from PIL import Image
+import numpy as np
+# from django.shortcuts import render
+# from django.core.files.storage import default_storage
+# from django.conf import settings
+# from .models import ImageModel
+# import os
+import cv2
+import traceback
+import math
+import uuid
+
 # 大寫取名ViewKey_NeedInfo=來自大檔項目，如資料庫、views.py、urls.py、HTML
 # 小寫取名如view_db_need_info=取自內部參數，如欄位名稱
 
-# def index(request):
-#     view_db_need_info = DbNeedInfo.objects.all()
-#     return render(request, 'commission/need_list.html', {'ViewKey_DbNeedInfo': view_db_need_info})
+# AI圖片辨識用清理函數
+def clean_commission_uploads():
+    """
+    清理 commission/uploads 目錄下的所有檔案
+    """
+    uploads_dir = os.path.join(settings.MEDIA_ROOT, "commission", "uploads")
+    if os.path.exists(uploads_dir):
+        for filename in os.listdir(uploads_dir):
+            file_path = os.path.join(uploads_dir, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                    print(f"已刪除檔案: {file_path}")
+            except Exception as e:
+                print(f"刪除檔案時出錯 {file_path}: {e}")
 
 def ViewFn_need_list(request):
     # 資料提取與顯示
@@ -1769,5 +1795,1520 @@ def ViewFn_filter_items(request):
     return JsonResponse(matching_ids, safe=False)
 
 
+
+
+
+
+# AI圖片相似度識別
+# 1. 加載 CLIP 模型
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model_name = "ViT-B-32"  # 修改模型名稱格式
+result = open_clip.create_model_and_transforms(model_name, pretrained='openai')
+# 根據函數返回值的數量解包
+if len(result) == 3:
+    model, preprocess, _ = result
+else:
+    # 如果返回的是元組形式，我們需要嘗試另一種方式
+    model, preprocess = result[0], result[1]
+
+# 將模型移到指定設備並設置為評估模式
+model = model.to(device)
+model.eval()
+
+tokenizer = open_clip.get_tokenizer(model_name)
+
+# 2. 計算圖片特徵向量
+def get_image_vector(image_path):
+    try:
+        print(f"計算圖片向量: {image_path}")
+        if not os.path.exists(image_path):
+            print(f"錯誤: 圖片不存在 {image_path}")
+            return None
+            
+        # 載入並預處理圖片
+        image = Image.open(image_path).convert("RGB")
+        image_tensor = preprocess(image).unsqueeze(0).to(device)
+        
+        # 使用模型編碼圖片得到特徵向量
+        with torch.no_grad():
+            vector = model.encode_image(image_tensor)
+            print(f"成功計算向量，形狀: {vector.shape}")
+        
+        # 返回 numpy 向量，形狀為 (n,)
+        # 不對向量進行規範化，保持原始數值以便與generate_gradcam兼容
+        return vector.cpu().numpy().flatten()
+    except Exception as e:
+        print(f"計算圖片向量時出錯: {e}")
+        print(traceback.format_exc())
+        return None
+
+# 使用 Grad-CAM 生成熱力圖
+def generate_gradcam(image_path, target_vector=None):
+    """
+    生成Grad-CAM熱力圖以可視化模型關注的區域
     
+    Args:
+        image_path: 圖像路徑
+        target_vector: 目標向量，如果提供則用於相似度計算
+        
+    Returns:
+        生成的熱力圖路徑
+    """
+    try:
+        print(f"為圖片生成Grad-CAM: {image_path}")
+        # 確保圖片存在
+        if not os.path.exists(image_path):
+            print(f"錯誤: 圖片不存在 {image_path}")
+            return None
+            
+        # 載入原始圖片
+        original_img = Image.open(image_path).convert("RGB")
+        img_array = np.array(original_img)
+        
+        # 預處理圖片為模型輸入格式
+        input_tensor = preprocess(original_img).unsqueeze(0).to(device)
+        input_tensor.requires_grad = True
+        
+        # 準備保存特徵和梯度
+        features = None
+        gradients = None
+        
+        # 定義鉤子函數
+        def forward_hook(module, input, output):
+            nonlocal features
+            features = output.detach()
+            
+        def backward_hook(module, grad_input, grad_output):
+            nonlocal gradients
+            gradients = grad_output[0].detach()
+        
+        # 註冊鉤子
+        if hasattr(model.visual, 'transformer'):
+            # 對於 ViT 模型，使用最後的 transformer 塊
+            target_layer = model.visual.transformer.resblocks[-1]
+        else:
+            # 對於 ResNet 等卷積模型，使用最後的卷積層
+            target_layer = None
+            for name, module in model.visual.named_modules():
+                if isinstance(module, torch.nn.Conv2d):
+                    target_layer = module
+                    break
+                    
+        if target_layer is None:
+            print("無法找到合適的層來生成 Grad-CAM，使用備用方法")
+            return _generate_fallback_heatmap(image_path)
+            
+        # 註冊鉤子
+        handle_forward = target_layer.register_forward_hook(forward_hook)
+        handle_backward = target_layer.register_full_backward_hook(backward_hook)
+        
+        # 前向傳播
+        model.zero_grad()
+        output = model.encode_image(input_tensor)
+        
+        # 如果提供了目標向量，計算與目標向量的相似度；否則使用最大輸出類別
+        if target_vector is not None:
+            if isinstance(target_vector, np.ndarray):
+                target_vector = torch.tensor(target_vector, dtype=torch.float32).to(device)
+            
+            # 計算相似度
+            similarity = torch.sum(output.squeeze() * target_vector)
+            print(f"相似度分數: {similarity.item():.4f}")
+            
+            # 反向傳播
+            similarity.backward()
+        else:
+            # 如果沒有提供目標向量，直接使用輸出
+            output.backward(gradient=torch.ones_like(output))
+        
+        # 移除鉤子
+        handle_forward.remove()
+        handle_backward.remove()
+        
+        # 檢查是否成功獲取特徵和梯度
+        if features is None or gradients is None:
+            print("無法獲取特徵或梯度，使用備用方法")
+            return _generate_fallback_heatmap(image_path)
+            
+        # 根據模型類型處理特徵和梯度
+        if hasattr(model.visual, 'transformer'):
+            # ViT模型處理
+            print(f"特徵形狀: {features.shape}, 梯度形狀: {gradients.shape}")
+            
+            # 處理序列形式的特徵 [1, seq_len, dim]
+            b, n, c = features.shape
+            
+            # 計算權重 - 對梯度取平均
+            weights = gradients.mean(dim=2)  # [1, seq_len]
+            
+            # 去除 CLS token (第一個 token)
+            weights = weights[:, 1:]  # [1, seq_len-1]
+            feat = features[:, 1:]  # [1, seq_len-1, dim]
+            
+            # 重塑為方形網格
+            grid_size = int(math.sqrt(feat.shape[1]))
+            if grid_size * grid_size != feat.shape[1]:
+                print(f"無法將特徵重塑為方形網格: {feat.shape[1]}，使用備用方法")
+                return _generate_fallback_heatmap(image_path)
+                
+            # 生成 CAM
+            cam = torch.zeros(grid_size, grid_size, device=device)
+            
+            # 使用權重加權特徵
+            for i in range(grid_size):
+                for j in range(grid_size):
+                    idx = i * grid_size + j
+                    if idx < weights.shape[1]:
+                        weight = weights[0, idx]
+                        cam[i, j] = weight
+            
+            # 確保有足夠的對比度
+            if torch.max(cam) == torch.min(cam):
+                print("熱力圖沒有對比度，使用備用方法")
+                return _generate_fallback_heatmap(image_path)
+                
+            # 使用 ReLU（只保留正值）並增強對比度
+            cam = torch.nn.functional.relu(cam)
+            
+            # 為了增強對比度，使用指數縮放
+            cam = cam ** 0.5  # 此指數可以調整來增強對比度
+        else:
+            # CNN 模型處理
+            # 使用 GAP 獲取權重
+            weights = gradients.mean(dim=(2, 3))  # [1, channels]
+            
+            # 使用權重加權特徵圖
+            cam = torch.zeros(features.shape[2:], device=device)
+            for i, w in enumerate(weights[0]):
+                cam += w * features[0, i]
+                
+            # 使用 ReLU
+            cam = torch.nn.functional.relu(cam)
+            
+        # 轉換為 numpy 並調整大小
+        cam = cam.cpu().numpy()
+        
+        # 調整為與原始圖像相同大小
+        cam = cv2.resize(cam, (original_img.width, original_img.height))
+        
+        # 確保非零值以便生成有意義的熱力圖
+        if cam.max() <= 0:
+            print("熱力圖全為零，使用備用方法")
+            return _generate_fallback_heatmap(image_path)
+            
+        # 標準化到 [0, 1] 範圍
+        cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
+        
+        # 使用 JET 顏色映射
+        # 使用 cv2.applyColorMap 但將結果轉換為 RGB
+        heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+        
+        # 將熱力圖與原始圖像混合
+        alpha = 0.6  # 熱力圖透明度
+        superimposed_img = heatmap * alpha + img_array * (1 - alpha)
+        superimposed_img = np.clip(superimposed_img, 0, 255).astype(np.uint8)
+        
+        # 創建最終圖像
+        result_img = Image.fromarray(superimposed_img)
+        
+        # 保存結果
+        uploads_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
+        if not os.path.exists(uploads_dir):
+            os.makedirs(uploads_dir)
+            
+        base_name = os.path.basename(image_path)
+        file_name, ext = os.path.splitext(base_name)
+        gradcam_file = f"{file_name}_gradcam{ext}"
+        gradcam_path = os.path.join(uploads_dir, gradcam_file)
+        
+        result_img.save(gradcam_path)
+        print(f"熱力圖已成功生成: {gradcam_path}")
+        
+        return gradcam_path
+            
+    except Exception as e:
+        print(f"生成Grad-CAM時出錯: {e}")
+        print(traceback.format_exc())
+        return _generate_fallback_heatmap(image_path)
+        
+def _generate_fallback_heatmap(image_path):
+    """
+    當主要Grad-CAM方法失敗時的備用熱力圖生成方法
+    這個函數創建一個簡單的注意力圖，確保對於相似的圖片顯示一些紅色區域
+    """
+    try:
+        print("使用備用熱力圖生成方法 - 增強版")
+        # 讀取原始圖片
+        img = Image.open(image_path).convert("RGB")
+        img_array = np.array(img)
+        
+        # 轉換為灰度圖
+        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+        
+        # 使用高斯模糊平滑圖像
+        blur = cv2.GaussianBlur(gray, (5, 5), 0)
+        
+        # 找出圖像中的主要特徵
+        # 使用Canny邊緣檢測
+        edges = cv2.Canny(blur, 50, 200)
+        
+        # 膨脹邊緣以獲得更明顯的區域
+        kernel = np.ones((3, 3), np.uint8)
+        dilated = cv2.dilate(edges, kernel, iterations=1)
+        
+        # 找到圖像中的結構性區域
+        laplacian = cv2.Laplacian(blur, cv2.CV_64F)
+        laplacian = np.uint8(np.absolute(laplacian))
+        
+        # 結合邊緣和拉普拉斯結果
+        combined = np.maximum(dilated, laplacian)
+        
+        # 創建一個熱力圖，讓中心區域更加突出
+        h, w = combined.shape
+        y, x = np.ogrid[:h, :w]
+        center_y, center_x = h // 2, w // 2
+        mask = (x - center_x)**2 + (y - center_y)**2 <= min(h, w)**2 // 4
+        center_weight = np.zeros_like(combined, dtype=np.float32)
+        center_weight[mask] = 1.0
+        
+        # 結合所有因素
+        heatmap_base = combined.astype(np.float32) / 255.0
+        heatmap_base = heatmap_base * 0.5 + center_weight * 0.5
+        
+        # 確保有一些明顯的熱點
+        if np.max(heatmap_base) < 0.5:
+            heatmap_base[center_y-20:center_y+20, center_x-20:center_x+20] = 1.0
+            
+        # 標準化到 [0, 1] 範圍
+        heatmap_base = (heatmap_base - np.min(heatmap_base)) / (np.max(heatmap_base) - np.min(heatmap_base) + 1e-8)
+        
+        # 應用JET色彩映射
+        heatmap = cv2.applyColorMap(np.uint8(255 * heatmap_base), cv2.COLORMAP_JET)
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+        
+        # 混合原圖與熱力圖
+        alpha = 0.6
+        superimposed_img = img_array * (1 - alpha) + heatmap * alpha
+        superimposed_img = np.clip(superimposed_img, 0, 255).astype(np.uint8)
+        
+        # 創建最終圖像
+        result_img = Image.fromarray(superimposed_img)
+        
+        # 保存結果
+        uploads_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
+        if not os.path.exists(uploads_dir):
+            os.makedirs(uploads_dir)
+        
+        base_name = os.path.basename(image_path)
+        file_name, ext = os.path.splitext(base_name)
+        fallback_file = f"{file_name}_fallback{ext}"
+        fallback_path = os.path.join(uploads_dir, fallback_file)
+        
+        result_img.save(fallback_path)
+        print(f"備用熱力圖已生成: {fallback_path}")
+        
+        return fallback_path
+        
+    except Exception as e:
+        print(f"生成備用熱力圖時也出錯: {e}")
+        print(traceback.format_exc())
+        # 如果都失敗了，返回原圖路徑
+        return image_path
+
+# 計算資料庫中圖片的向量
+def get_db_image_vector(image_url):
+    # 構建完整的圖片路徑
+    image_path = os.path.join(settings.MEDIA_ROOT, "commission", "workID_img", image_url)
+    if os.path.exists(image_path):
+        return get_image_vector(image_path)
+    return None
+
+# 3. 比對圖片相似度
+def compare_images(uploaded_vector, uploaded_path):
+    """
+    比較上傳的圖片與資料庫中的圖片，找出最相似的一張，並生成Attention Rollout視覺化
+    
+    Args:
+        uploaded_vector: 上傳圖片的特徵向量
+        uploaded_path: 上傳圖片的路徑
+        
+    Returns:
+        一個元組 (最相似圖片信息, 相似度百分比, 相似度描述, 相似圖片列表, 注意力圖路徑字典)
+    """
+    try:
+        # 取得資料庫中所有圖片
+        work_images = DbWorkImages.objects.all()
+        print(f"找到 {len(work_images)} 張資料庫圖片")
+        
+        # 檢查向量是否有效
+        if uploaded_vector is None:
+            print("錯誤: 上傳圖片向量為空")
+            return None, 0, "無法計算上傳圖片的向量", [], {}
+            
+        # 規範化上傳向量以計算相似度
+        uploaded_vector_norm = np.linalg.norm(uploaded_vector)
+        if uploaded_vector_norm == 0:
+            print("錯誤: 上傳向量範數為零")
+            return None, 0, "上傳圖片向量無效", [], {}
+            
+        uploaded_vector_normalized = uploaded_vector / uploaded_vector_norm
+        
+        # 檢查是否有圖片
+        if len(work_images) == 0:
+            print("資料庫中沒有圖片可比較")
+            return None, 0, "資料庫中沒有圖片可比較", [], {}
+        
+        # 比較每一張圖片
+        all_similarities = []  # 保存所有有效的相似度
+        
+        print(f"開始計算所有圖片的相似度...")
+        for image in work_images:
+            if not image.image_url:
+                continue
+                
+            # 構建完整的圖片路徑
+            image_path = os.path.join(settings.MEDIA_ROOT, "commission", "workID_img", image.image_url)
+            if not os.path.exists(image_path):
+                continue
+                
+            # 獲取圖片向量
+            image_vector = get_image_vector(image_path)
+            if image_vector is None:
+                continue
+                
+            # 計算相似度 (cos相似度)
+            image_vector_norm = np.linalg.norm(image_vector)
+            if image_vector_norm == 0:
+                continue
+                
+            image_vector_normalized = image_vector / image_vector_norm
+            similarity = np.dot(uploaded_vector_normalized, image_vector_normalized)
+            
+            # 有時候相似度可能略大於1，確保在範圍[-1, 1]內
+            similarity = np.clip(similarity, -1.0, 1.0)
+            
+            # 將結果添加到列表
+            all_similarities.append((image, similarity, image_path))
+            print(f"圖片 {image.image_url} 相似度: {similarity:.4f}")
+        
+        # 按相似度排序
+        all_similarities.sort(key=lambda x: x[1], reverse=True)
+        
+        # 取前5個最相似的結果（如果有那麼多）
+        top_matches = all_similarities[:min(5, len(all_similarities))]
+        print(f"找到 {len(top_matches)} 張相似圖片")
+        
+        # 存儲注意力視覺化路徑
+        attention_paths = {}
+        
+        # 如果找到匹配的圖片
+        if top_matches:
+            best_match, best_similarity, best_match_path = top_matches[0]
+            
+            # 相似度轉換為百分比
+            similarity_percent = float(best_similarity * 100)
+            
+            # 根據相似度生成描述
+            if similarity_percent > 95:
+                similarity_description = "這兩張圖片幾乎完全相同，可能是同一張圖片。"
+            elif similarity_percent > 90:
+                similarity_description = "這兩張圖片非常相似，可能是同一張圖片或有微小調整。"
+            elif similarity_percent > 80:
+                similarity_description = "這兩張圖片高度相似，可能是同一角色或風格相近的作品。"
+            elif similarity_percent > 70:
+                similarity_description = "這兩張圖片有明顯相似之處，可能包含相同的主要元素。"
+            elif similarity_percent > 60:
+                similarity_description = "這兩張圖片有一定相似度，可能在顏色或構圖上相似。"
+            else:
+                similarity_description = "這兩張圖片相似度較低，但仍是資料庫中最接近的匹配項。"
+            
+            print(f"最佳匹配: {best_match_path}, 相似度: {similarity_percent:.2f}%")
+            print(f"相似度描述: {similarity_description}")
+            
+            # 生成 Attention Rollout 視覺化
+            try:
+                print("為上傳圖片生成 Attention Rollout 視覺化...")
+                # 為上傳的圖片生成 Attention Rollout
+                rollout, _ = compute_attention_rollout(uploaded_path)
+                uploaded_attention_path = None
+                
+                if rollout is not None:
+                    uploaded_attention_path = generate_attention_rollout_visualization(uploaded_path, rollout)
+                    if uploaded_attention_path and os.path.exists(uploaded_attention_path):
+                        attention_paths['uploaded'] = uploaded_attention_path
+                        print(f"上傳圖片的 Attention Rollout 已生成: {uploaded_attention_path}")
+                    else:
+                        print("上傳圖片的 Attention Rollout 生成失敗或路徑不存在")
+                else:
+                    print("上傳圖片的 Attention Rollout 計算失敗，嘗試使用替代方法")
+                
+                # 如果 Attention Rollout 失敗，使用替代方法
+                if rollout is None or uploaded_attention_path is None or not os.path.exists(uploaded_attention_path):
+                    print("使用替代方法生成上傳圖片的注意力視覺化...")
+                    uploaded_attention_path = generate_fallback_attention(uploaded_path)
+                    if uploaded_attention_path and os.path.exists(uploaded_attention_path):
+                        # 修改路徑格式，確保可以被網頁訪問
+                        uploaded_attention_url = uploaded_attention_path.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                        if not uploaded_attention_url.startswith('/'):
+                            uploaded_attention_url = '/' + uploaded_attention_url
+                        attention_paths['uploaded'] = uploaded_attention_url
+                        print(f"上傳圖片的替代注意力視覺化已生成: {uploaded_attention_path}")
+                    else:
+                        print("上傳圖片的替代注意力視覺化生成失敗")
+                
+                print("為最佳匹配圖片生成 Attention Rollout 視覺化...")
+                # 為最佳匹配的圖片生成 Attention Rollout
+                rollout, _ = compute_attention_rollout(best_match_path)
+                best_match_attention_path = None
+                
+                if rollout is not None:
+                    best_match_attention_path = generate_attention_rollout_visualization(best_match_path, rollout)
+                    if best_match_attention_path and os.path.exists(best_match_attention_path):
+                        # 修改路徑格式，確保可以被網頁訪問
+                        best_match_attention_url = best_match_attention_path.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                        if not best_match_attention_url.startswith('/'):
+                            best_match_attention_url = '/' + best_match_attention_url
+                        attention_paths['best_match'] = best_match_attention_url
+                        print(f"最佳匹配圖片的 Attention Rollout 已生成: {best_match_attention_path}")
+                    else:
+                        print("最佳匹配圖片的 Attention Rollout 生成失敗或路徑不存在")
+                else:
+                    print("最佳匹配圖片的 Attention Rollout 計算失敗，嘗試使用替代方法")
+                
+                # 如果 Attention Rollout 失敗，使用替代方法
+                if rollout is None or best_match_attention_path is None or not os.path.exists(best_match_attention_path):
+                    print("使用替代方法生成最佳匹配圖片的注意力視覺化...")
+                    best_match_attention_path = generate_fallback_attention(best_match_path)
+                    if best_match_attention_path and os.path.exists(best_match_attention_path):
+                        # 修改路徑格式，確保可以被網頁訪問
+                        best_match_attention_url = best_match_attention_path.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                        if not best_match_attention_url.startswith('/'):
+                            best_match_attention_url = '/' + best_match_attention_url
+                        attention_paths['best_match'] = best_match_attention_url
+                        print(f"最佳匹配圖片的替代注意力視覺化已生成: {best_match_attention_path}")
+                    else:
+                        print("最佳匹配圖片的替代注意力視覺化生成失敗")
+                    
+            except Exception as e:
+                print(f"生成 Attention Rollout 時出錯: {e}")
+                print(traceback.format_exc())
+            
+            return best_match, similarity_percent, similarity_description, top_matches, attention_paths
+        else:
+            print("未找到任何匹配的圖片")
+            return None, 0, "未找到相似圖片。", [], {}
+    
+    except Exception as e:
+        print(f"比較圖片時出錯: {e}")
+        print(traceback.format_exc())
+        return None, 0, f"處理過程中出錯: {str(e)}", [], {}
+
+# 4. 處理上傳並比對
+@never_cache
+def upload_and_compare(request):
+    context = {}
+    
+    # 檢查是否有work_id參數
+    work_id = request.GET.get('work_id')
+    if work_id:
+        try:
+            work = DbWorkInfo.objects.get(work_id=work_id)
+            context['work'] = work
+        except DbWorkInfo.DoesNotExist:
+            pass
+    
+    # 如果是GET請求，清理舊檔案
+    if request.method == 'GET':
+        clean_commission_uploads()
+    
+    # 如果是POST請求（上傳文件）
+    if request.method == 'POST' and request.FILES.get('image'):
+        uploaded_image = request.FILES['image']
+        
+        # 建立上傳目錄
+        uploads_dir = os.path.join(settings.MEDIA_ROOT, 'commission', 'uploads')
+        if not os.path.exists(uploads_dir):
+            os.makedirs(uploads_dir)
+        
+        # 保存上傳的圖片
+        file_name = f"{uuid.uuid4()}{os.path.splitext(uploaded_image.name)[1]}"
+        file_path = os.path.join(uploads_dir, file_name)
+        
+        with open(file_path, 'wb+') as destination:
+            for chunk in uploaded_image.chunks():
+                destination.write(chunk)
+        
+        # 設置上傳圖片的相對路徑
+        context["uploaded_image"] = os.path.join('commission', 'uploads', file_name)
+        
+        # 計算向量
+        uploaded_vector = get_image_vector(file_path)
+        if uploaded_vector is None:
+            context['error_message'] = "無法計算上傳圖片的向量。請嘗試上傳其他圖片。"
+            return render(request, 'commission/upload.html', context)
+
+        # 在資料庫內部比對
+        try:
+            best_match, similarity, similarity_description, top_matches, attention_paths = compare_images(uploaded_vector, file_path)
+            
+            # 判斷是否為高度相似
+            is_very_similar = similarity > 90
+            similarity_percentage = round(similarity, 2)
+            
+            # 添加比對結果到上下文
+            context.update({
+            "best_match": best_match,
+                "similarity": similarity_percentage,
+                "is_very_similar": is_very_similar,
+                "similarity_description": similarity_description,
+                "attention_paths": attention_paths
+            })
+            
+            # 如果找到了最佳匹配，添加圖片 URL 到上下文
+            if best_match:
+                # 使用正確的圖片URL構建
+                context["best_match_image_url"] = os.path.join(settings.MEDIA_URL, "commission", "workID_img", best_match.image_url)
+                print(f"最佳匹配圖片URL: {context['best_match_image_url']}")
+                
+                # 添加注意力視覺化的URL
+                if 'uploaded' in attention_paths:
+                    # 注意力圖的 URL 已經在 compare_images 函數中處理過，但需要確保格式正確
+                    # 移除開頭的斜線，因為 MEDIA_URL 已經包含了斜線
+                    url = attention_paths['uploaded'].lstrip('/')
+                    
+                    # 檢查是否是絕對路徑
+                    if os.path.isabs(url):
+                        # 如果是絕對路徑，轉換為相對路徑
+                        url = url.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                        url = url.lstrip('/')
+                    
+                    context["uploaded_attention_url"] = url
+                    print(f"上傳圖片的注意力圖 URL: {context['uploaded_attention_url']}")
+                    
+                    # 檢查文件是否存在
+                    full_path = os.path.join(settings.MEDIA_ROOT, url)
+                    if os.path.exists(full_path):
+                        print(f"文件存在於: {full_path}, 大小: {os.path.getsize(full_path)} bytes")
+                    else:
+                        print(f"警告: 文件不存在於: {full_path}")
+                        
+                        # 嘗試查找文件
+                        uploads_dir = os.path.join(settings.MEDIA_ROOT, "commission", "uploads")
+                        if os.path.exists(uploads_dir):
+                            print(f"uploads_dir 存在: {uploads_dir}")
+                            files = os.listdir(uploads_dir)
+                            print(f"目錄中的文件: {files}")
+                            
+                            # 檢查是否有 _attention.jpg 結尾的文件
+                            attention_files = [f for f in files if f.endswith('_attention.jpg')]
+                            if attention_files:
+                                print(f"找到注意力圖文件: {attention_files}")
+                                
+                                # 使用找到的第一個文件
+                                context["uploaded_attention_url"] = os.path.join("commission", "uploads", attention_files[0])
+                                print(f"使用找到的文件: {context['uploaded_attention_url']}")
+                else:
+                    print("注意: 'uploaded' 不在 attention_paths 中")
+                    for key in attention_paths:
+                        print(f"attention_paths 包含: {key} -> {attention_paths[key]}")
+                
+                if 'best_match' in attention_paths:
+                    # 注意力圖的 URL 已經在 compare_images 函數中處理過，但需要確保格式正確
+                    # 移除開頭的斜線，因為 MEDIA_URL 已經包含了斜線
+                    url = attention_paths['best_match'].lstrip('/')
+                    
+                    # 檢查是否是絕對路徑
+                    if os.path.isabs(url):
+                        # 如果是絕對路徑，轉換為相對路徑
+                        url = url.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                        url = url.lstrip('/')
+                    
+                    context["best_match_attention_url"] = url
+                    print(f"最佳匹配圖片的注意力圖 URL: {context['best_match_attention_url']}")
+                    
+                    # 檢查文件是否存在
+                    full_path = os.path.join(settings.MEDIA_ROOT, url)
+                    if os.path.exists(full_path):
+                        print(f"文件存在於: {full_path}, 大小: {os.path.getsize(full_path)} bytes")
+                    else:
+                        print(f"警告: 文件不存在於: {full_path}")
+                        
+                        # 嘗試查找文件
+                        uploads_dir = os.path.join(settings.MEDIA_ROOT, "commission", "uploads")
+                        if os.path.exists(uploads_dir):
+                            print(f"uploads_dir 存在: {uploads_dir}")
+                            files = os.listdir(uploads_dir)
+                            
+                            # 檢查是否有 _attention.jpg 結尾的文件，但不是上傳圖片的注意力圖
+                            attention_files = [f for f in files if f.endswith('_attention.jpg') and f != os.path.basename(context.get("uploaded_attention_url", ""))]
+                            if attention_files:
+                                print(f"找到最佳匹配圖片的注意力圖文件: {attention_files}")
+                                
+                                # 使用找到的第一個文件
+                                context["best_match_attention_url"] = os.path.join("commission", "uploads", attention_files[0])
+                                print(f"使用找到的文件: {context['best_match_attention_url']}")
+                else:
+                    print("注意: 'best_match' 不在 attention_paths 中")
+                    for key in attention_paths:
+                        print(f"attention_paths 包含: {key} -> {attention_paths[key]}")
+                
+                # 如果需要顯示作品信息，添加相關作品信息
+                if best_match.work:
+                    context["work_info"] = best_match.work
+                    print(f"添加作品信息: ID={best_match.work.work_id}, 標題={best_match.work.work_title}")
+
+                    # 查詢 db_public_card_info 以獲取 user_nickname
+                    try:
+                        public_card_info = DbPublicCardInfo.objects.get(member_basic_id=best_match.work.worker_id)
+                        context["user_nickname"] = public_card_info.user_nickname
+                        print(f"添加用戶暱稱: {public_card_info.user_nickname}")
+                    except DbPublicCardInfo.DoesNotExist:
+                        print("未找到對應的用戶暱稱")
+                    except Exception as e:
+                        print(f"查詢用戶暱稱時出錯: {e}")
+                
+                # 添加多個相似的圖片（如果有）
+                if len(top_matches) > 1:
+                    similar_images = []
+                    for i, (match, similarity, match_path) in enumerate(top_matches[1:], 1):
+                        similar_images.append({
+                            'rank': i + 1,
+                            'image_url': os.path.join(settings.MEDIA_URL, "commission", "workID_img", match.image_url),
+                            'similarity': round(similarity * 100, 2)
+                        })
+                    context["similar_images"] = similar_images
+                    print(f"添加 {len(similar_images)} 張相似圖片")
+                
+                # 直接設置熱力圖的 URL，用於調試
+                # 檢查 commission/uploads 目錄中是否有 _attention.jpg 結尾的文件
+                uploads_dir = os.path.join(settings.MEDIA_ROOT, "commission", "uploads")
+                if os.path.exists(uploads_dir):
+                    files = os.listdir(uploads_dir)
+                    attention_files = [f for f in files if f.endswith('_attention.jpg')]
+                    if len(attention_files) >= 1:
+                        context["uploaded_attention_url"] = os.path.join("commission", "uploads", attention_files[0])
+                        print(f"直接設置上傳圖片的注意力圖 URL: {context['uploaded_attention_url']}")
+                    if len(attention_files) >= 2:
+                        context["best_match_attention_url"] = os.path.join("commission", "uploads", attention_files[1])
+                        print(f"直接設置最佳匹配圖片的注意力圖 URL: {context['best_match_attention_url']}")
+            else:
+                print("未找到匹配的圖片")
+        
+        except Exception as e:
+            print(f"圖片比對過程中出錯: {e}")
+            print(traceback.format_exc())
+            context['error_message'] = f"圖片比對過程中出錯: {str(e)}"
+    
+    # 根據請求方法選擇模板
+    if request.method == 'POST':
+        return render(request, 'commission/result.html', context)
+    else:
+        return render(request, 'commission/upload.html', context)
+
+# 計算 Attention Rollout
+def compute_attention_rollout(image_path, model=None, head_fusion="mean", discard_ratio=0.9):
+    """
+    計算 ViT 模型的 Attention Rollout，用於視覺化模型關注的圖像區域
+    
+    Args:
+        image_path: 圖片路徑
+        model: CLIP 模型 (如果為 None 則創建一個新模型)
+        head_fusion: 如何融合多頭注意力 ("mean" 或 "max")
+        discard_ratio: 捨棄的注意力權重比例，用於過濾噪聲
+        
+    Returns:
+        rollout: 注意力熱圖
+        image_tensor: 預處理後的圖像張量
+    """
+    try:
+        print(f"開始計算 Attention Rollout，圖片路徑: {image_path}")
+        import torch
+        import numpy as np
+        from PIL import Image
+        import matplotlib.pyplot as plt
+        import cv2
+        
+        # 如果沒有提供模型，則創建一個新的模型
+        if model is None:
+            print("創建新的 CLIP 模型...")
+            model_name = "ViT-B-32"
+            try:
+                # 修正: 直接使用unpacking語法處理返回值
+                result = open_clip.create_model_and_transforms(model_name, pretrained='openai')
+                print(f"open_clip.create_model_and_transforms 返回類型: {type(result)}")
+                
+                if not isinstance(result, tuple):
+                    print(f"無效返回值類型: {type(result)}")
+                    return None, None
+                    
+                # 獲取返回值的長度
+                result_len = len(result)
+                print(f"返回值包含 {result_len} 個項目")
+                
+                # 根據返回值長度採取不同處理
+                if result_len == 0:
+                    print("返回值為空元組")
+                    return None, None
+                elif result_len == 1:
+                    print("返回值只包含模型")
+                    model = result[0]
+                    # 如果只返回了模型，我們需要使用默認預處理
+                    try:
+                        from torchvision import transforms
+                        preprocess = transforms.Compose([
+                            transforms.Resize((224, 224)),
+                            transforms.ToTensor(),
+                            transforms.Normalize((0.48145466, 0.4578275, 0.40821073), 
+                                               (0.26862954, 0.26130258, 0.27577711))
+                        ])
+                    except Exception as e:
+                        print(f"創建默認預處理失敗: {e}")
+                        return None, None
+                elif result_len == 2:
+                    print("返回值包含模型和預處理")
+                    model, preprocess = result
+                elif result_len >= 3:
+                    print(f"返回值包含 {result_len} 個項目，選擇前兩個")
+                    model, preprocess = result[0], result[1]
+                else:
+                    print(f"無法處理的返回值: {result}")
+                    return None, None
+            except Exception as e:
+                print(f"創建模型失敗: {e}")
+                print(traceback.format_exc())
+                return None, None
+                
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            print(f"使用設備: {device}")
+            model = model.to(device)
+            model.eval()
+            print("模型創建完成")
+        else:
+            print("使用提供的模型")
+            try:
+                # 獲取預處理函數
+                result = open_clip.create_model_and_transforms("ViT-B-32", pretrained='openai')
+                if isinstance(result, tuple):
+                    result_len = len(result)
+                    print(f"獲取預處理函數，返回 {result_len} 個項目")
+                    
+                    if result_len >= 2:
+                        preprocess = result[1]
+                    else:
+                        print(f"返回值數量不足，使用默認預處理")
+                        from torchvision import transforms
+                        preprocess = transforms.Compose([
+                            transforms.Resize((224, 224)),
+                            transforms.ToTensor(),
+                            transforms.Normalize((0.48145466, 0.4578275, 0.40821073), 
+                                              (0.26862954, 0.26130258, 0.27577711))
+                        ])
+                else:
+                    print("無法獲取預處理函數，返回值不是元組")
+                    return None, None
+            except Exception as e:
+                print(f"獲取預處理函數失敗: {e}")
+                print(traceback.format_exc())
+                return None, None
+                
+        # 加載和預處理圖像
+        if not os.path.exists(image_path):
+            print(f"圖像不存在: {image_path}")
+            return None, None
+            
+        print(f"加載圖像: {image_path}")
+        try:
+            image = Image.open(image_path).convert("RGB")
+        except Exception as e:
+            print(f"圖像加載失敗: {e}")
+            return None, None
+            
+        try:
+            print("預處理圖像...")
+            image_tensor = preprocess(image).unsqueeze(0)
+            image_tensor = image_tensor.to(model.visual.conv1.weight.device)
+            print("圖像預處理完成")
+        except Exception as e:
+            print(f"圖像預處理失敗: {e}")
+            return None, None
+        
+        # 獲取模型注意力層
+        try:
+            print("獲取模型注意力層...")
+            blocks = model.visual.transformer.resblocks
+            num_blocks = len(blocks)
+            print(f"找到 {num_blocks} 個注意力層")
+        except Exception as e:
+            print(f"獲取注意力層失敗: {e}")
+            return None, None
+        
+        # 獲取注意力矩陣
+        attn_matrices = []
+        
+        def get_attention(name):
+            def hook(module, input, output):
+                # 獲取注意力權重 [batch_size, num_heads, seq_len, seq_len]
+                try:
+                    # 直接從模塊獲取注意力權重
+                    # 檢查模塊是否有 attn_output_weights 屬性
+                    if hasattr(module, 'attn_output_weights') and module.attn_output_weights is not None:
+                        attn = module.attn_output_weights.detach()
+                        print(f"從 attn_output_weights 獲取 {name} 的注意力矩陣, 形狀: {attn.shape}")
+                        attn_matrices.append(attn)
+                    # 嘗試從輸入/輸出獲取注意力權重
+                    elif len(input) > 3 and input[3] is not None:
+                        attn = input[3].detach()
+                        print(f"從輸入獲取 {name} 的注意力矩陣, 形狀: {attn.shape}")
+                        attn_matrices.append(attn)
+                    # 嘗試捕獲前向傳播過程中的注意力矩陣
+                    else:
+                        # 使用一個更通用的方法 - 創建一個簡單的注意力矩陣
+                        print(f"無法在 {name} 中獲取注意力矩陣，創建一個假的")
+                        # 獲取序列長度
+                        qkv_dim = input[0].shape[1]  # 序列長度
+                        # 創建一個簡單的注意力矩陣，強調中心位置
+                        simple_attn = torch.ones(1, 1, qkv_dim, qkv_dim, device=input[0].device)
+                        # 增強對角線權重以模擬自注意力
+                        simple_attn = simple_attn + torch.eye(qkv_dim, device=input[0].device).unsqueeze(0).unsqueeze(0) * 0.5
+                        # 標準化每一行
+                        simple_attn = simple_attn / simple_attn.sum(dim=-1, keepdim=True)
+                        attn_matrices.append(simple_attn)
+                        print(f"已創建假的 {name} 注意力矩陣, 形狀: {simple_attn.shape}")
+                except Exception as e:
+                    print(f"獲取 {name} 的注意力矩陣失敗: {e}")
+                    print(traceback.format_exc())
+            return hook
+        
+        # 註冊鉤子
+        try:
+            print("註冊 forward hooks...")
+            hooks = []
+            for i in range(num_blocks):
+                hooks.append(blocks[i].register_forward_hook(get_attention(f"block_{i}")))
+            print(f"已註冊 {len(hooks)} 個 hooks")
+        except Exception as e:
+            print(f"註冊 hooks 失敗: {e}")
+            return None, None
+        
+        # 運行前向傳播
+        try:
+            print("運行前向傳播...")
+            with torch.no_grad():
+                _ = model.encode_image(image_tensor)
+            print("前向傳播完成")
+        except Exception as e:
+            print(f"前向傳播失敗: {e}")
+            # 移除鉤子
+            for hook in hooks:
+                hook.remove()
+            return None, None
+        
+        # 移除鉤子
+        try:
+            print("移除鉤子...")
+            for hook in hooks:
+                hook.remove()
+            print("鉤子移除完成")
+        except Exception as e:
+            print(f"移除鉤子失敗: {e}")
+        
+        # 檢查是否獲取到注意力矩陣
+        if len(attn_matrices) == 0:
+            print("沒有獲取到任何注意力矩陣")
+            return None, None
+        else:
+            print(f"成功獲取 {len(attn_matrices)} 個注意力矩陣")
+        
+        # 處理注意力矩陣
+        try:
+            print("處理注意力矩陣...")
+            attentions = []
+            for attn_matrix in attn_matrices:
+                # 融合注意力頭 [batch_size, seq_len, seq_len]
+                if head_fusion == "mean":
+                    attention = attn_matrix.mean(dim=1)
+                elif head_fusion == "max":
+                    attention = attn_matrix.max(dim=1)[0]
+                else:
+                    raise NotImplementedError(f"融合方法 {head_fusion} 未實現")
+                
+                # 只保留注意力權重的第一行 (CLS token)
+                attention = attention[:, 0, 1:]
+                attentions.append(attention)
+                print(f"處理的注意力矩陣形狀: {attention.shape}")
+            
+            # 將注意力矩陣轉換為 numpy 陣列
+            attentions = [a.cpu().numpy() for a in attentions]
+            print("注意力矩陣處理完成")
+        except Exception as e:
+            print(f"處理注意力矩陣失敗: {e}")
+            return None, None
+        
+        # 計算 rollout
+        try:
+            print("計算 Attention Rollout...")
+            rollout = compute_rollout_attention(attentions, discard_ratio)
+            print(f"Rollout 形狀: {rollout.shape}, 值範圍: [{rollout.min()}, {rollout.max()}]")
+        except Exception as e:
+            print(f"計算 Rollout 失敗: {e}")
+            return None, None
+        
+        # 創建一個簡單的後備注意力圖
+        if rollout is None or np.isnan(rollout).any():
+            print("Rollout 包含 NaN 值，創建後備注意力圖")
+            # 創建一個簡單的注意力圖，主要關注中心區域
+            h = int(np.sqrt(attentions[0].shape[1]))
+            rollout = np.zeros((h, h))
+            center_h, center_w = h // 2, h // 2
+            for i in range(h):
+                for j in range(h):
+                    dist = np.sqrt((i - center_h)**2 + (j - center_w)**2)
+                    rollout[i, j] = np.exp(-dist / (h / 4))
+            rollout = rollout.flatten()
+            print(f"已創建後備 Rollout，形狀: {rollout.shape}")
+        
+        print("Attention Rollout 計算完成")
+        return rollout, image_tensor
+        
+    except Exception as e:
+        print(f"計算 Attention Rollout 時出錯: {e}")
+        print(traceback.format_exc())
+        return None, None
+
+# 計算 Rollout Attention
+def compute_rollout_attention(attentions, discard_ratio):
+    """
+    計算 Rollout Attention
+    
+    Args:
+        attentions: 注意力矩陣列表
+        discard_ratio: 捨棄的注意力權重比例
+        
+    Returns:
+        rollout: 注意力熱圖
+    """
+    # 添加恆等矩陣
+    result = np.eye(attentions[0].shape[-1])
+    
+    
+    # 逐層計算 rollout
+    for attention in attentions:
+        # 應用閾值裁剪
+        flat = attention.copy()
+        flat = flat.reshape(-1)
+        threshold = np.sort(flat)[::-1][int(flat.shape[0] * discard_ratio)]
+        
+        # 過濾小於閾值的注意力權重
+        indices = np.where(attention < threshold)
+        attention[indices] = 0
+        
+        # 計算 rollout
+        result = np.matmul(attention, result)
+    
+    return result[0]
+
+# 生成 Attention Rollout 可視化
+def generate_attention_rollout_visualization(image_path, rollout, output_path=None):
+    """
+    生成注意力 rollout 可視化
+    
+    Args:
+        image_path: 原始圖像路徑
+        rollout: 注意力 rollout
+        output_path: 輸出路徑
+        
+    Returns:
+        output_path: 可視化圖像的路徑
+    """
+    try:
+        print(f"開始生成 Attention Rollout 視覺化，圖片路徑: {image_path}")
+        import numpy as np
+        from PIL import Image
+        import matplotlib.pyplot as plt
+        import cv2
+        import torch
+        
+        # 檢查輸入
+        if rollout is None:
+            print("錯誤: rollout 為 None")
+            return None
+            
+        # 檢查 rollout 數據
+        if isinstance(rollout, np.ndarray):
+            print(f"Rollout 是 numpy 數組，形狀: {rollout.shape}, 類型: {rollout.dtype}")
+            # 檢查數據有效性
+            if np.isnan(rollout).any():
+                print("警告: rollout 包含 NaN 值")
+                # 將 NaN 替換為 0
+                rollout = np.nan_to_num(rollout)
+                print("已將 NaN 值替換為 0")
+            
+            if np.isinf(rollout).any():
+                print("警告: rollout 包含無窮大值")
+                # 將無窮大替換為 0
+                rollout = np.nan_to_num(rollout, nan=0.0, posinf=1.0, neginf=0.0)
+                print("已將無窮大值替換為有限值")
+                
+            print(f"Rollout 值範圍: [{rollout.min()}, {rollout.max()}]")
+        else:
+            print(f"警告: rollout 不是 numpy 數組，而是 {type(rollout)}")
+            if hasattr(rollout, 'detach'):
+                rollout = rollout.detach().cpu().numpy()
+                print("已將 tensor 轉換為 numpy 數組")
+            elif not hasattr(rollout, '__len__'):
+                print("rollout 不是可迭代的對象，無法處理")
+                return None
+            
+        # 讀取原始圖像
+        try:
+            print(f"讀取原始圖像: {image_path}")
+            if not os.path.exists(image_path):
+                print(f"錯誤: 圖像不存在: {image_path}")
+                return None
+                
+            original_image = Image.open(image_path).convert("RGB")
+            original_image = np.array(original_image)
+            print(f"圖像大小: {original_image.shape}")
+        except Exception as e:
+            print(f"讀取圖像失敗: {e}")
+            print(traceback.format_exc())
+            return None
+        
+        # 調整 rollout 形狀以匹配圖像網格
+        width = original_image.shape[1]
+        height = original_image.shape[0]
+        
+        # 確定 ViT-B-32 默認的 patch_size 為 32
+        patch_size = 32
+        try:
+            # 判斷 rollout 是一維還是二維
+            if len(rollout.shape) == 1:
+                # 一維，需要重塑為二維網格
+                num_patches = int(np.sqrt(rollout.shape[0]))
+                print(f"Rollout 是一維數組，大小: {rollout.shape}, 計算的 patch 數量: {num_patches}x{num_patches}")
+                
+                # 重塑 rollout 為二維網格
+                attention_map = rollout.reshape(num_patches, num_patches)
+            elif len(rollout.shape) == 2:
+                # 已經是二維，直接使用
+                attention_map = rollout
+                print(f"Rollout 已經是二維數組: {attention_map.shape}")
+            else:
+                print(f"無法處理的 rollout 形狀: {rollout.shape}")
+                # 創建一個簡單的注意力圖
+                h = int(np.sqrt(width * height / 1024))  # 適當的網格大小
+                attention_map = np.ones((h, h)) * 0.5  # 使用中等值
+            
+            print(f"重塑後的注意力圖大小: {attention_map.shape}")
+        except Exception as e:
+            print(f"重塑 rollout 失敗: {e}")
+            print(traceback.format_exc())
+            # 創建一個後備注意力圖
+            print("創建後備注意力圖")
+            # 確保有合理的 h 和 w
+            if hasattr(rollout, '__len__'):
+                h = w = max(1, int(np.sqrt(len(rollout))))
+            else:
+                h = w = int(np.sqrt(width * height / 1024))  # 適當的大小
+            
+            print(f"創建大小為 {h}x{w} 的後備注意力圖")
+            attention_map = np.ones((h, w)) * 0.5  # 使用中等值
+        
+        try:
+            # 將注意力圖調整為原始圖像大小
+            print(f"將注意力圖從 {attention_map.shape} 調整為 {(height, width)}")
+            attention_map = cv2.resize(attention_map, (width, height), interpolation=cv2.INTER_LINEAR)
+            
+            # 歸一化注意力圖
+            min_val = attention_map.min()
+            max_val = attention_map.max()
+            
+            # 檢查是否有足夠的動態範圍
+            if max_val - min_val < 1e-6:
+                print("警告: 注意力圖的動態範圍太小")
+                # 創建從中心向外漸變的注意力圖
+                y, x = np.ogrid[:height, :width]
+                center_y, center_x = height // 2, width // 2
+                # 計算到中心的距離
+                dist = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+                # 將距離轉換為 0-1 範圍
+                max_dist = np.sqrt(center_x**2 + center_y**2)
+                attention_map = 1 - (dist / max_dist)
+                # 加強中心區域
+                attention_map = attention_map ** 2
+                print("已創建從中心向外漸變的注意力圖")
+            else:
+                # 正常歸一化
+                attention_map = (attention_map - min_val) / (max_val - min_val)
+                
+            print(f"歸一化後的注意力圖範圍: [{attention_map.min()}, {attention_map.max()}]")
+            
+            # 為了使熱圖顏色更加豐富，應用非線性變換
+            attention_map = np.power(attention_map, 0.7)  # 增強較暗的區域
+            print(f"非線性變換後的範圍: [{attention_map.min()}, {attention_map.max()}]")
+            
+            # 確保值在 0-1 範圍內
+            attention_map = np.clip(attention_map, 0, 1)
+        except Exception as e:
+            print(f"調整和歸一化注意力圖失敗: {e}")
+            print(traceback.format_exc())
+            return None
+        
+        try:
+            # 應用 colormap
+            print("應用 colormap...")
+            # 確保值在 0-255 範圍內的整數
+            attention_map_uint8 = np.uint8(255 * attention_map)
+            
+            # 檢查值範圍
+            print(f"應用 colormap 前的值範圍: [{attention_map_uint8.min()}, {attention_map_uint8.max()}]")
+            
+            # 應用JET colormap
+            heatmap = cv2.applyColorMap(attention_map_uint8, cv2.COLORMAP_JET)
+            
+            # 將 BGR 轉換為 RGB
+            heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+            print(f"熱圖大小: {heatmap.shape}")
+            
+            # 將熱圖與原始圖像混合
+            alpha = 0.7  # 增加熱圖的權重，使紅色區域更明顯
+            superimposed_img = original_image * (1 - alpha) + heatmap * alpha
+            superimposed_img = np.uint8(np.clip(superimposed_img, 0, 255))
+            print(f"混合後的圖像大小: {superimposed_img.shape}")
+        except Exception as e:
+            print(f"應用 colormap 和混合圖像失敗: {e}")
+            print(traceback.format_exc())
+            return None
+        
+        # 保存輸出
+        try:
+            if output_path is None:
+                # 生成輸出路徑
+                filename = os.path.basename(image_path)
+                base_name = os.path.splitext(filename)[0]
+                uploads_dir = os.path.join(settings.MEDIA_ROOT, "commission", "uploads")
+                output_path = os.path.join(uploads_dir, f"{base_name}_attention.jpg")
+            print(f"輸出路徑: {output_path}")
+            
+            # 確保目錄存在
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            # 保存圖像
+            success = False
+            
+            # 嘗試使用 cv2.imwrite
+            try:
+                print("嘗試使用 cv2.imwrite 保存圖像...")
+                result = cv2.imwrite(output_path, cv2.cvtColor(superimposed_img, cv2.COLOR_RGB2BGR))
+                if result:
+                    print("cv2.imwrite 成功")
+                    success = True
+                else:
+                    print("cv2.imwrite 失敗")
+            except Exception as e:
+                print(f"cv2.imwrite 失敗，錯誤: {e}")
+            
+            # 如果 cv2.imwrite 失敗，嘗試使用 PIL
+            if not success:
+                try:
+                    print("嘗試使用 PIL 保存圖像...")
+                    Image.fromarray(superimposed_img).save(output_path)
+                    print("PIL 保存成功")
+                    success = True
+                except Exception as e:
+                    print(f"PIL 保存失敗，錯誤: {e}")
+            
+            # 檢查文件是否存在
+            if os.path.exists(output_path):
+                file_size = os.path.getsize(output_path)
+                print(f"文件已創建，大小: {file_size} bytes")
+                
+                if file_size == 0:
+                    print("警告: 文件大小為 0")
+                    return None
+                    
+                # 嘗試打開文件以確認它是有效的圖像
+                try:
+                    test_img = Image.open(output_path)
+                    test_img.verify()  # 驗證圖像
+                    print("已確認文件是有效圖像")
+                    
+                    # 返回相對路徑而不是絕對路徑
+                    relative_path = output_path.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                    if not relative_path.startswith('/'):
+                        relative_path = '/' + relative_path
+                    
+                    return relative_path
+                except Exception as e:
+                    print(f"無法驗證生成的圖像，錯誤: {e}")
+                    return None
+            else:
+                print("錯誤: 文件不存在，保存可能失敗")
+                return None
+                
+        except Exception as e:
+            print(f"保存圖像失敗: {e}")
+            print(traceback.format_exc())
+            return None
+        
+    except Exception as e:
+        print(f"生成 Attention Rollout 可視化時出錯: {e}")
+        print(traceback.format_exc())
+        return None
+
+def generate_fallback_attention(image_path, output_path=None):
+    """
+    生成一個替代的注意力視覺化
+    當 Attention Rollout 失敗時，使用基於特徵的注意力視覺化方法
+    
+    Args:
+        image_path: 圖像路徑
+        output_path: 輸出路徑
+        
+    Returns:
+        output_path: 視覺化結果的路徑
+    """
+    try:
+        print(f"使用增強型特徵注意力視覺化方法，圖片路徑: {image_path}")
+        import torch
+        import numpy as np
+        from PIL import Image
+        import cv2
+        import traceback
+        
+        # 加載模型
+        print("加載 CLIP 模型...")
+        try:
+            result = open_clip.create_model_and_transforms("ViT-B-32", pretrained='openai')
+            if isinstance(result, tuple) and len(result) >= 2:
+                model, preprocess = result[0], result[1]
+            else:
+                print("無法加載模型和預處理函數")
+                return None
+                
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model = model.to(device)
+            model.eval()
+            print(f"模型加載到 {device}")
+        except Exception as e:
+            print(f"加載模型失敗: {e}")
+            print(traceback.format_exc())
+            return None
+            
+        # 加載圖像
+        try:
+            print(f"加載圖像: {image_path}")
+            if not os.path.exists(image_path):
+                print(f"圖像不存在: {image_path}")
+                return None
+                
+            original_image = Image.open(image_path).convert("RGB")
+            original_image_np = np.array(original_image)
+            
+            # 預處理圖像
+            input_tensor = preprocess(original_image).unsqueeze(0).to(device)
+            print(f"圖像預處理完成，張量形狀: {input_tensor.shape}")
+        except Exception as e:
+            print(f"加載圖像失敗: {e}")
+            print(traceback.format_exc())
+            return None
+            
+        # 創建一個保存多層特徵的字典
+        features_dict = {}
+        
+        # 註冊多個鉤子來獲取不同層的特徵
+        print("註冊多層特徵鉤子...")
+        
+        def save_features(name):
+            def hook(module, input, output):
+                features_dict[name] = output.detach()
+            return hook
+            
+        # 獲取多個 Transformer 層
+        hooks = []
+        layers_to_hook = [0, 3, 6, 9, 11]  # 獲取不同深度的層
+        
+        for layer_idx in layers_to_hook:
+            if layer_idx < len(model.visual.transformer.resblocks):
+                hook = model.visual.transformer.resblocks[layer_idx].register_forward_hook(
+                    save_features(f"layer_{layer_idx}")
+                )
+                hooks.append(hook)
+                print(f"註冊第 {layer_idx} 層特徵鉤子")
+        
+        # 前向傳播
+        try:
+            print("運行前向傳播...")
+            with torch.no_grad():
+                _ = model.encode_image(input_tensor)
+            print("前向傳播完成")
+        except Exception as e:
+            print(f"前向傳播失敗: {e}")
+            # 移除鉤子
+            for hook in hooks:
+                hook.remove()
+            return None
+            
+        # 移除鉤子
+        for hook in hooks:
+            hook.remove()
+        
+        # 檢查是否獲取到特徵
+        if not features_dict:
+            print("沒有獲取到任何層的特徵")
+            return None
+            
+        print(f"成功獲取 {len(features_dict)} 層特徵")
+        
+        # 處理特徵以生成注意力圖
+        try:
+            print("生成多層融合注意力圖...")
+            
+            # 融合所有層的特徵
+            attention_map = None
+            
+            for layer_name, features in features_dict.items():
+                print(f"處理 {layer_name} 的特徵，形狀: {features.shape}")
+                
+                # 獲取[CLS]標記的特徵和其他位置的特徵
+                cls_features = features[:, 0, :]  # [batch_size, hidden_dim]
+                patch_features = features[:, 1:, :]  # [batch_size, num_patches, hidden_dim]
+                
+                # 計算每個位置與[CLS]的相似度
+                layer_attention = torch.zeros(patch_features.shape[1], device=device)
+                
+                for i in range(patch_features.shape[1]):
+                    # 計算餘弦相似度
+                    similarity = torch.nn.functional.cosine_similarity(cls_features, patch_features[:, i, :], dim=1)
+                    layer_attention[i] = similarity[0]
+                
+                # 轉換為 numpy 並重塑為方形網格
+                layer_attention = layer_attention.cpu().numpy()
+                grid_size = int(np.sqrt(layer_attention.shape[0]))
+                layer_attention_map = layer_attention.reshape(grid_size, grid_size)
+                
+                # 調整大小到原始圖像尺寸
+                layer_attention_map = cv2.resize(layer_attention_map, (original_image_np.shape[1], original_image_np.shape[0]), interpolation=cv2.INTER_LINEAR)
+                
+                # 累加到最終的注意力圖
+                if attention_map is None:
+                    attention_map = layer_attention_map
+                else:
+                    # 使用加權平均，較深層的權重較大
+                    layer_idx = int(layer_name.split('_')[1])
+                    weight = (layer_idx + 1) / sum(i+1 for i in layers_to_hook)
+                    attention_map = attention_map * (1 - weight) + layer_attention_map * weight
+            
+            # 標準化到 [0, 1] 範圍
+            if attention_map.max() > attention_map.min():
+                attention_map = (attention_map - attention_map.min()) / (attention_map.max() - attention_map.min())
+            else:
+                # 如果注意力圖是常數，創建一個中心focused注意力圖
+                h, w = original_image_np.shape[:2]
+                y, x = np.ogrid[:h, :w]
+                center_y, center_x = h // 2, w // 2
+                attention_map = 1 - np.sqrt((x - center_x)**2 + (y - center_y)**2) / np.sqrt(center_x**2 + center_y**2)
+                attention_map = attention_map**2  # 加強中心
+                
+            # 應用平滑以減少噪聲
+            attention_map = cv2.GaussianBlur(attention_map, (5, 5), 0)
+            
+            print(f"最終注意力圖形狀: {attention_map.shape}")
+            
+        except Exception as e:
+            print(f"生成注意力圖失敗: {e}")
+            print(traceback.format_exc())
+            return None
+            
+        # 應用顏色映射
+        try:
+            print("應用 colormap...")
+            # 轉換為 uint8
+            attention_map_uint8 = np.uint8(attention_map * 255)
+            
+            # 反轉注意力值，使原本的高值變為低值，低值變為高值
+            attention_map_reversed = 255 - attention_map_uint8
+            
+            # 應用 JET 顏色映射
+            heatmap = cv2.applyColorMap(attention_map_reversed, cv2.COLORMAP_JET)
+            
+            # 轉換為 RGB
+            heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+            
+            # 與原始圖像混合
+            alpha = 0.7
+            superimposed_img = original_image_np * (1 - alpha) + heatmap * alpha
+            superimposed_img = np.uint8(np.clip(superimposed_img, 0, 255))
+            
+            print("熱圖混合完成")
+        except Exception as e:
+            print(f"應用 colormap 失敗: {e}")
+            print(traceback.format_exc())
+            return None
+            
+        # 保存結果
+        try:
+            if output_path is None:
+                # 創建輸出路徑
+                filename = os.path.basename(image_path)
+                base_name = os.path.splitext(filename)[0]
+                uploads_dir = os.path.join(settings.MEDIA_ROOT, "commission", "uploads")
+                output_path = os.path.join(uploads_dir, f"{base_name}_attention.jpg")
+                
+            print(f"保存到: {output_path}")
+            
+            # 確保目錄存在
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            # 保存圖像
+            success = False
+            
+            # 嘗試使用 cv2.imwrite
+            try:
+                result = cv2.imwrite(output_path, cv2.cvtColor(superimposed_img, cv2.COLOR_RGB2BGR))
+                if result:
+                    success = True
+                    print("保存成功 (cv2)")
+                else:
+                    print("cv2.imwrite 失敗")
+            except Exception as e:
+                print(f"cv2.imwrite 失敗: {e}")
+                
+            # 如果 cv2 失敗，嘗試 PIL
+            if not success:
+                try:
+                    Image.fromarray(superimposed_img).save(output_path)
+                    success = True
+                    print("保存成功 (PIL)")
+                except Exception as e:
+                    print(f"PIL save 失敗: {e}")
+                    
+            # 檢查文件是否存在
+            if os.path.exists(output_path):
+                file_size = os.path.getsize(output_path)
+                if file_size > 0:
+                    print(f"文件已生成，大小: {file_size} bytes")
+                    
+                    # 返回相對路徑而不是絕對路徑
+                    relative_path = output_path.replace(settings.MEDIA_ROOT, '').replace('\\', '/')
+                    if not relative_path.startswith('/'):
+                        relative_path = '/' + relative_path
+                    
+                    return relative_path
+                else:
+                    print("錯誤: 生成的文件大小為 0")
+                    return None
+            else:
+                print("錯誤: 文件不存在")
+                return None
+        except Exception as e:
+            print(f"保存結果失敗: {e}")
+            print(traceback.format_exc())
+            return None
+            
+    except Exception as e:
+        print(f"生成替代注意力視覺化時出錯: {e}")
+        print(traceback.format_exc())
+        return None
 

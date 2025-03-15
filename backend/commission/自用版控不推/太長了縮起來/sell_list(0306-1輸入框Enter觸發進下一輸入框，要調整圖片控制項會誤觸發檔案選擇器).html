@@ -1,0 +1,1504 @@
+{# {% extends '[BASE]ALL.html' %} #}
+{% load static %} 
+{% block app_css %}
+<style>
+  /* <!-- ↓剪取區 --> */
+    /* 價目表樣式 - 整體容器 */
+  .sell-content-wrapper {
+    padding: 15px;
+    background-color: #f1f1f1;
+    border-radius: 4px;
+    width: 750px; /* 輸入框DIV寬度 */
+  }
+  /* 價目表輸入框上方小標題樣式 */
+  .sell-content-wrapper .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  /* 價目表文本區域樣式 - 價目表描述文字框 */
+  .sell-content-wrapper textarea {
+    resize: vertical; /* 只允許垂直調整大小 */
+    min-height: 100px;
+  }
+  /* 價目表示意圖容器樣式 - 包裹圖片預覽和操作按鈕 */
+  .image-preview-wrapper {
+    position: relative;
+    max-height: 187px; /* 容器最大高度預期值，不設定會讓顯示圖片拉伸容器 */
+    overflow: hidden;  /*確保超出容器範圍的內容被裁剪 */
+  }
+
+  /* 價目表示意圖控制項容器樣式 - 檢視、更換、刪除圖示的容器 */
+  .icon-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 5px;
+    padding: 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 0 5px 0 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  /* 價目表示意圖控制項 -hover 時顯示控制項動畫 */
+  .image-preview-wrapper:hover .icon-container {
+    opacity: 1;
+  }
+  /* 價目表示意圖控制項按鈕樣式 - 檢視、更換、刪除圖示按鈕 */
+  .icon-button {
+    background: none;
+    border: none;
+    padding: 3px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+  }
+
+  /* 價目表示意圖控制項按鈕樣式 - 圖示 SVG 樣式 - 檢視、更換、刪除圖示 */
+  .icon-button svg {
+    fill: white;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* 價目表示意圖檢視原圖效果 - 圖片背景遮罩層 */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050; /* 確保在導航選單之上 */
+  }
+
+  /* 價目表示意圖檢視原圖效果 - 圖片顯示 */
+  .modal-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+  }
+/* 價目表本體排序按鈕樣式 - 上移、下移按鈕的容器 */
+.order-controls {
+    margin-right: auto;
+  }
+  /* 價目表本體排序按鈕樣式 - 上移、下移按鈕 */
+  .move-up, .move-down {
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.5rem;
+    border: 1px solid #dee2e6; /* 加上邊框 */
+    border-radius: 0.25rem; /* 加上圓角 */
+    background-color: #fff; /* 設定背景色 */
+    color: #495057; /* 設定文字顏色 */
+    cursor: pointer; /* 設定滑鼠游標 */
+  }
+  /* 價目表本體排序按鈕樣式 - 上移、下移按鈕禁用狀態 */
+  .move-up:disabled, .move-down:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border: 1px solid #dee2e6; /* 加上邊框 */
+    background-color: #e9ecef; /* 禁用時的背景色 */
+    color: #79828a; /* 禁用時的文字顏色 */
+  }
+  /* 價目表本體排序按鈕樣式 - 上移、下移按鈕禁用狀態的 SVG 圖示 */
+  .move-up:disabled svg, .move-down:disabled svg {
+    fill: #6c757d;
+  }
+
+/* 價目表拖曳相關樣式 */
+  /* 價目表容器樣式 - 包含拖曳把手的價目表項目容器 */
+  .sell-content-wrapper {
+    position: relative;
+    /* background: white; */
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+  }
+
+  /* 價目表本體拖曳把手樣式 - 用於拖曳價目表項目的把手 */
+  .drag-handle {
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: move;
+    padding: 5px;
+    color: #6c757d;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+
+  /* 價目表本體拖曳把手 - hover 時顯示拖曳把手 */
+  .drag-handle:hover {
+    opacity: 1;
+  }
+
+  /* 價目表本體拖曳時的 Ghost 樣式 - 拖曳時顯示的虛影 */
+  .sell-item-ghost {
+    opacity: 0.5;
+    background: #f8f9fa;
+  }
+
+  /* 價目表本體拖曳 - 選中拖曳目標時的樣式 */
+  .sell-item-chosen {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+
+  /* 價目表本體拖曳 - 正在拖曳的項目樣式 */
+  .sell-item-drag {
+    opacity: 1;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  }
+
+  /* 調整容器左邊距，為拖曳把手留出空間 */
+  /* 價目表內容容器樣式 - 包含所有價目表項目的容器，用於拖曳排序 */
+  .sell-content-container {
+    padding-left: 25px;
+  }
+  /* <!-- ↑剪取區 --> */
+
+  /* Sortable 拖曳元素樣式 */
+  .sortable-fallback {
+    transform: scale(0.95);
+    opacity: 0.8;
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    pointer-events: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* 避免拖曳時的抖動 */
+  .image-preview-wrapper {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform, box-shadow;
+    user-select: none;
+  }
+
+  /* 被拖曳項目的樣式 */
+  .sortable-dragging {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* 被拖曳項目的樣式 */
+  .sell-item-chosen {
+    background-color: #f0f8ff;
+    border: 1px dashed #4e94ff;
+    transition: background-color 0.2s ease, border 0.2s ease;
+  }
+
+  /* 被拖曳項目的放置位置樣式 */
+  .sell-item-ghost {
+    opacity: 0.4;
+    background-color: #f0f8ff;
+    border: 1px dashed #4e94ff;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+  }
+
+  /* 拖曳過程中的額外樣式 */
+  .sell-item-drag {
+    cursor: grabbing;
+  }
+</style>
+{% endblock %}
+
+{% block app_content %}
+<!-- 右側區域容器(分隔線區分兩側) -->
+<!-- <div class="right-section" style="border-left: 1px solid #dee2e6;"> -->
+    <!-- <ul class="content-list"> -->
+        <!-- ↓剪取區 -->
+        <li>
+            <!-- 接案價目表開關容器 -->
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="form-check-label form-label me-2" for="switch-sell"
+                >接案價目表</label
+              >
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="switch-sell"
+                  name="ViewKey_bd_public_card_info_switch-sell"
+                  checked
+                />
+              </div>
+            </div>
+            <!-- 私人訊息提示 (目前隱藏) -->
+            <div class="private-message" style="display: none;">
+              <div class="text-muted text-center py-3">使用者未開放資訊</div>
+            </div>
+            <!-- 可展開內容區塊 (價目表主要內容) -->
+            <div class="expandable-content" id="content-sell">
+              <div class="public-content">
+                <!-- 價目表的內容 -->
+                {% if ViewKey_DbPublicCardSell %}
+                    <!-- 如果 ViewKey_DbPublicCardSell 存在（表示使用者已設定價目表） -->
+                    {% for sell_item in ViewKey_DbPublicCardSell|dictsort:"sell_step" %}
+                        <!-- 迴圈遍歷每一個價目表項目 -->
+                        <!-- 價目表項目容器 -->
+                        <div class="sell-content-wrapper mb-3" data-sell-id="{{ sell_item.sell_list_id|default:'new' }}" data-current-step="{{ sell_item.sell_step }}">
+                            <!-- 拖曳把手 -->
+                            <div class="drag-handle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                            </div>
+                            <!-- 價目表主要內容容器 -->
+                            <div class="d-flex justify-content-between align-items-stretch mb-3">
+                                <!-- 左側容器 (販售項目、規則) -->
+                                <div class="me-3" style="width: 80%">
+                                    <label class="form-label">販售項目</label>
+                                    <!-- 販售項目和定價的容器 -->
+                                    <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            name="sell_title_item_{{ sell_item.sell_list_id|default:'new' }}"
+                                            placeholder="如：頭像、人設、半身像、上色...等"
+                                            style="flex: 1;"
+                                            value="{{ sell_item.sell_title }}"
+                                            onkeydown="handleSellItemKeyDown(event)"
+                                        />
+                                        <!-- 定價容器 -->
+                                        <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                name="sell_price_item_{{ sell_item.sell_list_id|default:'new' }}"
+                                                placeholder="定價"
+                                                style="width: 80px;"
+                                                value="{{ sell_item.sell_price }}"
+                                                onkeydown="handlePriceItemKeyDown(event)"
+                                            />
+                                            <span>NTD</span>
+                                        </div>
+                                    </div>
+
+                                    <label class="form-label mt-3">接單規則、注意事項</label>
+                                    <textarea
+                                        class="form-control"
+                                        name="sell_description_item_{{ sell_item.sell_list_id|default:'new' }}"
+                                        rows="4"
+                                        placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
+                                    >{{ sell_item.sell_description }}</textarea>
+                                </div>
+                                <!-- 右側容器 (示意圖) -->
+                                <div style="width: 40%">
+                                    <label class="form-label">示意圖(最多兩張)</label>
+
+                                    <!-- 圖片預覽容器 (flex 排列圖片) -->
+                                    <div class="d-flex" style="gap: 10px; height: 85%">
+                                        <!-- 第一張圖片位置 -->
+                                        <!-- 預覽容器 (當有圖片時顯示) -->
+                                        {% if sell_item.sell_example_image_1 %}
+                                        <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                                                data-image-id="1" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                                <!-- 如果有圖片就顯示 -->
+                                                <img src="{{ MEDIA_URL }}commission/publiccard/sell_list_img/{{ sell_item.sell_example_image_1 }}"
+                                                    alt="示意圖 1"
+                                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                                <!-- 添加控制按鈕容器 -->
+                                                <div class="icon-container">
+                                                    <button type="button" class="icon-button view-image" title="檢視原圖" data-image-url="{{ MEDIA_URL }}/commission/publiccard/sell_list_img/{{ sell_item.sell_example_image_1 }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                                          <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                                                          <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="icon-button replace-image" title="更換圖片" data-image-id="1" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                                          <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                                                          <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
+                                                      </svg>
+                                                    </button>
+                                                    <button type="button" class="icon-button delete-image" title="刪除" data-image-id="1" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                                        <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                                                      </svg>
+                                                    </button>
+                                                    <!-- 新增隱藏的檔案輸入元素 -->
+                                                    <input type="file" 
+                                                           id="sell_image_1_item_{{ sell_item.sell_list_id|default:'new' }}" 
+                                                           name="sell_image_1_item_{{ sell_item.sell_list_id|default:'new' }}" 
+                                                           accept="image/*" 
+                                                           style="display: none;">
+                                                </div>
+                                        </div>
+                                        {% endif %}
+                                        <!-- 佔位符容器 (當沒有圖片時顯示) -->
+                                        {% if not sell_item.sell_example_image_1 %}
+                                        <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                                                data-image-id="1" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}"
+                                                onclick="triggerFileInput(this)">
+                                                <!-- 沒有圖片就顯示預設圖標 -->
+                                                <div class="text-center text-muted">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                                        <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                                    </svg>
+                                                    <p>上傳示意圖1</p>
+                                                </div>
+                                        </div>
+                                        {% endif %}
+
+                                        <!-- 第二張圖片位置 -->
+                                        <!-- 預覽容器 (當有圖片時顯示) -->
+                                        {% if sell_item.sell_example_image_2 %}
+                                        <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                                                data-image-id="2" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                                <!-- 如果有圖片就顯示 -->
+                                                <img src="{{ MEDIA_URL }}commission/publiccard/sell_list_img/{{ sell_item.sell_example_image_2 }}"
+                                                    alt="示意圖 2"
+                                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                                <!-- 添加控制按鈕容器 -->
+                                                <div class="icon-container">
+                                                    <button type="button" class="icon-button view-image" title="檢視原圖" data-image-url="{{ MEDIA_URL }}/commission/publiccard/sell_list_img/{{ sell_item.sell_example_image_2 }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                                          <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                                                          <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="icon-button replace-image" title="更換圖片" data-image-id="2" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                                          <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                                                          <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
+                                                      </svg>
+                                                    </button>
+                                                    <button type="button" class="icon-button delete-image" title="刪除" data-image-id="2" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                                        <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                                                      </svg>
+                                                    </button>
+                                                    <!-- 新增隱藏的檔案輸入元素 -->
+                                                    <input type="file" 
+                                                           id="sell_image_2_item_{{ sell_item.sell_list_id|default:'new' }}" 
+                                                           name="sell_image_2_item_{{ sell_item.sell_list_id|default:'new' }}" 
+                                                           accept="image/*" 
+                                                           style="display: none;">
+                                                </div>
+                                        </div>
+                                        {% endif %}
+                                        <!-- 佔位符容器 (當沒有圖片時顯示) -->
+                                        {% if not sell_item.sell_example_image_2 %}
+                                        <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                                                data-image-id="2" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}"
+                                                onclick="triggerFileInput(this)">
+                                                <!-- 沒有圖片就顯示預設圖標 -->
+                                                <div class="text-center text-muted">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                                        <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                                    </svg>
+                                                    <p>上傳示意圖2</p>
+                                                </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 第二行：操作按鈕列 -->
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <!-- 排序控制按鈕容器 -->
+                                <div class="order-controls">
+                                    <button class="btn btn-sm btn-outline-secondary move-up" onclick="moveSellItem(this, 'up', event)" disabled>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary move-down" onclick="moveSellItem(this, 'down', event)" disabled>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- 功能按鈕容器 (刪除、新增) -->
+                                <div>
+                                    <button class="btn app-btn-secondary me-2" onclick="deleteSellItem(this, event)">刪除本項</button>
+                                    <button class="btn app-btn-primary" onclick="addSellItem(event)">新增下一項</button>
+                                </div>
+                            </div>
+                            <!-- 新增隱藏字段保存排序步驟 -->
+                            <input type="hidden" name="sell_step_item_{{ sell_item.sell_list_id|default:'new' }}" value="{{ sell_item.sell_step }}">
+                            <!-- 新增項目需包含臨時ID -->
+                            {% if not sell_item.sell_list_id %}
+                            <input type="hidden" name="is_new_item" value="true">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                {% else %}
+                    <!-- 如果 ViewKey_DbPublicCardSell 不存在（表示使用者未設定價目表） -->
+                    <!-- 價目表項目容器 (預設項目) -->
+                    <div class="sell-content-wrapper mb-3" data-sell-id="{{ sell_item.sell_list_id|default:'new' }}" data-current-step="{{ sell_item.sell_step }}">
+                        <!-- 拖曳把手 -->
+                        <div class="drag-handle">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                        </div>
+                        <!-- 價目表主要內容容器 -->
+                        <div class="d-flex justify-content-between align-items-stretch mb-3">
+                            <!-- 左側容器 (販售項目、規則) -->
+                            <div class="me-3" style="width: 80%">
+                                <label class="form-label">販售項目</label>
+                                <!-- 販售項目和定價的容器 -->
+                                <div class="d-flex gap-2">  <!-- 使用 flex 容器並排項目並添加間距 -->
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        name="sell_title_item_{{ sell_item.sell_list_id|default:'new' }}"
+                                        placeholder="如：頭像、人設、半身像、上色...等"
+                                        style="flex: 1;"
+                                    />
+                                    <!-- 定價容器 -->
+                                    <div class="d-flex align-items-center" style="gap: 5px;"> <!-- 新增的容器 -->
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            name="sell_price_item_{{ sell_item.sell_list_id|default:'new' }}"
+                                            placeholder="定價"
+                                            style="width: 80px;"
+                                        />
+                                        <span>NTD</span>
+                                    </div>
+                                </div>
+
+                                <label class="form-label mt-3">接單規則、注意事項</label>
+                                <textarea
+                                    class="form-control"
+                                    name="sell_description_item_{{ sell_item.sell_list_id|default:'new' }}"
+                                    rows="4"
+                                    placeholder="如：擅長領域、拒單範圍、工期、限定修改次數、急單處理原則...等"
+                                ></textarea>
+                            </div>
+                            <!-- 右側容器 (示意圖) -->
+                            <div style="width: 40%">
+                                <label class="form-label">示意圖(最多兩張)</label>
+
+                                <!-- 圖片預覽容器 (flex 排列圖片) -->
+                                <div class="d-flex" style="gap: 10px; height: 85%">
+                                    <!-- 當沒有圖片時顯示兩個上傳佔位符 -->
+                                    {% for i in "12" %}
+                                    <!-- 灰色加號DIV版本 -->
+                                    <!-- <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                                        style="flex: 1; background-color: #e0e0e0; border-radius: 5px; cursor: pointer;"
+                                        onclick="triggerFileInput(this)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                            class="bi bi-plus-circle" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.
+                                            5 0 0 1 8 4"/>
+                                        </svg>
+                                    </div> -->
+                                    <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                                                style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                                                data-image-id="2" data-sell-item-id="{{ sell_item.sell_list_id|default:'new' }}">
+                                    <div class="text-center text-muted>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                                        </svg>
+                                        <p>上傳示意圖${imageId}</p>
+                                    </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <!-- 隱藏的檔案上傳輸入框 -->
+                                <input type="file" id="sell-image-upload" style="display: none;" accept="image/*">
+                            </div>
+                        </div>
+                        <!-- 第二行：操作按鈕列 -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <!-- 排序控制按鈕容器 -->
+                            <div class="order-controls">
+                                <button class="btn btn-sm btn-outline-secondary move-up" onclick="moveSellItem(this, 'up', event)" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary move-down" onclick="moveSellItem(this, 'down', event)" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- 功能按鈕容器 (刪除、新增) -->
+                            <div>
+                                <button class="btn app-btn-secondary me-2" onclick="deleteSellItem(this, event)">刪除本項</button>
+                                <button class="btn app-btn-primary" onclick="addSellItem(event)">新增下一項</button>
+                            </div>
+                        </div>
+                        <!-- 新增隱藏字段保存排序步驟 -->
+                        <input type="hidden" name="sell_step_item_{{ sell_item.sell_list_id|default:'new' }}" value="{{ sell_item.sell_step }}">
+                        <!-- 新增項目需包含臨時ID -->
+                        {% if not sell_item.sell_list_id %}
+                        <input type="hidden" name="is_new_item" value="true">
+                        {% endif %}
+                    </div>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+          <!-- ↑剪取區 -->
+    <!-- </ul> -->
+<!-- </div> -->
+
+<!-- 在表單底部添加隱藏字段用於存儲排序數據 -->
+<input type="hidden" name="sell_order_data" id="sell-order-data" value="">
+
+<!-- 在價目表容器附近添加全域檔案選擇器 -->
+<div style="display: none;">
+    <input type="file" id="sell-image-upload" accept="image/*">
+</div>
+
+{% endblock %}
+
+
+{% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+ <!-- Sortable.js 拖曳排序功能(僅測試，喜好作品、屬性Tag也有用到，建議統一於主頁建立就好) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+  // <!-- ↓剪取區 -->
+  //======== 價目表相關函式 ==========
+  // --- 價目表本體-拖曳 ---
+ // 初始化價目表拖曳功能
+ const sellContainer = document.querySelector('.public-content');
+  if (sellContainer) {
+      new Sortable(sellContainer, {
+          animation: 150,
+          handle: '.drag-handle',
+          ghostClass: 'sell-item-ghost',
+          chosenClass: 'sell-item-chosen',
+          dragClass: 'sell-item-drag',
+          onEnd: function(evt) {
+              const items = sellContainer.querySelectorAll('.sell-content-wrapper');
+              items.forEach((item, index) => {
+                  item.setAttribute('data-current-step', index + 1);
+              });
+              updateOrderButtonsState();
+          }
+      });
+  }
+
+// --- 價目表-本體控制項--
+// 價目表本體-新增次表按鈕
+let newItemCounter = 0;
+
+window.addSellItem = function(event) {
+    event.preventDefault();
+    const currentItem = event.target.closest('.sell-content-wrapper');
+    if (!currentItem) {
+        console.error('無法找到當前項目容器');
+        return;
+    }
+
+    // 生成唯一臨時ID
+    const newId = `new_${Date.now()}_${newItemCounter++}`;
+    console.log(`新增項目，臨時ID: ${newId}`);
+    
+    // 克隆當前項目
+    const newItem = currentItem.cloneNode(true);
+    
+    // 清空輸入內容
+    newItem.querySelectorAll('input[type="text"], textarea').forEach(input => {
+        input.value = '';
+        // 更新name屬性中的ID部分
+        const oldName = input.name;
+        input.name = input.name.replace(/_item_.+$/, `_item_${newId}`);
+        console.log(`更新輸入欄位名稱: ${oldName} -> ${input.name}`);
+    });
+
+    // 重置圖片區域
+    const imageContainer = newItem.querySelector('.d-flex[style*="gap: 10px; height: 85%"]');
+    if (imageContainer) {
+        // 清除現有圖片
+        imageContainer.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                 style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                 data-image-id="1" data-sell-item-id="${newId}"
+                 onclick="triggerFileInput(this)">
+                <div class="text-center text-muted">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                        <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                    </svg>
+                    <p>上傳示意圖1</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center justify-content-center image-preview-wrapper"
+                 style="flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;"
+                 data-image-id="2" data-sell-item-id="${newId}"
+                 onclick="triggerFileInput(this)">
+                <div class="text-center text-muted">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                        <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                    </svg>
+                    <p>上傳示意圖2</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // 更新隱藏字段的name屬性
+    const stepInput = newItem.querySelector('input[type="hidden"][name^="sell_step_item_"]');
+    if (stepInput) {
+        const oldStepName = stepInput.name;
+        stepInput.name = `sell_step_item_${newId}`;
+        console.log(`更新步驟輸入欄位名稱: ${oldStepName} -> ${stepInput.name}`);
+    }
+    
+    // 添加 is_new_item 隱藏欄位標記為新項目
+    const isNewItemInput = document.createElement('input');
+    isNewItemInput.type = 'hidden';
+    isNewItemInput.name = `is_new_item_${newId}`;
+    isNewItemInput.value = 'true';
+    newItem.appendChild(isNewItemInput);
+    console.log(`添加新項目標記: ${isNewItemInput.name} = ${isNewItemInput.value}`);
+    
+    // 更新data-sell-id屬性
+    newItem.setAttribute('data-sell-id', newId);
+    console.log(`設置 data-sell-id: ${newId}`);
+    
+    // 插入到當前項目之後
+    currentItem.after(newItem);
+    
+    // 初始化新增項目的圖片容器拖曳功能
+    const newImageContainer = newItem.querySelector('.d-flex[style*="gap: 10px"]');
+    if (newImageContainer) {
+        initializeImageSortable(newImageContainer);
+        console.log('初始化新項目圖片容器拖曳功能');
+    }
+    
+    // 更新排序按鈕狀態
+    updateOrderButtonsState();
+
+    // 自動聚焦到新項目的販售項目輸入框
+    const titleInput = newItem.querySelector('input[name^="sell_title_item_"]');
+    if (titleInput) {
+        setTimeout(() => {
+            titleInput.focus();
+        }, 100); // 添加短暫延遲確保DOM已更新
+    }
+};
+
+// 價目表本體-刪除本表按鈕
+window.deleteSellItem = function(button, event) {
+    event.preventDefault();
+    const sellContentWrapper = button.closest('.sell-content-wrapper');
+    if (sellContentWrapper) {
+        const allSellItems = document.querySelectorAll('.sell-content-wrapper');
+
+        // 檢查表單內是否有文字或圖片
+        let hasContent = false;
+
+        // 檢查文字內容
+        sellContentWrapper.querySelectorAll('input[type="text"], textarea').forEach(input => {
+            if (input.value.trim() !== '') {
+                hasContent = true;
+                console.log(`發現非空文字內容: ${input.name} = ${input.value}`);
+            }
+        });
+
+        // 檢查是否有上傳的圖片
+        const imageWrappers = sellContentWrapper.querySelectorAll('.image-preview-wrapper');
+        if (imageWrappers.length > 0) {
+            // 增加更精確的圖片檢查
+            const hasRealImages = Array.from(imageWrappers).some(wrapper => {
+                const img = wrapper.querySelector('img');
+                const placeholderContainer = wrapper.querySelector('.placeholder-container');
+                
+                // 如果存在真實圖片，或者佔位符容器不可見，則視為有內容
+                return (img && img.src && !img.src.includes('data:image/gif')) || 
+                       (placeholderContainer && placeholderContainer.style.display !== 'none');
+            });
+
+            if (hasRealImages) {
+                hasContent = true;
+                console.log(`發現真實圖片預覽: ${imageWrappers.length} 個`);
+            }
+        }
+
+        if (hasContent) {
+            if (!confirm('表單內存在資料，確定要刪除嗎？')) {
+                console.log('使用者取消刪除');
+                return; // 如果使用者點擊取消，則不執行刪除
+            }
+        }
+
+        // 如果是現有項目（不是新增的），添加標記表示需要删除
+        const sellId = sellContentWrapper.getAttribute('data-sell-id');
+        if (sellId && !sellId.startsWith('new')) {
+            const deleteMarker = document.createElement('input');
+            deleteMarker.type = 'hidden';
+            deleteMarker.name = `delete_item_${sellId}`;
+            deleteMarker.value = 'true';
+            document.querySelector('form').appendChild(deleteMarker);
+            console.log(`添加刪除標記: ${deleteMarker.name} = ${deleteMarker.value}`);
+        }
+
+        if (allSellItems.length > 1) {
+            // 如果不只一個，則移除
+            sellContentWrapper.remove();
+            console.log(`移除項目: ${sellId}`);
+        } else {
+            // 如果只剩一個，則清空內容
+            sellContentWrapper.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                input.value = '';
+                console.log(`清空輸入欄位: ${input.name}`);
+            });
+
+            // 清空圖片預覽區域並重置為預設狀態
+            const imageContainer = sellContentWrapper.querySelector('.d-flex[style*="gap: 10px"]');
+            if (imageContainer) {
+                imageContainer.innerHTML = ''; // 清空容器
+                console.log('清空圖片容器');
+
+                // 創建兩個新的上傳佔位符
+                for (let i = 0; i < 2; i++) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'd-flex align-items-center justify-content-center image-preview-wrapper';
+                    placeholder.style.cssText = 'flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;';
+                    placeholder.setAttribute('onclick', 'triggerFileInput(this)');
+
+                    const imageId = i + 1; // 為每個佔位符添加編號
+                    placeholder.setAttribute('data-image-id', imageId);
+
+                    placeholder.innerHTML = `
+                        <div class="placeholder-container text-center text-muted">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+                            </svg>
+                            <p>上傳示意圖${imageId}</p>
+                            <input type="file" name="sell_image_${imageId}" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                        </div>
+                    `;
+
+                    imageContainer.appendChild(placeholder);
+                }
+                console.log('重新生成兩個示意圖佔位符');
+            }
+
+            // 更新排序按鈕狀態
+            updateOrderButtonsState();
+        }
+    }
+    updateOrderButtonsState();
+};
+// --- 價目表示意圖控制項 ---
+// 示意圖-檔案選擇
+function triggerFileInput(placeholder) {
+    const sellItemWrapper = placeholder.closest('.sell-content-wrapper');
+    const sellItemId = sellItemWrapper ? sellItemWrapper.dataset.sellId : 'new';
+    // 將 imageIndex 確保為數字 1 或 2
+    const imageIndex = parseInt(placeholder.dataset.imageId, 10) || 1;
+    // 確保只能是 1 或 2
+    const finalImageIndex = (imageIndex === 1 || imageIndex === 2) ? imageIndex : 1;
+    
+    // 創建或找到對應的文件輸入元素
+    let fileInput = document.getElementById(`sell_image_${finalImageIndex}_item_${sellItemId}`);
+    
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = `sell_image_${finalImageIndex}_item_${sellItemId}`;
+        fileInput.name = `sell_image_${finalImageIndex}_item_${sellItemId}`;
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        // 將 currentPlaceholder 存儲為數字
+        fileInput.dataset.currentPlaceholder = parseInt(Array.from(placeholder.parentElement.children).indexOf(placeholder), 10);
+        
+        // 將新創建的文件輸入元素添加到 DOM
+        placeholder.closest('.d-flex').appendChild(fileInput);
+        
+        // 添加 onchange 事件處理器
+        fileInput.onchange = function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // 創建新的圖片預覽元素
+                    const previewWrapper = document.createElement('div');
+                    previewWrapper.className = 'd-flex align-items-center justify-content-center image-preview-wrapper';
+                    previewWrapper.style.cssText = 'flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px;';
+                    previewWrapper.dataset.isNewImage = 'true';
+                    // 確保是數字 1 或 2
+                    const placeholderIndex = parseInt(fileInput.dataset.currentPlaceholder, 10) || 0;
+                    const imageId = (placeholderIndex + 1 <= 2) ? (placeholderIndex + 1) : 1;
+                    previewWrapper.dataset.imageId = imageId;
+                    previewWrapper.dataset.sellItemId = sellItemId;
+                    
+                    // 添加圖片
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = `示意圖 ${fileInput.dataset.currentPlaceholder + 1}`;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    
+                    // 添加控制按鈕容器
+                    const iconContainer = document.createElement('div');
+                    iconContainer.className = 'icon-container';
+                    iconContainer.innerHTML = `
+                        <button type="button" class="icon-button view-image" title="檢視原圖">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                                <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="icon-button replace-image" title="更換圖片" data-image-id="${fileInput.dataset.currentPlaceholder + 1}" data-sell-item-id="${sellItemId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                                <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="icon-button delete-image" title="刪除" data-image-id="${fileInput.dataset.currentPlaceholder + 1}" data-sell-item-id="${sellItemId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                            </svg>
+                        </button>
+                    `;
+                    
+                    // 創建隱藏的文件輸入元素
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'file';
+                    hiddenInput.name = `sell_image_${fileInput.dataset.currentPlaceholder + 1}_item_${sellItemId}`;
+                    hiddenInput.id = `sell_image_${fileInput.dataset.currentPlaceholder + 1}_item_${sellItemId}`;
+                    hiddenInput.style.display = 'none';
+                    hiddenInput.accept = 'image/*';
+                    
+                    // 組合元素
+                    previewWrapper.appendChild(img);
+                    previewWrapper.appendChild(iconContainer);
+                    previewWrapper.appendChild(hiddenInput);
+                    
+                    // 添加FormData
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    hiddenInput.files = dataTransfer.files;
+                    
+                    // 替換佔位符
+                    const index = parseInt(fileInput.dataset.currentPlaceholder);
+                    const container = placeholder.parentElement;
+                    container.replaceChild(previewWrapper, container.children[index]);
+                    
+                    // 初始化新的圖片控制項
+                    initializeImageControls(previewWrapper);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        };
+    }
+    
+    // 觸發文件選擇
+    fileInput.click();
+}
+
+// --- 價目表示意圖 - 檢視原圖按鈕事件監聽器 ---
+// DOMContentLoaded 事件監聽器 - 確保 DOM 加載完成後執行
+document.addEventListener('DOMContentLoaded', function() {
+  // --- 價目表示意圖 - 初始化所有圖片控制項 ---
+  const imageWrappers = document.querySelectorAll('.image-preview-wrapper');
+  imageWrappers.forEach(wrapper => {
+    initializeImageControls(wrapper);
+  });
+});
+
+// --- 價目表示意圖 - 初始化圖片控制項 ---
+function initializeImageControls(wrapper) {
+    const iconContainer = wrapper.querySelector('.icon-container');
+    if (!iconContainer) return;
+
+   // --- 價目表示意圖 - 檢視原圖按鈕事件監聽器 ---
+    const viewBtn = iconContainer.querySelector('[title="檢視原圖"]');
+    if (viewBtn) {
+        viewBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const imgSrc = wrapper.querySelector('img').src;
+            showImageModal(imgSrc);
+        });
+    }
+
+    // --- 價目表示意圖 - 更換圖片按鈕事件監聽器 ---
+    const replaceBtn = iconContainer.querySelector('.replace-image');
+    if (replaceBtn) {
+        replaceBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const imageId = this.dataset.imageId;
+            const sellItemId = this.dataset.sellItemId;
+            const inputId = `sell_image_${imageId}_item_${sellItemId}`;
+            document.getElementById(inputId).click();
+        });
+    }
+
+    // --- 價目表示意圖 - 刪除按鈕事件監聽器 ---
+    const deleteBtn = iconContainer.querySelector('.delete-image');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteImage(wrapper);
+        });
+    }
+}
+
+// --- 價目表示意圖 - 檢視原圖按鈕 ---
+function showImageModal(imgSrc) {
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
+  const modalImage = document.createElement('img');
+  modalImage.src = imgSrc;
+  modalImage.className = 'modal-image';
+
+  modalOverlay.appendChild(modalImage);
+  document.body.appendChild(modalOverlay);
+
+  // 點擊 Modal 遮罩關閉 Modal
+  modalOverlay.addEventListener('click', function() {
+    document.body.removeChild(modalOverlay);
+  });
+}
+
+// --- 價目表示意圖 - 刪除按鈕 ---
+function deleteImage(wrapper) {
+  const container = wrapper.closest('.d-flex[style*="gap: 10px"]'); // 取得當前價目表的圖片容器
+  const imageId = wrapper.dataset.imageId || wrapper.querySelector('.replace-image').dataset.imageId;
+  const sellItemId = wrapper.dataset.sellItemId || wrapper.querySelector('.replace-image').dataset.sellItemId;
+
+  // 添加隱藏輸入元素，標記此圖片需要刪除
+  if (!wrapper.dataset.isNewImage) {
+    const deleteMarker = document.createElement('input');
+    deleteMarker.type = 'hidden';
+    deleteMarker.name = `sell_delete_image_${imageId}_item_${sellItemId}`;
+    deleteMarker.value = 'true';
+    container.appendChild(deleteMarker);
+  }
+
+  // 先移除圖片元素
+  wrapper.remove();
+  
+  // 更新上傳佔位符 - 只針對當前容器
+  updatePlaceholders(container);
+}
+
+// --- 價目表示意圖 - 更新圖片佔位符 ---
+function updatePlaceholders(container) {
+  // 先移除所有現有的佔位符 (只移除 placeholder，預覽容器不動)
+  const existingPlaceholders = container.querySelectorAll('.image-preview-wrapper[data-is-placeholder="true"]');
+  existingPlaceholders.forEach(placeholder => placeholder.remove());
+
+  // 檢查現有的預覽圖數量，決定需要生成幾個佔位符
+  const existingPreviews = container.querySelectorAll('.image-preview-wrapper:not([data-is-placeholder="true"])');
+  let placeholderCount = 2 - existingPreviews.length;
+  if (placeholderCount < 0) placeholderCount = 0; // 避免負數
+
+  // 追蹤已使用的 imageId
+  const usedImageIds = new Set(
+    Array.from(existingPreviews).map(preview => preview.dataset.imageId)
+  );
+
+  // 根據剩餘數量生成新的佔位符
+  for (let i = 0; i < placeholderCount; i++) {
+    // 找出未使用的 imageId (1 或 2)
+    let imageId = usedImageIds.has('1') ? '2' : '1';
+    usedImageIds.add(imageId);
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'd-flex align-items-center justify-content-center image-preview-wrapper';
+    placeholder.style.cssText = 'flex: 1; border-radius: 5px; overflow: hidden; background-color: #f8f9fa; min-height: 150px; cursor: pointer;';
+    placeholder.dataset.imageId = imageId; // 設置 data-image-id
+    placeholder.dataset.sellItemId = container.closest('.sell-content-wrapper').dataset.sellId; // 繼承 sellItemId
+    placeholder.dataset.isPlaceholder = 'true'; // 標記為佔位符
+    placeholder.setAttribute('onclick', 'triggerFileInput(this)'); // 添加 onclick 事件
+
+    // 佔位符內容
+    placeholder.innerHTML = `
+      <div class="text-center text-muted">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+          <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+        </svg>
+        <p>上傳示意圖${imageId}</p>
+      </div>
+    `;
+
+    container.appendChild(placeholder);
+  }
+}
+
+
+
+// --- 價目表-按鈕排序 ---
+// (按鈕)移動價目表本體
+window.moveSellItem = function(button, direction, event) {
+  event.preventDefault();
+  const itemWrapper = button.closest('.sell-content-wrapper');
+  if (!itemWrapper) return;
+
+  // 添加動畫效果
+  function animateMovement(item, newPosition) {
+    item.style.transition = 'transform 300ms ease-in-out';
+    item.style.transform = `translateY(${newPosition}px)`;
+    
+    setTimeout(() => {
+      item.style.transition = '';
+      item.style.transform = '';
+    }, 300);
+  }
+
+  if (direction === 'up') {
+    const prevItem = itemWrapper.previousElementSibling;
+    if (prevItem) {
+      // 計算移動距離
+      const moveDistance = prevItem.offsetTop - itemWrapper.offsetTop;
+      
+      // 添加拖曳效果樣式
+      itemWrapper.classList.add('sell-item-ghost');
+      prevItem.classList.add('sell-item-drag');
+      
+      // 執行動畫
+      animateMovement(itemWrapper, moveDistance);
+      animateMovement(prevItem, -moveDistance);
+      
+      // 實際移動元素
+      setTimeout(() => {
+        itemWrapper.parentNode.insertBefore(itemWrapper, prevItem);
+        itemWrapper.classList.remove('sell-item-ghost');
+        prevItem.classList.remove('sell-item-drag');
+        updateOrderButtonsState();
+      }, 300);
+    }
+  } else {
+    const nextItem = itemWrapper.nextElementSibling;
+    if (nextItem) {
+      // 計算移動距離
+      const moveDistance = nextItem.offsetTop - itemWrapper.offsetTop;
+      
+      // 添加拖曳效果樣式
+      itemWrapper.classList.add('sell-item-drag');
+      nextItem.classList.add('sell-item-ghost');
+      
+      // 執行動畫
+      animateMovement(itemWrapper, moveDistance);
+      animateMovement(nextItem, -moveDistance);
+      
+      // 實際移動元素
+      setTimeout(() => {
+        itemWrapper.parentNode.insertBefore(nextItem, itemWrapper);
+        itemWrapper.classList.remove('sell-item-drag');
+        nextItem.classList.remove('sell-item-ghost');
+        updateOrderButtonsState();
+      }, 300);
+    }
+  }
+};
+
+// 更新價目表排序按鈕狀態
+window.updateOrderButtonsState = function() {
+  const sellItems = document.querySelectorAll('.sell-content-wrapper');
+  sellItems.forEach((item, index) => {
+    const upButton = item.querySelector('.move-up');
+    const downButton = item.querySelector('.move-down');
+
+    upButton.disabled = index === 0;
+    downButton.disabled = index === sellItems.length - 1;
+  });
+};
+
+// 初始化時更新按鈕狀態
+document.addEventListener("DOMContentLoaded", function() {
+  updateOrderButtonsState();
+});
+
+//======== 示意圖拖曳功能 ==========
+  // 初始化所有圖片容器拖曳功能
+  function initializeImageSortable(container) {
+    new Sortable(container, {
+      animation: 150,
+      handle: '.image-preview-wrapper', // 只能拖曳圖片預覽區
+      ghostClass: 'sell-item-ghost',    // 使用與價目表相同的樣式
+      chosenClass: 'sell-item-chosen',
+      dragClass: 'sell-item-drag',
+      // filter: '.image-preview-wrapper', 禁止拖曳上傳佔位符
+      onEnd: function(evt) {
+        // 更新圖片順序標記
+        const images = container.querySelectorAll('.image-preview-wrapper');
+        images.forEach((img, index) => {
+          img.setAttribute('data-sort-order', index + 1);
+        });
+      }
+    });
+  }
+
+  // 為所有現有圖片容器初始化
+  document.querySelectorAll('.sell-content-wrapper').forEach(wrapper => {
+    const imageContainer = wrapper.querySelector('.d-flex[style*="gap: 10px"]');
+    if (imageContainer) {
+      initializeImageSortable(imageContainer);
+    }
+  });
+
+// // 本來喜好作品、Tag有在裡面加式子，現在切割出來重複寫了document.addEventListener("DOMContentLoaded", function () {});不知道有沒有關係
+// document.addEventListener("DOMContentLoaded", function () {
+//   // 在表單提交時收集並更新順序數據
+//   document.querySelector('form').addEventListener('submit', function(e) {
+//       const orderData = [];
+//       document.querySelectorAll('.sell-content-wrapper').forEach((item) => {
+//           orderData.push({
+//               id: item.dataset.sellId,
+//               step: item.dataset.currentStep || item.dataset.originalStep
+//           });
+//       });
+      
+//       // 將排序數據添加到隱藏的輸入欄位
+//       let orderInput = document.getElementById('sell-order-data');
+//       if (!orderInput) {
+//           orderInput = document.createElement('input');
+//           orderInput.type = 'hidden';
+//           orderInput.name = 'sell_order_data';
+//           orderInput.id = 'sell-order-data';
+//           this.appendChild(orderInput);
+//       }
+//       orderInput.value = JSON.stringify(orderData);
+//   });
+// });
+// <!-- ↑剪取區 -->
+
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM fully loaded and parsed");  // 確認 DOM 加載完成
+
+    const form = document.querySelector('form');
+    if (!form) {
+        console.error("Form not found");
+        return;
+    }
+    
+    form.addEventListener('submit', function(e) {
+        // 收集排序數據
+        const orderData = [];
+        document.querySelectorAll('.sell-content-wrapper').forEach((item, index) => {
+            const sellId = item.getAttribute('data-sell-id') || 'new' + index;
+            orderData.push({
+                id: sellId,
+                step: index + 1
+            });
+        });
+        
+        console.log("Collected order data:", orderData);  // 調試信息
+        
+        // 將排序數據添加到隱藏的輸入欄位
+        let orderInput = document.getElementById('sell-order-data');
+        if (!orderInput) {
+            orderInput = document.createElement('input');
+            orderInput.type = 'hidden';
+            orderInput.name = 'sell_order_data';
+            orderInput.id = 'sell-order-data';
+            this.appendChild(orderInput);
+        }
+        orderInput.value = JSON.stringify(orderData);
+        
+        // 收集圖片排序數據
+        const imageOrderData = {};
+        document.querySelectorAll('.sell-content-wrapper').forEach((item) => {
+            const sellId = item.getAttribute('data-sell-id');
+            const imagesData = [];
+            
+            // 查找此項目的所有圖片
+            const images = item.querySelectorAll('.image-preview-wrapper');
+            images.forEach((img, imgIndex) => {
+                const imageId = img.getAttribute('data-image-id') || (imgIndex + 1).toString();
+                imagesData.push({
+                    id: imageId,
+                    order: imgIndex + 1
+                });
+            });
+            
+            if (imagesData.length > 0) {
+                imageOrderData[sellId] = imagesData;
+            }
+        });
+        
+        // 將圖片排序數據添加到隱藏的輸入欄位
+        let imageOrderInput = document.getElementById('sell-image-order-data');
+        if (!imageOrderInput) {
+            imageOrderInput = document.createElement('input');
+            imageOrderInput.type = 'hidden';
+            imageOrderInput.name = 'sell_image_order_data';
+            imageOrderInput.id = 'sell-image-order-data';
+            this.appendChild(imageOrderInput);
+        }
+        imageOrderInput.value = JSON.stringify(imageOrderData);
+    });
+});
+
+// 在表單提交前修正所有與圖片相關的輸入欄位名稱
+$('form').on('submit', function(event) {
+    // 建立一個映射來跟踪已使用的索引
+    const usedIndices = {};
+    
+    // 收集圖片排序數據
+    const imageOrderData = {};
+    
+    // 遍歷所有價目表項目的圖片容器
+    $('.sell-content-wrapper').each(function() {
+        const sellItemId = $(this).data('sell-id');
+        const imageContainer = $(this).find('.d-flex[style*="gap: 10px"]');
+        
+        console.log(`處理價目表項目: ${sellItemId}`);
+        
+        if (imageContainer.length > 0) {
+            // 獲取該項目下所有圖片元素
+            const images = imageContainer.find('.image-preview-wrapper');
+            
+            // 如果有多張圖片，記錄它們的順序
+            if (images.length > 0) {
+                const orderInfo = [];
+                images.each(function(index) {
+                    const imageId = parseInt($(this).data('image-id'), 10);
+                    // 使用 data-sort-order 屬性，如果不存在則使用當前索引 + 1
+                    const sortOrder = parseInt($(this).data('sort-order') || (index + 1), 10);
+                    console.log(`收集圖片順序: ID=${imageId}, 順序=${sortOrder}`);
+                    
+                    // 只有在 imageId 為有效數字時才添加
+                    if (!isNaN(imageId)) {
+                        orderInfo.push({
+                            image_id: imageId,
+                            sort_order: sortOrder
+                        });
+                    }
+                });
+                
+                // 確保按照 sort_order 排序
+                orderInfo.sort((a, b) => a.sort_order - b.sort_order);
+                
+                // 將排序信息添加到數據對象中
+                if (orderInfo.length > 0) {
+                    imageOrderData[sellItemId] = orderInfo;
+                }
+            }
+            
+            // 標準化該項目的所有圖片輸入欄位
+            imageContainer.find('input[type="file"]').each(function() {
+                const originalName = $(this).attr('name') || '';
+                if (!originalName.startsWith('sell_image_')) return;
+                
+                // 提取 ID 和圖片索引
+                const matches = originalName.match(/sell_image_(\d+)_item_(.+)$/);
+                if (!matches) return;
+                
+                const imgIndex = parseInt(matches[1], 10);
+                const itemId = matches[2];
+                
+                // 確保索引值為1或2
+                const correctedImgIndex = (imgIndex === 1 || imgIndex === 2) ? imgIndex : (imgIndex > 1 ? 2 : 1);
+                const correctedName = `sell_image_${correctedImgIndex}_item_${itemId}`;
+                
+                if (originalName !== correctedName) {
+                    console.log(`標準化圖片欄位名稱: ${originalName} -> ${correctedName}`);
+                    $(this).attr('name', correctedName);
+                    $(this).attr('id', correctedName);
+                }
+            });
+        }
+    });
+    
+    // 如果有排序信息，創建一個隱藏輸入欄位將其添加到表單中
+    if (Object.keys(imageOrderData).length > 0) {
+        // 將排序數據轉換為 JSON 字符串
+        const imageOrderJson = JSON.stringify(imageOrderData);
+        console.log('圖片排序數據:', imageOrderJson);
+        
+        // 檢查是否已存在此隱藏欄位，如果存在則更新值
+        let orderInput = $('input[name="sell_image_order_data"]');
+        if (orderInput.length === 0) {
+            // 不存在則創建新欄位
+            orderInput = $('<input>').attr({
+                'type': 'hidden',
+                'name': 'sell_image_order_data'
+            });
+            $(this).append(orderInput);
+        }
+        
+        // 設置欄位值
+        orderInput.val(imageOrderJson);
+    }
+    
+    // 提交前記錄所有圖片輸入欄位的最終狀態
+    console.log('===== 提交前的最終欄位狀態 =====');
+    $('input[type="file"][name^="sell_image_"]').each(function() {
+        console.log(`最終欄位名稱：${$(this).attr('name')}`);
+    });
+});
+
+// 處理點擊圖片預覽區域觸發文件上傳
+function triggerFileInput(element) {
+    const wrapper = $(element).closest('.image-preview-wrapper');
+    const imageId = wrapper.data('image-id');
+    const sellItemId = wrapper.data('sell-item-id') || wrapper.closest('.sell-content-wrapper').data('sell-id');
+    
+    if (!imageId || !sellItemId) {
+        console.error('無法確定圖片ID或項目ID', {imageId, sellItemId});
+        return;
+    }
+    
+    console.log(`觸發檔案上傳: 圖片ID=${imageId}, 項目ID=${sellItemId}`);
+    
+    // 構建輸入欄位ID
+    const inputId = `sell_image_${imageId}_item_${sellItemId}`;
+    
+    // 檢查輸入欄位是否存在
+    let input = document.getElementById(inputId);
+    
+    // 如果不存在，創建一個新的
+    if (!input) {
+        input = document.createElement('input');
+        input.type = 'file';
+        input.id = inputId;
+        input.name = inputId;
+        input.style.display = 'none';
+        input.accept = 'image/*';
+        wrapper.append(input);
+        console.log(`創建新的檔案輸入欄位: ${inputId}`);
+    }
+    
+    // 觸發點擊
+    input.click();
+}
+
+// 處理輸入欄位導航（Enter鍵跳到下一個輸入框）
+document.addEventListener('DOMContentLoaded', function() {
+    // 為所有表單綁定事件處理
+    document.addEventListener('keydown', function(event) {
+        // 檢查是否按下的是Enter鍵
+        if (event.key === 'Enter') {
+            const target = event.target;
+            
+            // 如果當前輸入欄位是販售項目輸入框
+            if (target.name && target.name.startsWith('sell_title_item_')) {
+                event.preventDefault(); // 阻止預設行為
+                
+                // 找到當前販售項目所在的容器
+                const wrapper = target.closest('.sell-content-wrapper');
+                if (wrapper) {
+                    // 找到該容器中的定價輸入框並聚焦
+                    const priceInput = wrapper.querySelector('input[name^="sell_price_item_"]');
+                    if (priceInput) {
+                        priceInput.focus();
+                    }
+                }
+            }
+            // 如果當前輸入欄位是定價輸入框
+            else if (target.name && target.name.startsWith('sell_price_item_')) {
+                event.preventDefault(); // 阻止預設行為
+                
+                // 找到當前定價所在的容器
+                const wrapper = target.closest('.sell-content-wrapper');
+                if (wrapper) {
+                    // 找到該容器中的接單規則textarea並聚焦
+                    const descTextarea = wrapper.querySelector('textarea[name^="sell_description_item_"]');
+                    if (descTextarea) {
+                        descTextarea.focus();
+                    }
+                }
+            }
+            // 在textarea中不阻止Enter鍵的預設行為（允許換行）
+        }
+    });
+    
+    // 修改addSellItem函數，使其在添加新項目後自動聚焦到新項目的販售項目輸入框
+    const originalAddSellItem = window.addSellItem;
+    window.addSellItem = function(event) {
+        // 調用原始函數
+        originalAddSellItem(event);
+        
+        // 獲取剛剛創建的新項目（當前項目的下一個兄弟元素）
+        const currentItem = event.target.closest('.sell-content-wrapper');
+        const newItem = currentItem.nextElementSibling;
+        
+        if (newItem) {
+            // 找到新項目中的販售項目輸入框並聚焦
+            const titleInput = newItem.querySelector('input[name^="sell_title_item_"]');
+            if (titleInput) {
+                setTimeout(() => {
+                    titleInput.focus();
+                }, 100); // 添加短暫延遲確保DOM已更新
+            }
+        }
+    };
+});
+
+// 處理販售項目輸入框的Enter鍵
+function handleSellItemKeyDown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // 阻止預設行為
+        
+        // 找到當前販售項目所在的容器
+        const wrapper = event.target.closest('.sell-content-wrapper');
+        if (wrapper) {
+            // 找到該容器中的定價輸入框並聚焦
+            const priceInput = wrapper.querySelector('input[name^="sell_price_item_"]');
+            if (priceInput) {
+                priceInput.focus();
+            }
+        }
+    }
+}
+
+// 處理定價輸入框的Enter鍵
+function handlePriceItemKeyDown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // 阻止預設行為
+        
+        // 找到當前定價所在的容器
+        const wrapper = event.target.closest('.sell-content-wrapper');
+        if (wrapper) {
+            // 找到該容器中的接單規則textarea並聚焦
+            const descTextarea = wrapper.querySelector('textarea[name^="sell_description_item_"]');
+            if (descTextarea) {
+                descTextarea.focus();
+            }
+        }
+    }
+}
+
+// 修改addSellItem函數，使其在添加新項目後自動聚焦到新項目的販售項目輸入框
+const originalAddSellItem = window.addSellItem;
+window.addSellItem = function(event) {
+    // 調用原始函數
+    originalAddSellItem(event);
+    
+    // 獲取剛剛創建的新項目（當前項目的下一個兄弟元素）
+    const currentItem = event.target.closest('.sell-content-wrapper');
+    const newItem = currentItem.nextElementSibling;
+    
+    if (newItem) {
+        // 找到新項目中的販售項目輸入框並聚焦
+        const titleInput = newItem.querySelector('input[name^="sell_title_item_"]');
+        if (titleInput) {
+            setTimeout(() => {
+                titleInput.focus();
+            }, 100); // 添加短暫延遲確保DOM已更新
+        }
+    }
+};
+
+// 移除之前的全局事件監聽器
+document.removeEventListener('keydown', function(event) {
+    // 之前的全局事件處理邏輯
+});
+</script>
+{% endblock %}

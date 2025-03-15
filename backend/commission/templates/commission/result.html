@@ -1,0 +1,478 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %} 
+{% block app_css %}
+<style>
+/* 隱藏頂端列 */
+.app-header-inner {
+    display: none;
+}
+/* 取消主板 .app 的 padding-top 設置 */
+.app {
+    padding-top: 0 !important;
+}
+
+/* 新增隱藏預設標題的樣式
+.app-page-title {
+    display: none !important;
+} */
+
+.image-comparison {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+    justify-content: center;
+    flex-direction: row;
+    align-items: flex-start;
+}
+.image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.image-box {
+    /* width: 300px; */
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+    position: relative; /* 添加相對定位，以便遮罩可以絕對定位 */
+    overflow: hidden; /* 隱藏溢出的內容 */
+}
+/* 移除舊有卡片樣式 */
+/* .image-box .card {
+    width: 50%;
+    margin-left: 0;
+    text-align: left;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+} */
+
+/* 添加遮罩和懸停效果樣式 */
+.image-box .image-hover-info {
+    position: absolute;
+    bottom: 0; /* 初始位置設為 0，預設顯示 */
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 灰色半透明背景 */
+    color: white;
+    padding: 10px;
+    transition: bottom 0.3s ease; /* 平滑過渡效果 */
+    text-align: left;
+}
+
+/* 新增 CSS 類別用於 5 秒後下滑動畫 */
+.image-box .image-hover-info.slide-down {
+    bottom: -100%; /* 向下滑動隱藏 */
+}
+
+.image-box:hover .image-hover-info {
+    bottom: 0; /* 滑鼠懸停時保持顯示 */
+    transition: bottom 0.3s ease; /* 確保懸停時也有平滑過渡 */
+}
+
+.image-hover-info h5 {
+    font-size: 0.95em;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.image-hover-info p {
+    font-size: 0.85em;
+    color: #ddd;
+    line-height: 1.4;
+}
+
+.image-hover-info-header {
+    font-weight: bold;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    color: #4da6ff;
+}
+
+.image-box img {
+    max-width: 300px;
+    height: auto;
+    display: block; /* 確保圖片沒有額外間距 */
+}
+.image-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+    text-align: center;
+    width: 300px;
+}
+.similarity-info {
+    font-size: 1.2em;
+    margin: 15px 0;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.similarity-high {
+    background-color: #e7f5e7;
+    border-left: 5px solid #28a745;
+}
+.similarity-medium {
+    background-color: #fff3cd;
+    border-left: 5px solid #ffc107;
+}
+.similarity-low {
+    background-color: #f8f9fa;
+    border-left: 5px solid #6c757d;
+}
+.similarity-description {
+    margin-top: 10px;
+    font-style: italic;
+}
+.similarity-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.similarity-percent {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #15a362;
+}
+.similarity-bar {
+    height: 8px;
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+.similarity-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, #4da6ff, #15a362);
+    border-radius: 4px;
+}
+.error-message {
+    padding: 15px;
+    background-color: #fee;
+    border-left: 5px solid #f55;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.result-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    padding: 15px;
+}
+.result-heading { /* 比對結果標題 */
+    color: #15a362;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+.similar-images-section {
+    margin-top: 30px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+}
+.similar-image-card {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.similar-image-rank {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-right: 15px;
+    color: #666;
+    width: 30px;
+    text-align: center;
+}
+.similar-image-container {
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    margin-right: 15px;
+}
+.similar-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.similar-image-info {
+    flex-grow: 1;
+}
+.similar-image-similarity {
+    font-weight: bold;
+    color: #15a362;
+}
+.attention-section {
+    margin-top: 30px;
+    background-color: #f0f8ff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.attention-title {
+    color: #15a362;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+    font-weight: bold;
+}
+.attention-description {
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+.attention-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+.attention-image-box {
+    width: 300px;
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+}
+.attention-image-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+.attention-guide {
+    background-color: #e9f7fe;
+    padding: 10px;
+    margin-top: 20px;
+    border-radius: 5px;
+    font-style: italic;
+}
+/* 新增右對齊類別 */
+.right-aligned-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+/* 熱力圖說明樣式 */
+.heatmap-description {
+    background-color: #fff3e0; /* 淡橘色背景 */
+    color: #663c00;
+    border-color: #ffe0b2;
+    margin-top: 1rem;
+    display: none; /* 預設隱藏 */
+}
+</style>
+{% endblock %}
+
+{% block app_title %}
+<!-- 直接打文字即可替換各自應用程式的標題 -->
+委託專區 Commission
+{% endblock %}
+
+{% block app_content %}
+<div class="container">
+    {% if error_message %}
+    <div class="error-message">
+        <h3>處理過程中發生錯誤：</h3>
+        <p>{{ error_message }}</p>
+        <p>請嘗試上傳其他圖片或聯繫管理員。</p>
+    </div>
+    {% endif %}
+
+    {% if best_match %}
+    <div class="result-card">
+        <h2 class="result-heading">比對結果</h2>
+        
+        {% if is_very_similar %}
+        <div class="similarity-info similarity-high">
+        {% elif similarity > 85 %}
+        <div class="similarity-info similarity-high">
+        {% elif similarity > 70 %}
+        <div class="similarity-info similarity-medium">
+        {% else %}
+        <div class="similarity-info similarity-low">
+        {% endif %}
+            <div class="similarity-score">
+                <div>
+                    <strong>相似度評分</strong>
+                </div>
+                <div class="similarity-percent">{{ similarity }}%</div>
+            </div>
+            
+            <div class="similarity-bar">
+                <div class="similarity-bar-fill" style="width:{{ similarity }}%"></div>
+            </div>
+            
+            {% if similarity_description %}
+            <div class="similarity-description">{{ similarity_description }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="right-aligned-controls">
+            <div class="heatmap-toggle-container">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="heatmapToggle">
+                    <label class="form-check-label" for="heatmapToggle">注意力分佈熱力圖</label>
+                </div>
+            </div>
+        </div>
+        <div class="image-comparison">
+            <div class="image-item">
+                <div class="image-title">上傳的圖片</div>
+                <div class="image-box">
+                    <img src="{{ MEDIA_URL }}{{ uploaded_image }}" class="img-fluid original-image" alt="上傳的圖片">
+                    {% if uploaded_attention_url %}
+                    <img src="/media/{{ uploaded_attention_url }}" class="img-fluid heatmap-image" alt="上傳圖片的注意力分佈" style="display: none; position: absolute; top: 10px; object-fit: contain; opacity: 0.7; transition: opacity 0.3s ease-in-out;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="image-item">
+                <div class="image-title">最相似的圖片</div>
+                <div class="image-box">
+                    <img src="{{ best_match_image_url }}" class="img-fluid original-image" alt="最相似的圖片">
+                    {% if best_match_attention_url %}
+                    <img src="/media/{{ best_match_attention_url }}" class="img-fluid heatmap-image" alt="匹配圖片的注意力分佈" style="display: none; position: absolute; top: 10px;  object-fit: contain; opacity: 0.7; transition: opacity 0.3s ease-in-out;">
+                    {% endif %}
+                    {% if work_info %}
+                    <div class="image-hover-info">
+                        <div class="image-hover-info-header">作者：{% if user_nickname %}{{ user_nickname }}{% else %}ID {{ work_info.worker_id }}{% endif %}</div>
+                        <h5>{{ work_info.work_title }}</h5>
+                        <p>{{ work_info.work_description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="right-aligned-controls">
+            <a href="{% url 'commission:Urls_upload_compare' %}" class="btn btn-primary">重新上傳比對</a>
+        </div>
+        <div class="alert alert-info mt-3" id="clip-description">
+            <strong>CLIP 模型比對說明：</strong> CLIP 是一個由 OpenAI 開發的多模態模型，可以理解圖像和文本之間的關聯。
+            在圖片比對時，CLIP 將圖片轉換為高維向量，並計算向量之間的相似度。相似度越高，表示圖片在語義層面上越相似。
+            CLIP 能夠識別相同角色、相似場景或主題相關的圖片，而不僅僅是基於顏色或像素的相似性。
+        </div>
+        
+        <!-- 熱力圖說明 -->
+        <div class="alert heatmap-description mt-3" id="heatmap-description">
+            <strong>CLIP 模型注意力視覺化：</strong> 熱力圖顯示了 CLIP 模型在處理圖片時的注意力分佈，使用基於 Transformer 的視覺化技術生成。
+            <p class="mt-2"><strong>紅色/黃色區域</strong>表示模型關注度較高的區域，這些區域在圖片特徵提取過程中被認為具有更強的識別性；
+            <strong>藍色區域</strong>表示模型標準注意的一般區域。此視覺化幫助理解模型如何區分不同圖像中的特徵。</p>
+            <p>注意這種識別與人類直覺可能不同，例如有時模型會關注服裝、背景或姿勢等元素，而非僅關注面部特徵。</p>
+        </div>
+    </div>
+
+    {% if similar_images %}
+    <div class="similar-images-section">
+        <h3 class="mb-4">其他相似圖片</h3>
+        
+        {% for image in similar_images %}
+        <div class="similar-image-card">
+            <div class="similar-image-rank">#{{ image.rank }}</div>
+            <div class="similar-image-container">
+                <img src="{{ image.image_url }}" alt="相似圖片 #{{ image.rank }}">
+            </div>
+            <div class="similar-image-info">
+                <div class="similar-image-similarity">相似度: {{ image.similarity }}%</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if work_info %}
+    {% comment %}
+    <div class="card mt-4">
+        <div class="card-header">作品資訊</div>
+        <div class="card-body">
+            <h5 class="card-title">{{ work_info.work_title }}</h5>
+            <p class="card-text">{{ work_info.work_description }}</p>
+            {% if work_info.worker_id %}
+            <p><strong>作者ID:</strong> {{ work_info.worker_id }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endcomment %}
+    {% endif %}
+    
+    {% else %}
+    <div class="alert alert-warning">
+        沒有找到相似圖片。
+    </div>
+    {% endif %}
+
+
+</div>
+{% endblock %}
+
+{% block app_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('相似圖片結果頁面已加載');
+    
+    // 處理熱力圖切換
+    const heatmapToggle = document.getElementById('heatmapToggle');
+    const clipDescription = document.getElementById('clip-description');
+    const heatmapDescription = document.getElementById('heatmap-description');
+    
+    if (heatmapToggle) {
+        heatmapToggle.addEventListener('change', function() {
+            const heatmapImages = document.querySelectorAll('.heatmap-image');
+            
+            if (this.checked) {
+                // 顯示熱力圖
+                heatmapImages.forEach(img => {
+                    img.style.display = 'block';
+                });
+                
+                // 切換說明文字
+                clipDescription.style.display = 'none';
+                heatmapDescription.style.display = 'block';
+            } else {
+                // 隱藏熱力圖
+                heatmapImages.forEach(img => {
+                    img.style.display = 'none';
+                });
+                
+                // 切換說明文字
+                clipDescription.style.display = 'block';
+                heatmapDescription.style.display = 'none';
+            }
+        });
+    }
+
+    // 3 秒後讓作品資訊遮罩下滑隱藏
+    setTimeout(function() {
+        const hoverInfoElements = document.querySelectorAll('.image-hover-info');
+        hoverInfoElements.forEach(element => {
+            element.classList.add('slide-down');
+        });
+    }, 3000); // 3000 毫秒 = 3 秒
+
+    // 移除滑鼠移開圖片後遮罩會瞬間消失的問題 (可選)
+    const imageBoxes = document.querySelectorAll('.image-box');
+    imageBoxes.forEach(box => {
+        box.addEventListener('mouseleave', function() {
+            const hoverInfo = this.querySelector('.image-hover-info');
+            if (hoverInfo) {
+                hoverInfo.classList.add('slide-down'); // 滑鼠移開也添加下滑 class
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

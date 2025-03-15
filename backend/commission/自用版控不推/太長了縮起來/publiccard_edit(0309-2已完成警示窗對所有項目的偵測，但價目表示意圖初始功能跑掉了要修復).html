@@ -1,0 +1,1992 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %} 
+{% block app_css %}
+<!-- 如果應用程式有自己的css放這邊 -->
+<style>
+  /* 隱藏頂端列 */
+  .app-header-inner {
+    display: none;
+  }
+  /* 取消主板 .app 的 padding-top 設置 */
+  .app {
+    padding-top: 0 !important;
+  }
+
+  /* 頭像和個人資訊容器 */
+  .profile-info-container {
+    position: absolute;
+    top: -120px; /* 頭像與 banner 的高度距離，數字越小越上方 */
+    left: 50px; /* 頭像與左邊界的距離 */
+    right: 20px;
+    z-index: 1;
+    overflow: visible; /* 允許內容超出容器 */
+  }
+
+  /* 右側區域容器樣式 */
+  .right-section {
+    position: static; /* 移除相對定位 */
+    flex: 1; /* 讓右側區域佔據剩餘空間 */
+    padding-left: 40px; /* 與左側區域保持間距 */
+  }
+
+  /* 頭像與橫幅-自訂圖開關的字體大小 */
+  .form-check-label {
+    font-size: 0.85rem; /*  調整字體大小 */
+  }
+
+  /* 右側開關區域的獨立樣式 */
+  .right-section .form-check {
+    position: relative; /* 設置相對定位作為參考點 */
+    padding-right: 60px; /* 為開關預留空間 */
+    margin-bottom: 1rem;
+  }
+
+  /* 右側區域表單標籤樣式 */
+  .right-section .form-check-label {
+    font-size: 1rem;
+  }
+
+  /* 右側區域表單輸入樣式 */
+  .right-section .form-check-input {
+    position: absolute; /* 絕對定位 */
+    right: 40rem; /* 文字與開關的距離，越大越近 */
+    top: 40%; /* 垂直置中 */
+    transform: translateY(-50%); /* 精確垂直置中 */
+    margin: 0; /* 清除預設邊距 */
+  }
+
+  /* 列表樣式 */
+  .content-list {
+    /*list-style: none;  移除預設的列表符號 */
+    padding: 0;
+    margin: 0;
+  }
+
+  /* 內容列表項目樣式 */
+  .content-list li {
+    position: relative;
+    padding-left: 1.5em; /* 為自訂符號留空間 */
+    margin-bottom: 1rem;
+  }
+
+  /* 內容列表項目前景樣式 */
+  .content-list li::before {
+    /* content: "●"; */
+    position: absolute;
+    left: 0;
+    color: #333;
+  }
+
+  /* 開關容器樣式 */
+  .content-list .form-check {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 內容列表表單標籤樣式 */
+  .content-list .form-check-label {
+    font-size: 1rem;
+    margin-right: 10px;
+  }
+
+  /* 開關展開內容區域 */
+  .expandable-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding-left: 1.5em;
+  }
+
+  /* 開關展開時的狀態 */
+  .expandable-content.show {
+    max-height: 5000px; /* 設置一個足夠大的高度，但不要太大以免影響動畫效果 */
+    transition: max-height 0.5s ease-in;
+  }
+
+  /* 調整按鈕樣式以匹配輸入框高度 */
+  .input-group .btn {
+    height: 40px; /* 使按鈕高度與輸入框相同 */
+    padding: 0.375rem 0.75rem; /* 調整內邊距 */
+    display: flex; /* 確保按鈕內部元素垂直居中 */
+    align-items: center; /* 垂直居中 */
+  }
+
+  /* 修正 form-check 的樣式 */
+  .content-list .form-check.me-3 {
+    flex-direction: row; /* 覆蓋 row-reverse */
+    justify-content: flex-start; /* 覆蓋 space-between */
+  }
+
+  /* 輸入框(含喜好作品、屬性Tag、價目表區)-提示字 placeholder 樣式 */
+  .form-control::placeholder {
+    font-size: 0.875rem;  /* 14px，比預設的 16px 小一點 */
+    color: #7b838d;          /* 淺灰色 */
+    opacity: 0.8;         /* 稍微調整透明度 */
+  }
+
+  /* 提交表單按鈕組(返回上層、保存非公開、保存並公開)-黏性浮動按鈕 */
+  .sticky-buttons {
+    position: sticky; /* 實現黏性定位效果 */
+    bottom: 20px; /* 始終距離視窗底部20px */
+    z-index: 1000; /* 確保按鈕在最上層 */
+    /* background: rgba(255, 255, 255, 0.233); */
+    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
+    padding: 10px;
+    /* backdrop-filter: blur(3px); 毛玻璃效果 */
+    border-radius: 8px;
+  }
+
+  /* 提交表單按鈕組-按鈕包裝容器 */
+  .button-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* 提交表單按鈕組-按鈕遮罩層 */
+  .button-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 8px; /* 同按鈕設定之margin-right */
+    bottom: 0;
+    background: rgba(128, 128, 128, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 0.9rem;
+    border-radius: 0.4rem; /* 同按鈕圓角 */
+    z-index: 1001;
+    backdrop-filter: blur(1px);
+    transition: all 0.3s ease;
+  }
+
+  /* 提交表單按鈕組-按鈕遮罩層-hover效果 */
+  .button-overlay:hover {
+    background: rgba(128, 128, 128, 0.7);
+  }
+
+  /* 提交表單按鈕組-按鈕遮罩層-移除遮罩層的樣式 */
+  .button-overlay.removed {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 自訂確認對話框樣式 */
+  .custom-confirm-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 100%;
+  }
+
+  .modal-header {
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  .modal-message {
+    margin-bottom: 20px;
+    white-space: pre-line;
+  }
+
+  .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .modal-buttons button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    /* border: none; */
+  }
+  
+
+</style>
+{% endblock %}
+{% block app_title %}
+<!-- 直接打文字即可替換各自應用程式的標題 -->
+名片資訊編輯 (使用者ID：{{ ViewKey_DbPublicCardInfo.pk }}) 
+
+{% endblock %} 
+{% block app_content %}
+<!-- 白底編輯區 -->
+<div
+  class="app-card app-card-settings shadow-sm p-4 mb-4 d-flex flex-column"
+  style="flex-grow: 1"
+>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% include 'commission/publiccard_edit_test/banner.html' %}
+    
+
+    <!-- 頭像和個人資訊區域 -->
+    <div class="profile-info-container d-flex position-relative">
+      {% include 'commission/publiccard_edit_test/avatar.html' %}
+      {% include 'commission/publiccard_edit_test/user_info.html' %}      
+    </div>
+
+    <!-- 新增一個容器來包住兩個區塊 -->
+    <div class="sections-container" style="display: flex; margin-top: -90px">
+      <!-- 左側區域 -->
+      {% include 'commission/publiccard_edit_test/favorite_and_tag.html' %}
+
+
+      <!-- 右側區域(分隔線區分兩側) -->
+      <div class="right-section" style="border-left: 1px solid #dee2e6;">
+        <ul class="content-list">
+          {% include 'commission/publiccard_edit_test/sell_list.html' %}
+          {% include 'commission/publiccard_edit_test/work_sellnow.html' %}
+          {% include 'commission/publiccard_edit_test/work_done.html' %}
+          {% include 'commission/publiccard_edit_test/need.html' %}
+        </ul>
+      </div>
+    </div>
+    <div class="d-flex justify-content-end mt-3 sticky-buttons">
+      <div class="button-wrapper">
+        <div class="button-overlay" data-target="cancelButton">點擊解除保護</div>
+        <a href="#" id="cancelButton" class="btn app-btn-secondary me-2" disabled>返回上層</a>
+      </div>
+      <div class="button-wrapper">
+        <div class="button-overlay" data-target="savePrivateButton">點擊解除保護</div>
+        <button type="submit" id="savePrivateButton" 
+                class="btn app-btn-warning me-2" 
+                style="background-color: #facf4d; border-color: #facf4d" 
+                disabled
+                data-status="非公開">保存非公開</button>
+      </div>
+      <div class="button-wrapper">
+        <div class="button-overlay" style="right: 0;" data-target="savePublicButton">點擊解除保護</div>
+        <button type="submit" id="savePublicButton" 
+                class="btn app-btn-primary" 
+                disabled
+                data-status="公開">保存並公開</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- 自訂確認對話框 -->
+<div id="customConfirmModal" class="custom-confirm-modal">
+  <div class="modal-content">
+    <div class="modal-header">未保存的修改</div>
+    <div id="modalMessage" class="modal-message"></div>
+    <div class="modal-buttons">
+      <button id="btnStay" class="btn app-btn-primary">留在此頁</button>
+      <button id="btnLeave" class="btn app-btn-secondary">離開頁面</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %} 
+{% block app_script %}
+<!-- 新增 Sortable.js 拖曳排序功能 -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+// === 全域表單變化監聽 ===
+document.querySelector('form').addEventListener('input', function(e) {
+  const changedField = e.target;
+  // 自動收集所有表單資料
+  const formData = new FormData(this);
+  
+  // 添加自定義識別屬性 (可選)
+  if (changedField.hasAttribute('data-subtemplate')) {
+    formData.append('subtemplate', changedField.getAttribute('data-subtemplate'));
+  }
+});
+
+// === 表單提交處理 ===
+$(document).ready(function() {
+    // 初始化圖片拖曳排序功能
+    function initializeImageSortable(container) {
+        new Sortable(container, {
+            animation: 150,  // 恢復原始動畫時間
+            handle: '.image-preview-wrapper', // 只能拖曳圖片預覽區
+            ghostClass: 'sell-item-ghost',    // 使用與價目表相同的樣式
+            chosenClass: 'sell-item-chosen',
+            dragClass: 'sell-item-drag',
+            forceFallback: false,  // 關閉強制回退模式
+            fallbackTolerance: 3, 
+            swapThreshold: 0.5,   
+            direction: 'horizontal', // 限制為水平方向拖動
+            scroll: true,  // 啟用滾動
+            bubbleScroll: true, // 允許冒泡滾動
+            scrollSensitivity: 30, // 觸發滾動的敏感度
+            scrollSpeed: 10, // 滾動速度
+            onStart: function(evt) {
+                // 添加拖動開始時的樣式
+                evt.item.classList.add('sortable-dragging');
+            },
+            onEnd: function(evt) {
+                // 移除拖動結束時的樣式
+                evt.item.classList.remove('sortable-dragging');
+                
+                // 更新圖片順序標記
+                const images = container.querySelectorAll('.image-preview-wrapper');
+                images.forEach((img, index) => {
+                    // 使用 index + 1 作為 sort_order，確保從 1 開始
+                    img.setAttribute('data-sort-order', index + 1);
+                    console.log(`更新圖片排序: ID=${img.getAttribute('data-image-id')}, 順序=${index + 1}`);
+                });
+            }
+        });
+    }
+
+    // 為所有現有圖片容器初始化
+    $('.sell-content-wrapper').each(function() {
+        const imageContainer = $(this).find('.d-flex[style*="gap: 10px"]')[0];
+        if (imageContainer) {
+            initializeImageSortable(imageContainer);
+        }
+    });
+    
+    $('form').submit(function(event) {
+        event.preventDefault(); // 阻止表單的默認提交行為
+        
+        // 喜好作品-收集並存儲喜好作品數據
+        var acgnItems = [];
+        $('#favoriteAcgnList li .acgn-text').each(function() {
+            acgnItems.push($(this).text().trim());
+        });
+        $('#involved_acgn_hidden').val(acgnItems.join(','));
+        
+        // 屬性Tag-收集並存儲屬性標籤數據
+        var tagItems = [];
+        $('#tagsContainer .tag').each(function() {
+            // 取得標籤文本，去除刪除按鈕的 '×' 字符
+            var tagText = $(this).clone().children().remove().end().text().trim();
+            tagItems.push(tagText);
+        });
+        $('#key_tags_hidden').val(tagItems.join(','));
+        
+        var formData = new FormData(this);
+        
+        // 小卡相關-寫入公開/非公開狀態
+        var clickedButton = $(document.activeElement);
+        if(clickedButton.is('button[type="submit"]')) {
+            formData.append('ViewKey_bd_public_card_info_card_status', clickedButton.data('status'));
+        }
+
+        $.ajax({
+            url: $(this).attr('action'),
+            type: $(this).attr('method'),
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                alert('儲存成功: ' + response.message); // 彈出成功訊息
+                window.location.reload(); // 重新加載頁面
+            },
+            error: function(response) {
+                alert('儲存失敗: ' + response.responseText); // 彈出失敗訊息
+            }
+        });
+    });
+});
+
+// === 右側內容區域開關初始化開關狀態並添加事件監聽器 ===
+const switchStates = {
+    // '開關控制ID': 從views.py連動的資料表.資料表欄位
+    'switch-sell': JSON.parse('{{ ViewKey_DbPublicCardInfo.sell_public_status|lower|default:"false"|escapejs }}'.toLowerCase()),
+    'switch-work-sellnow': JSON.parse('{{ ViewKey_DbPublicCardInfo.work_sellnow_list_public_status|lower|default:"false"|escapejs }}'.toLowerCase()),
+    'switch-work-done': JSON.parse('{{ ViewKey_DbPublicCardInfo.work_done_list_public_status|lower|default:"false"|escapejs }}'.toLowerCase()),
+    'switch-need-list': JSON.parse('{{ ViewKey_DbPublicCardInfo.need_list_public_status|lower|default:"false"|escapejs }}'.toLowerCase())
+};
+
+// 右側內容區域開關-初始化每個開關的狀態
+Object.entries(switchStates).forEach(([switchId, initialState]) => {
+  const switchElement = document.getElementById(switchId);
+  if (switchElement) {
+    // 設置初始狀態
+    switchElement.checked = initialState;
+    // 初始化內容區域的顯示狀態
+    const contentId = `content-${switchId.replace('switch-', '')}`;
+    const contentEl = document.getElementById(contentId);
+    const privateMessage = contentEl.previousElementSibling;
+    
+    if (contentEl) {
+      // 控制初始化時的顯示內容
+      if (initialState) { 
+        // 如果開關狀態(取自資料表欄位資料)為 true，顯示原定內容，隱藏「使用者未開放資訊」字樣
+        privateMessage.style.display = 'none';
+        contentEl.classList.add("show");
+      } else {
+        privateMessage.style.display = 'block';
+        contentEl.classList.remove("show");
+      }
+    }
+    // 開關事件監聽器
+    switchElement.addEventListener('change', function(e) {
+      // const contentId = `content-${switchId.replace('switch-', '')}`;
+      // const contentEl = document.getElementById(contentId);
+      // const privateMessage = contentEl.previousElementSibling;
+      
+      if (contentEl) {
+        // 控制模板開關改變時的顯示內容
+        if (this.checked) {
+          // 開關開啟：顯示公開內容，隱藏「使用者未開放資訊」字樣
+          privateMessage.style.display = 'none';
+          contentEl.classList.add("show");
+        } else {
+          // 開關關閉：顯示「使用者未開放資訊」字樣，隱藏公開內容
+          privateMessage.style.display = 'block';
+          contentEl.classList.remove("show");
+        }
+      }
+    });
+  }
+});
+
+// === 提交表單按鈕組-按鈕遮罩層-點擊事件 ===
+document.addEventListener('DOMContentLoaded', function() {
+    const buttonOverlays = document.querySelectorAll('.button-overlay');
+    const stickyButtons = document.querySelector('.sticky-buttons');
+    const originalButtonsPosition = stickyButtons.offsetTop;
+    let isInOriginalPosition = true; // 追蹤按鈕組是否在原始位置
+
+    // 提交表單按鈕組-處理遮罩層點擊
+    buttonOverlays.forEach(overlay => {
+        overlay.addEventListener('click', function() {
+            toggleOverlay(this, false); // 手動點擊時永久移除
+        });
+    });
+
+    // 提交表單按鈕組-監聽頁面滾動
+    window.addEventListener('scroll', function() {
+        const currentScroll = window.pageYOffset;
+        const isAtOriginalPos = currentScroll <= originalButtonsPosition;
+
+        // 提交表單按鈕組-當滾動狀態改變時才執行
+        if (isAtOriginalPos !== isInOriginalPosition) {
+            isInOriginalPosition = isAtOriginalPos;
+            
+            buttonOverlays.forEach(overlay => {
+                const targetButton = document.getElementById(overlay.dataset.target);
+                if (isAtOriginalPos) {
+                    // 回到原始位置時恢復遮罩
+                    toggleOverlay(overlay, true);
+                } else {
+                    // 離開原始位置時移除遮罩
+                    toggleOverlay(overlay, false);
+                }
+            });
+        }
+    });
+
+    // 提交表單按鈕組-統一處理遮罩狀態的函數
+    function toggleOverlay(overlay, show) {
+        const targetButton = document.getElementById(overlay.dataset.target);
+        if (show) {
+            overlay.classList.remove('removed');
+            targetButton.disabled = true;
+        } else {
+            overlay.classList.add('removed');
+            targetButton.disabled = false;
+        }
+    }
+});
+
+// 價目表圖片 - 處理文件選擇變更
+$(document).on('change', 'input[type="file"][name^="sell_image_"]', function() {
+    const $fileInput = $(this);
+    const file = this.files[0];
+    
+    // 移除前導零
+    const normalizedName = $fileInput.attr('name').replace(/^sell_image_0*(\d+)/, 'sell_image_$1');
+    $fileInput.attr('name', normalizedName);
+    
+    if (file) {
+        // 獲取圖片預覽容器
+        const $previewContainer = $fileInput.closest('.image-preview-wrapper');
+        
+        // 創建 FileReader 讀取文件
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // 移除舊的圖片預覽或預設圖標
+            $previewContainer.empty();
+            
+            // 添加新的圖片預覽
+            const $img = $('<img>').attr({
+                'src': e.target.result,
+                'alt': '示意圖',
+                'style': 'width: 100%; height: 100%; object-fit: cover;'
+            });
+            $previewContainer.append($img);
+            
+            // 重新添加控制按鈕容器
+            const imageId = parseInt($previewContainer.data('image-id')); // 確保 imageId 是整數 1 或 2
+            const sellItemId = $previewContainer.data('sell-item-id');
+            
+            const $iconContainer = $('<div>').addClass('icon-container');
+            
+            // 檢視按鈕
+            const $viewButton = $('<button>').attr({
+                'type': 'button',
+                'class': 'icon-button view-image',
+                'title': '檢視原圖',
+                'data-image-url': e.target.result
+            }).html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg>');
+            
+            // 更換按鈕
+            const $replaceButton = $('<button>').attr({
+                'type': 'button',
+                'class': 'icon-button replace-image',
+                'title': '更換圖片',
+                'data-image-id': imageId,
+                'data-sell-item-id': sellItemId
+            }).html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/><path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/></svg>');
+            
+            // 刪除按鈕
+            const $deleteButton = $('<button>').attr({
+                'type': 'button',
+                'class': 'icon-button delete-image',
+                'title': '刪除',
+                'data-image-id': imageId,
+                'data-sell-item-id': sellItemId
+            }).html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/></svg>');
+            
+            // 添加按鈕到容器
+            $iconContainer.append($viewButton, $replaceButton, $deleteButton);
+            $previewContainer.append($iconContainer);
+            
+            // 重新添加文件輸入元素，確保 name 屬性格式正確
+            $fileInput.attr('name', `sell_image_${imageId}_item_${sellItemId}`);
+            $fileInput.attr('id', `sell_image_${imageId}_item_${sellItemId}`);
+            $previewContainer.append($fileInput);
+            
+            // 修改：移除點擊事件但保持按鈕功能
+            // 只移除 onclick 屬性，而不是將 onclick 設為 null
+            $previewContainer.css('cursor', 'default').removeAttr('onclick');
+            
+            // 確保更換圖片按鈕的事件能被正確觸發
+            $replaceButton.on('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                const imageId = $(this).data('image-id');
+                const sellItemId = $(this).data('sell-item-id');
+                const inputId = `sell_image_${imageId}_item_${sellItemId}`;
+                $(`#${inputId}`).click();
+            });
+        };
+        
+        // 讀取文件
+        reader.readAsDataURL(file);
+    }
+});
+
+// 價目表圖片 - 刪除圖片
+$(document).on('click', '.delete-image', function() {
+    const imageId = parseInt($(this).data('image-id'), 10); // 確保是數字
+    // 確保只能是 1 或 2
+    const finalImageId = (imageId === 1 || imageId === 2) ? imageId : 1;
+    
+    const sellItemId = $(this).data('sell-item-id');
+    const $previewContainer = $(this).closest('.image-preview-wrapper');
+    const $fileInput = $(`#sell_image_${finalImageId}_item_${sellItemId}`);
+    const $parentContainer = $previewContainer.parent();
+    
+    // 清空文件輸入
+    $fileInput.val('');
+    
+    // 重置預覽區域
+    $previewContainer.empty();
+    
+    // 添加預設圖標
+    const $defaultContent = $('<div>').addClass('text-center text-muted').html(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54A.5.5 0 0 1 1 12.5v-9a.5.5 0 0 1 .5-.5h13z"/>
+        </svg>
+        <p>上傳示意圖${finalImageId}</p>
+    `);
+    
+    // 創建新的佔位符容器
+    const $placeholderWrapper = $('<div>')
+        .addClass('d-flex align-items-center justify-content-center image-preview-wrapper')
+        .attr({
+            'data-image-id': finalImageId,
+            'data-sell-item-id': sellItemId,
+            'data-is-placeholder': 'true'
+        })
+        .css({
+            'flex': '1', 
+            'border-radius': '5px', 
+            'overflow': 'hidden', 
+            'background-color': '#f8f9fa', 
+            'min-height': '150px', 
+            'cursor': 'pointer'
+        });
+    
+    // 直接添加點擊處理函數（不使用.on方法），但只為佔位符添加
+    $placeholderWrapper[0].onclick = function(e) {
+        // 阻止事件冒泡以避免遞迴
+        e.stopPropagation();
+        
+        // 檢查是否含有圖片，如果有則不觸發檔案選擇
+        if (this.querySelector('img')) {
+            return;
+        }
+        
+        const sellItemId = this.getAttribute('data-sell-item-id');
+        const imageId = parseInt(this.getAttribute('data-image-id')); // 確保 imageId 是整數 1 或 2
+        const inputId = `sell_image_${imageId}_item_${sellItemId}`;
+        
+        // 使用原生方法觸發點擊
+        const fileInput = document.getElementById(inputId);
+        if (fileInput) {
+            fileInput.click();
+        }
+    };
+    
+    $placeholderWrapper.append($defaultContent);
+    
+    // 重新添加文件輸入元素（清空後的），確保 name 屬性格式正確
+    $fileInput.attr('name', `sell_image_${finalImageId}_item_${sellItemId}`);
+    $fileInput.attr('id', `sell_image_${finalImageId}_item_${sellItemId}`);
+    $placeholderWrapper.append($fileInput);
+    
+    // 添加隱藏輸入元素，標記此圖片需要刪除
+    const $deleteMarker = $('<input>').attr({
+        'type': 'hidden',
+        'name': `sell_delete_image_${finalImageId}_item_${sellItemId}`,
+        'value': 'true'
+    });
+    $placeholderWrapper.append($deleteMarker);
+    
+    // 替換原有的預覽容器
+    $previewContainer.replaceWith($placeholderWrapper);
+    
+    // 重新計算佔位符序號
+    updatePlaceholderNumbers($parentContainer);
+});
+
+// 新增函數：更新佔位符序號
+function updatePlaceholderNumbers($container) {
+    // 找出所有佔位符
+    const $placeholders = $container.find('.image-preview-wrapper[data-is-placeholder="true"]');
+    
+    // 找出已存在的圖片預覽
+    const $existingPreviews = $container.find('.image-preview-wrapper:not([data-is-placeholder="true"])');
+    
+    // 已存在圖片的 imageId 集合
+    const existingImageIds = new Set(
+        $existingPreviews.map(function() { 
+            return parseInt($(this).data('image-id')); // 確保轉換為整數
+        }).get()
+    );
+    
+    // 可用的 imageId (1 或 2)
+    const availableImageIds = [1, 2].filter(id => !existingImageIds.has(id));
+    
+    // 更新佔位符
+    $placeholders.each(function(index) {
+        if (index < availableImageIds.length) {
+            const newImageId = availableImageIds[index];
+            
+            // 更新 data-image-id
+            $(this).attr('data-image-id', newImageId);
+            
+            // 更新文字
+            $(this).find('p').text(`上傳示意圖${newImageId}`);
+            
+            // 更新隱藏輸入元素的 name
+            const sellItemId = $(this).data('sell-item-id');
+            const $fileInput = $(this).find('input[type="file"]');
+            $fileInput.attr('name', `sell_image_${newImageId}_item_${sellItemId}`);
+            $fileInput.attr('id', `sell_image_${newImageId}_item_${sellItemId}`);
+            
+            // 更新onclick函數的imageId，但只為佔位符添加
+            this.onclick = function(e) {
+                e.stopPropagation();
+                
+                // 檢查是否含有圖片，如果有則不觸發檔案選擇
+                if (this.querySelector('img')) {
+                    return;
+                }
+                
+                const sellItemId = this.getAttribute('data-sell-item-id');
+                const imageId = newImageId; // 使用新分配的ID
+                const inputId = `sell_image_${imageId}_item_${sellItemId}`;
+                
+                const fileInput = document.getElementById(inputId);
+                if (fileInput) {
+                    fileInput.click();
+                }
+            };
+        }
+    });
+}
+
+// 價目表圖片 - 檢視原圖功能
+$(document).on('click', '.view-image', function() {
+    const imageUrl = $(this).data('image-url');
+    
+    // 創建模態框
+    const $modalOverlay = $('<div>').addClass('modal-overlay').click(function() {
+        $(this).remove();
+    });
+    
+    const $modalImage = $('<img>').addClass('modal-image').attr('src', imageUrl);
+    
+    $modalOverlay.append($modalImage);
+    $('body').append($modalOverlay);
+});
+
+// === 頁面變更追蹤 ===
+// 追蹤表單變更的狀態
+let formChanged = false;
+// 儲存已變更欄位的名稱
+const changedFields = new Set();
+
+// 定義 handleVisibilityChange 函數，使其在小卡公開狀態切換時觸發變更偵測
+window.handleVisibilityChange = function(container, itemId, status) {
+    console.log(`===== 開始處理小卡公開狀態切換: itemId=${itemId}, status=${status} =====`);
+    
+    // 找到容器內的 radio 按鈕
+    const radio = container.querySelector(`input[type="radio"]`);
+    
+    // 如果 radio 尚未被選中，則模擬點擊
+    if (!radio.checked) {
+        // 保存舊值
+        const oldValue = radio.checked;
+        // 設置新值
+        radio.checked = true;
+        
+        console.log(`小卡狀態變更: 從 ${oldValue} 變更為 ${radio.checked}`);
+        
+        // 觸發遮罩效果
+        const cardContainer = container.closest('.commission-card').querySelector('.commission-card-container');
+        if (cardContainer) {
+            if (status === 'private') {
+                cardContainer.classList.add('private');
+            } else {
+                cardContainer.classList.remove('private');
+            }
+        }
+        
+        // 獲取卡片類型（需求、作品等）
+        const cardType = container.closest('.commission-card').getAttribute('data-template');
+        console.log(`小卡類型: ${cardType}`);
+        
+        // 根據卡片類型添加相應的變更標記
+        let fieldName = '';
+        let fieldType = '';
+        
+        if (cardType && cardType.includes('need')) {
+            fieldType = 'need_';
+            fieldName = `needStatus${itemId}`;
+            console.log('需求卡片公開狀態已變更');
+        } else if (cardType && cardType.includes('work_sellnow')) {
+            fieldType = 'work_sellnow_';
+            fieldName = `workSellnowStatus${itemId}`;
+            console.log('公開販售作品卡片公開狀態已變更');
+        } else if (cardType && cardType.includes('work_done')) {
+            fieldType = 'work_done_';
+            fieldName = `workStatus${itemId}`;
+            console.log('已成交作品卡片公開狀態已變更');
+        }
+        
+        console.log(`欄位名稱: ${fieldName}, 欄位類型: ${fieldType}`);
+        
+        // 獲取當前表單狀態
+        const currentFormData = getFormSnapshot();
+        
+        // 檢查是否與初始狀態相同
+        if (fieldName && initialFormData[fieldName] !== undefined) {
+            const currentValue = currentFormData[fieldName];
+            const initialValue = initialFormData[fieldName];
+            
+            console.log(`檢查欄位 ${fieldName}: 當前值=${currentValue}, 初始值=${initialValue}`);
+            
+            if (currentValue === initialValue) {
+                // 如果當前值與初始值相同，從變更集合中移除
+                changedFields.delete(fieldType);
+                console.log(`欄位 ${fieldName} 已恢復到初始狀態，從變更集合中移除 ${fieldType}`);
+            } else {
+                // 如果當前值與初始值不同，添加到變更集合
+                changedFields.add(fieldType);
+                console.log(`欄位 ${fieldName} 與初始狀態不同，添加到變更集合 ${fieldType}`);
+            }
+            
+            // 更新初始狀態，確保下次比較時使用正確的值
+            initialFormData[fieldName] = currentValue;
+            console.log(`更新初始狀態: ${fieldName} = ${currentValue}`);
+        } else {
+            // 如果沒有初始值記錄，添加到變更集合
+            if (fieldType) {
+                changedFields.add(fieldType);
+                console.log(`無法找到欄位 ${fieldName} 的初始值，添加到變更集合 ${fieldType}`);
+                
+                // 更新初始狀態，確保下次比較時使用正確的值
+                initialFormData[fieldName] = currentFormData[fieldName];
+                console.log(`設置初始狀態: ${fieldName} = ${currentFormData[fieldName]}`);
+            }
+        }
+        
+        // 更新表單變更狀態
+        formChanged = changedFields.size > 0;
+        console.log('表單變更狀態更新: formChanged =', formChanged, '變更欄位清單:', Array.from(changedFields));
+        
+        // 如果 debounceCheck 函數已定義，則觸發變更檢測
+        if (typeof debounceCheck === 'function') {
+            console.log('觸發變更檢測');
+            debounceCheck();
+        } else {
+            console.log('debounceCheck 函數未定義，無法觸發變更檢測');
+        }
+        
+        // 這裡可以加入原本的 AJAX 請求邏輯
+        // fetch(...)
+    } else {
+        console.log(`小卡狀態未變更: radio 已經是 ${radio.checked}`);
+    }
+    
+    console.log(`===== 結束處理小卡公開狀態切換 =====`);
+};
+
+$(document).ready(function() {
+    console.log('變更檢測系統：開始初始化');
+    
+    // 欄位名稱對應的顯示名稱
+    const fieldDisplayNames = {
+        'banner_image': '橫幅圖片',
+        'avatar_image': '頭像圖片',
+        'nickname': '暱稱',
+        'self_intro': '簡介',
+        'involved_acgn': '喜好作品',
+        'key_tags': '屬性Tag',
+        'sell_': '接案價目表',
+        'work_sellnow_': '公開販售作品',
+        'work_done_': '已成交作品',
+        'need_': '發起過的需求',
+        'switch-sell': '接案價目表顯示設定',
+        'switch-work-sellnow': '公開販售作品顯示設定',
+        'switch-work-done': '已成交作品顯示設定',
+        'switch-need-list': '發起過的需求顯示設定'
+    };
+    
+    // 欄位名稱關鍵詞映射到標準欄位名稱
+    const fieldNameKeywords = {
+        'user_introduction': 'self_intro',
+        'self_intro': 'self_intro',
+        'nickname': 'nickname',
+        'acgn_list': 'involved_acgn',
+        'involved_acgn': 'involved_acgn',
+        'tag_list': 'key_tags',
+        'key_tags': 'key_tags',
+        'banner': 'banner_image',
+        'avatar': 'avatar_image',
+        'switch-sell': 'switch-sell',
+        'switch-work-sellnow': 'switch-work-sellnow',
+        'switch-work-done': 'switch-work-done',
+        'switch-need-list': 'switch-need-list',
+        'workStatus': 'work_done_',       // 已成交作品狀態
+        'workSellnowStatus': 'work_sellnow_', // 公開販售作品狀態
+        'needStatus': 'need_'             // 發起過的需求狀態
+    };
+
+    // 標記變更檢測系統是否已初始化
+    let isInitialized = false;
+    
+    // 標記頁面是否已提交表單
+    let isFormSubmitted = false;
+    
+    // 自訂確認對話框元素
+    const customConfirmModal = document.getElementById('customConfirmModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const btnStay = document.getElementById('btnStay');
+    const btnLeave = document.getElementById('btnLeave');
+    let confirmCallback = null;
+    
+    // 禁用所有預設的 beforeunload 事件處理
+    window.onbeforeunload = null;
+    
+    // 標記頁面是否即將離開，防止重複檢查
+    let isLeavingPage = false;
+
+    // 顯示自訂確認對話框
+    function showCustomConfirm(message, onConfirm) {
+        console.log('顯示自訂確認對話框:', message);
+        modalMessage.textContent = message;
+        customConfirmModal.style.display = 'flex';
+        confirmCallback = onConfirm;
+    }
+
+    // 按鈕事件處理
+    btnStay.addEventListener('click', function() {
+        console.log('使用者選擇：留在此頁');
+        customConfirmModal.style.display = 'none';
+    });
+
+    btnLeave.addEventListener('click', function() {
+        console.log('使用者選擇：離開頁面');
+        isLeavingPage = true; // 標記頁面正在離開
+        customConfirmModal.style.display = 'none';
+        if (confirmCallback) {
+            confirmCallback();
+        }
+    });
+
+    // 點擊模態框背景不關閉
+    customConfirmModal.addEventListener('click', function(e) {
+        if (e.target === customConfirmModal) {
+            // 點擊遮罩層時觸發「留在此頁」按鈕的點擊事件
+            btnStay.click();
+        }
+    });
+
+    // ==============================================================
+    // === 重寫且簡化的表單狀態追蹤和變更檢測系統 - 修正順序恢復檢測 ===
+    // ==============================================================
+    
+    // 初始表單狀態
+    let initialFormData = {};
+    // 初始排序標識，用於記錄初始排序序列
+    let initialSortOrder = {};
+    
+    // 根據欄位名稱識別標準欄位類型
+    function identifyFieldType(fieldName) {
+        console.log(`嘗試識別欄位類型: ${fieldName}`);
+        
+        if (!fieldName) {
+            console.log('欄位名稱為空，無法識別');
+            return null;
+        }
+        
+        // 特殊處理 workStatus 數字後綴欄位（例如 workStatus11）- 已成交作品
+        if (/^workStatus\d+$/.test(fieldName)) {
+            console.log(`欄位 [${fieldName}] 識別為 [work_done_] 類型 (已成交作品狀態)`);
+            return 'work_done_';
+        }
+        
+        // 特殊處理 workSellnowStatus 數字後綴欄位（例如 workSellnowStatus11）- 公開販售作品
+        if (/^workSellnowStatus\d+$/.test(fieldName)) {
+            console.log(`欄位 [${fieldName}] 識別為 [work_sellnow_] 類型 (公開販售作品狀態)`);
+            return 'work_sellnow_';
+        }
+        
+        // 特殊處理 needStatus 數字後綴欄位（例如 needStatus11）- 發起過的需求
+        if (/^needStatus\d+$/.test(fieldName)) {
+            console.log(`欄位 [${fieldName}] 識別為 [need_] 類型 (需求狀態)`);
+            return 'need_';
+        }
+        
+        // 直接遍歷關鍵詞映射，檢查欄位名稱是否包含任何關鍵詞
+        for (const [keyword, standardField] of Object.entries(fieldNameKeywords)) {
+            if (fieldName.includes(keyword)) {
+                console.log(`欄位 [${fieldName}] 識別為 [${standardField}] 類型 (包含關鍵詞: ${keyword})`);
+                return standardField;
+            }
+        }
+        
+        // 特殊處理 sell_, work_sellnow_, work_done_, need_ 前綴
+        if (fieldName.includes('sell_')) {
+            console.log(`欄位 [${fieldName}] 識別為 [sell_] 類型 (包含前綴: sell_)`);
+            return 'sell_';
+        } else if (fieldName.includes('work_sellnow_')) {
+            console.log(`欄位 [${fieldName}] 識別為 [work_sellnow_] 類型 (包含前綴: work_sellnow_)`);
+            return 'work_sellnow_';
+        } else if (fieldName.includes('work_done_')) {
+            console.log(`欄位 [${fieldName}] 識別為 [work_done_] 類型 (包含前綴: work_done_)`);
+            return 'work_done_';
+        } else if (fieldName.includes('need_')) {
+            console.log(`欄位 [${fieldName}] 識別為 [need_] 類型 (包含前綴: need_)`);
+            return 'need_';
+        }
+        
+        // 無法識別的欄位
+        console.log(`無法識別欄位類型: ${fieldName}`);
+        return null;
+    }
+
+    // 標準化圖片排序資料，只保留相對順序資訊
+    function normalizeImageOrder(imageOrdersObj) {
+        try {
+            if (typeof imageOrdersObj === 'string') {
+                imageOrdersObj = JSON.parse(imageOrdersObj);
+            }
+            
+            // 按賣品ID分組，用於存儲每個賣品中圖片的相對位置
+            const result = {};
+            
+            // 遍歷所有圖片排序資訊
+            for (const [key, value] of Object.entries(imageOrdersObj)) {
+                // 解析key: image_order_賣品ID_圖片ID
+                const parts = key.split('_');
+                if (parts.length < 4) continue;
+                
+                const sellItemId = parts[2];
+                
+                // 如果該賣品還沒在結果集中，初始化為空陣列
+                if (!result[sellItemId]) {
+                    result[sellItemId] = [];
+                }
+                
+                // 添加圖片資訊到該賣品的陣列中
+                result[sellItemId].push({
+                    imageId: parts[3],
+                    position: parseInt(value) || 0
+                });
+            }
+            
+            // 對每個賣品的圖片按位置排序，並提取其視覺順序
+            const finalResult = {};
+            
+            for (const [sellItemId, images] of Object.entries(result)) {
+                // 按照position屬性排序
+                images.sort((a, b) => a.position - b.position);
+                
+                // 提取圖片ID的視覺順序
+                finalResult[sellItemId] = images.map(img => img.imageId).join(',');
+            }
+            
+            return JSON.stringify(finalResult);
+        } catch (error) {
+            console.error('標準化圖片順序時出錯:', error);
+            return "{}";
+        }
+    }
+    
+    // 取得表單當前狀態的序列化快照
+    function getFormSnapshot() {
+        try {
+            const formData = {};
+            
+            // 1. 文字輸入欄位
+            document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"], textarea').forEach(el => {
+                if (el.name || el.id) {
+                    const key = el.name || el.id;
+                    formData[key] = el.value || '';
+                    // 輸出所有自我介紹相關欄位的初始值，幫助調試
+                    if (key.includes('introduction') || key.includes('intro')) {
+                        console.log(`記錄欄位 [${key}] 值: [${el.value}]`);
+                    }
+                }
+            });
+            
+            // 2. 複選框和單選按鈕
+            document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(el => {
+                if (el.name || el.id) {
+                    const key = el.name || el.id;
+                    formData[key] = el.checked;
+                }
+            });
+            
+            // 3. 下拉選單
+            document.querySelectorAll('select').forEach(el => {
+                if (el.name || el.id) {
+                    const key = el.name || el.id;
+                    formData[key] = el.value || '';
+                }
+            });
+            
+            // 4. 喜好作品列表 - 保留精確順序，存儲文本內容
+            const acgnItems = [];
+            $('#favoriteAcgnList li .acgn-text').each(function() {
+                acgnItems.push($(this).text().trim());
+            });
+            // 儲存完整順序，而不是排序後的列表
+            formData['acgn_list'] = acgnItems.join('|');
+            formData['acgn_list_order'] = acgnItems.join('|');
+            
+            // 5. 標籤列表 - 保留精確順序，存儲文本內容
+            const tagItems = [];
+            $('#tagsContainer .tag').each(function() {
+                const tagText = $(this).clone().children().remove().end().text().trim();
+                tagItems.push(tagText);
+            });
+            // 儲存完整順序，而不是排序後的列表
+            formData['tag_list'] = tagItems.join('|');
+            formData['tag_list_order'] = tagItems.join('|');
+            
+            // 6. 文件上傳欄位（只檢查是否有選擇檔案）
+            document.querySelectorAll('input[type="file"]').forEach(el => {
+                if (el.files && el.files.length > 0) {
+                    formData[el.name || el.id] = el.files[0].name;
+                }
+            });
+            
+            // 7. 接案價目表順序 - 增強版調試輸出
+            console.log('===== 開始收集接案價目表順序 =====');
+            
+            // === 尋找價目表容器 - 嘗試多種選擇器 ===
+            const containerSelectors = [
+                '.sell-items-container',  // 原始選擇器
+                '#content-sell',          // 內容容器
+                '.sell-content-wrapper',  // 可能的內容包裝器
+                '.sell-item-container',   // 商品容器
+                '.content-list',          // 內容列表
+                'ul.content-list',        // 具體的列表標籤
+                '[id^="content-sell"]',   // ID以content-sell開頭的元素
+                '[id*="sell"]',           // ID包含sell的元素
+                '.expandable-content',    // 可展開的內容區域
+                '.expandable-content.show' // 已展開的內容區域
+            ];
+            
+            console.log('嘗試多個價目表容器選擇器:');
+            containerSelectors.forEach(selector => {
+                const containers = document.querySelectorAll(selector);
+                console.log(`選擇器 '${selector}': 找到 ${containers.length} 個元素`);
+                if (containers.length > 0) {
+                    console.log(`- 第一個元素 class="${containers[0].className}", id="${containers[0].id || '無'}"`);
+                    console.log(`- 子元素數量: ${containers[0].children.length}`);
+                }
+            });
+            
+            // === 尋找價目表項目元素 - 嘗試多種選擇器 ===
+            const itemSelectors = [
+                '.sell-item',             // 原始選擇器
+                '.sell-row',              // 可能的行
+                '.sell-content',          // 內容元素
+                '.sell-list-item',        // 列表項
+                '.price-item',            // 價格項
+                '.sell-card',             // 卡片樣式
+                '[id^="sell-item"]',      // ID以sell-item開頭
+                '[data-sell-item-id]',    // 帶有sell-item-id屬性
+                'div[class*="sell"]'      // class包含sell的div
+            ];
+            
+            console.log('嘗試多個價目表項目選擇器:');
+            itemSelectors.forEach(selector => {
+                const items = document.querySelectorAll(selector);
+                console.log(`選擇器 '${selector}': 找到 ${items.length} 個元素`);
+                if (items.length > 0) {
+                    console.log(`- 第一個元素 class="${items[0].className}", id="${items[0].id || '無'}"`);
+                    const itemTitle = items[0].querySelector('.sell-item-title') || 
+                                     items[0].querySelector('h3, h4, h5, strong') || 
+                                     items[0].querySelector('*[class*="title"]');
+                    console.log(`- 可能的標題: ${itemTitle ? itemTitle.textContent.trim() : '找不到標題元素'}`);
+                }
+            });
+            
+            // === 詳細分析頁面結構 ===
+            console.log('分析接案價目表相關區域的頁面結構:');
+            const contentSellArea = document.querySelector('#content-sell') || 
+                                   document.querySelector('[id^="content-sell"]');
+            
+            if (contentSellArea) {
+                console.log('找到內容區域:', contentSellArea.id);
+                
+                // 輸出HTML結構的前500個字符
+                console.log('內容區域HTML結構:', contentSellArea.innerHTML.substring(0, 500) + '...');
+                
+                // 遍歷直接子元素
+                console.log('直接子元素:');
+                Array.from(contentSellArea.children).forEach((child, index) => {
+                    console.log(`子元素 #${index}: tag=${child.tagName}, class="${child.className}", id="${child.id || '無'}"`);
+                });
+            } else {
+                console.log('找不到接案價目表相關區域');
+            }
+            
+            // 根據上面的查找結果，嘗試確定最佳的選擇器
+            let sellItems = [];
+            let bestItemSelector = '';
+            let maxItems = 0;
+            
+            // 嘗試所有項目選擇器，選擇找到最多元素的那個
+            itemSelectors.forEach(selector => {
+                const items = document.querySelectorAll(selector);
+                if (items.length > maxItems) {
+                    maxItems = items.length;
+                    bestItemSelector = selector;
+                    sellItems = Array.from(items);
+                }
+            });
+            
+            console.log(`使用最佳項目選擇器 '${bestItemSelector}', 找到 ${sellItems.length} 個項目`);
+            
+            // 使用找到的最佳選擇器收集項目
+            const sellItemsList = [];
+            sellItems.forEach((item, index) => {
+                const itemId = item.dataset.sellItemId || item.id;
+                const itemTitle = item.querySelector('.sell-item-title') || 
+                                 item.querySelector('h3, h4, h5, strong') || 
+                                 item.querySelector('*[class*="title"]');
+                const name = itemTitle ? itemTitle.textContent.trim() : `項目 #${index}`;
+                
+                console.log(`價目表項目 #${index}: ID=${itemId || 'undefined'}, 名稱=${name}`);
+                
+                if(itemId) {
+                    sellItemsList.push(itemId);
+                } else if (index !== undefined) {
+                    // 如果沒有ID，使用索引作為ID
+                    sellItemsList.push(`item_${index}`);
+                }
+            });
+            
+            formData['sell_items_order'] = sellItemsList.join('|');
+            console.log('最終收集的接案價目表順序:', formData['sell_items_order']);
+            console.log('===== 結束收集接案價目表順序 =====');
+            
+            // 8. 示意圖排序 - 重寫更精確的排序檢測
+            const imageOrders = {};
+            
+            // 按賣品ID分組收集圖片
+            const sellItemContainers = {};
+            
+            // 查找所有賣品容器
+            $('[id^="content-sell"] .d-flex').each(function() {
+                // 查找這個容器內的所有圖片預覽元素
+                const $images = $(this).find('.image-preview-wrapper');
+                
+                // 如果有圖片
+                if ($images.length > 0) {
+                    // 獲取第一個圖片的賣品ID作為容器ID
+                    const sellItemId = $images.first().data('sell-item-id');
+                    if (sellItemId) {
+                        sellItemContainers[sellItemId] = $(this);
+                    }
+                }
+            });
+            
+            // 對每個賣品容器，收集其中圖片的實際視覺順序
+            for (const [sellItemId, container] of Object.entries(sellItemContainers)) {
+                // 收集該容器中所有圖片元素
+                const $images = container.find('.image-preview-wrapper');
+                
+                // 按DOM順序收集圖片ID
+                $images.each(function(visualIndex) {
+                    const imageId = $(this).data('image-id');
+                    
+                    if (imageId) {
+                        // 使用DOM視覺順序作為排序值
+                        const key = `image_order_${sellItemId}_${imageId}`;
+                        imageOrders[key] = visualIndex;
+                    }
+                });
+            }
+            
+            formData['image_orders'] = JSON.stringify(imageOrders);
+            
+            // 9. 收集小卡公開狀態
+            console.log('===== 開始收集小卡公開狀態 =====');
+            
+            // 收集需求小卡的公開狀態
+            console.log('收集需求小卡的公開狀態:');
+            document.querySelectorAll('.commission-card[data-template="need"]').forEach((card, index) => {
+                const needId = card.querySelector('[data-debug]')?.dataset.needId;
+                if (needId) {
+                    const publicRadio = card.querySelector('input[value="public"]');
+                    const privateRadio = card.querySelector('input[value="private"]');
+                    if (publicRadio && privateRadio) {
+                        const fieldName = `needStatus${needId}`;
+                        const publicStatus = publicRadio.checked;
+                        const privateStatus = privateRadio.checked;
+                        formData[fieldName] = publicStatus;
+                        console.log(`需求小卡 #${index}: ID=${needId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
+                    }
+                }
+            });
+            
+            // 收集已成交作品小卡的公開狀態
+            console.log('收集已成交作品小卡的公開狀態:');
+            document.querySelectorAll('.commission-card[data-template="work_done"]').forEach((card, index) => {
+                const workId = card.querySelector('[data-debug]')?.dataset.workId;
+                if (workId) {
+                    const publicRadio = card.querySelector('input[value="public"]');
+                    const privateRadio = card.querySelector('input[value="private"]');
+                    if (publicRadio && privateRadio) {
+                        const fieldName = `workStatus${workId}`;
+                        const publicStatus = publicRadio.checked;
+                        const privateStatus = privateRadio.checked;
+                        formData[fieldName] = publicStatus;
+                        console.log(`已成交作品小卡 #${index}: ID=${workId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
+                        
+                        // 檢查 data-debug 元素的 data-public-status 屬性
+                        const debugElement = card.querySelector('[data-debug]');
+                        if (debugElement) {
+                            const dataPublicStatus = debugElement.dataset.publicStatus;
+                            console.log(`已成交作品小卡 #${index} data-public-status: ${dataPublicStatus}`);
+                            
+                            // 檢查是否與 radio 按鈕狀態一致
+                            const isConsistent = (dataPublicStatus === 'true' && publicStatus) || 
+                                                (dataPublicStatus === 'false' && !publicStatus);
+                            console.log(`已成交作品小卡 #${index} 狀態一致性: ${isConsistent}`);
+                        }
+                    }
+                }
+            });
+            
+            // 收集公開販售作品小卡的公開狀態
+            console.log('收集公開販售作品小卡的公開狀態:');
+            document.querySelectorAll('.commission-card[data-template="work_sellnow"]').forEach((card, index) => {
+                const workId = card.querySelector('[data-debug]')?.dataset.workId;
+                if (workId) {
+                    const publicRadio = card.querySelector('input[value="public"]');
+                    const privateRadio = card.querySelector('input[value="private"]');
+                    if (publicRadio && privateRadio) {
+                        const fieldName = `workSellnowStatus${workId}`;
+                        const publicStatus = publicRadio.checked;
+                        const privateStatus = privateRadio.checked;
+                        formData[fieldName] = publicStatus;
+                        console.log(`公開販售作品小卡 #${index}: ID=${workId}, 公開狀態=${publicStatus}, 非公開狀態=${privateStatus}, 欄位名稱=${fieldName}`);
+                        
+                        // 檢查 data-debug 元素的 data-public-status 屬性
+                        const debugElement = card.querySelector('[data-debug]');
+                        if (debugElement) {
+                            const dataPublicStatus = debugElement.dataset.publicStatus;
+                            console.log(`公開販售作品小卡 #${index} data-public-status: ${dataPublicStatus}`);
+                            
+                            // 檢查是否與 radio 按鈕狀態一致
+                            const isConsistent = (dataPublicStatus === 'true' && publicStatus) || 
+                                                (dataPublicStatus === 'false' && !publicStatus);
+                            console.log(`公開販售作品小卡 #${index} 狀態一致性: ${isConsistent}`);
+                        }
+                    }
+                }
+            });
+            
+            console.log('===== 結束收集小卡公開狀態 =====');
+            
+            return formData;
+        } catch (error) {
+            console.error('獲取表單快照時出錯:', error);
+            return {};
+        }
+    }
+    
+    // 初始化狀態
+    function initializeFormTracking() {
+        try {
+            console.log('===== 開始初始化表單跟蹤 =====');
+            
+            // 確保頁面已經完全載入
+            initialFormData = getFormSnapshot();
+            
+            // 特別處理示意圖排序的初始狀態，以便後續比較
+            if (initialFormData['image_orders']) {
+                const rawImageOrders = initialFormData['image_orders'];
+                console.log('原始圖片排序:', rawImageOrders);
+                
+                initialSortOrder.imageOrders = normalizeImageOrder(rawImageOrders);
+                console.log('初始標準化後圖片排序:', initialSortOrder.imageOrders);
+                
+                // 替換原始數據以確保使用標準化版本
+                initialFormData['image_orders'] = initialSortOrder.imageOrders;
+            }
+            
+            // 存儲其他排序的初始狀態
+            initialSortOrder.acgnList = initialFormData['acgn_list_order'];
+            initialSortOrder.tagList = initialFormData['tag_list_order'];
+            initialSortOrder.sellItems = initialFormData['sell_items_order'];
+            
+            console.log('表單初始狀態已保存:', Object.keys(initialFormData).length, '個欄位');
+            
+            // 輸出所有開關元素的狀態，便於調試
+            console.log('初始開關狀態:');
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if ((el.id && el.id.includes('switch-')) || (el.name && el.name.includes('switch-'))) {
+                    console.log(`- ${el.name || el.id}: ${el.checked}`);
+                }
+            });
+            
+            // 輸出排序項目的初始狀態
+            console.log('初始排序狀態:');
+            console.log('- 喜好作品:', initialSortOrder.acgnList);
+            console.log('- 屬性Tag:', initialSortOrder.tagList);
+            console.log('- 接案價目表順序:', initialSortOrder.sellItems);
+            console.log('- 示意圖順序(標準化):', initialSortOrder.imageOrders);
+            
+            // 輸出小卡狀態的初始狀態
+            console.log('初始小卡狀態:');
+            
+            // 檢查並修正已成交作品小卡的初始狀態
+            console.log('檢查並修正已成交作品小卡的初始狀態:');
+            document.querySelectorAll('.commission-card[data-template="work_done"]').forEach((card, index) => {
+                const workId = card.querySelector('[data-debug]')?.dataset.workId;
+                if (workId) {
+                    const fieldName = `workStatus${workId}`;
+                    const publicRadio = card.querySelector('input[value="public"]');
+                    if (publicRadio) {
+                        const publicStatus = publicRadio.checked;
+                        initialFormData[fieldName] = publicStatus;
+                        console.log(`修正已成交作品小卡 #${index}: ID=${workId}, 初始公開狀態=${publicStatus}`);
+                    }
+                }
+            });
+            
+            // 檢查並修正公開販售作品小卡的初始狀態
+            console.log('檢查並修正公開販售作品小卡的初始狀態:');
+            document.querySelectorAll('.commission-card[data-template="work_sellnow"]').forEach((card, index) => {
+                const workId = card.querySelector('[data-debug]')?.dataset.workId;
+                if (workId) {
+                    const fieldName = `workSellnowStatus${workId}`;
+                    const publicRadio = card.querySelector('input[value="public"]');
+                    if (publicRadio) {
+                        const publicStatus = publicRadio.checked;
+                        initialFormData[fieldName] = publicStatus;
+                        console.log(`修正公開販售作品小卡 #${index}: ID=${workId}, 初始公開狀態=${publicStatus}`);
+                    }
+                }
+            });
+            
+            // 檢查並修正需求小卡的初始狀態
+            console.log('檢查並修正需求小卡的初始狀態:');
+            document.querySelectorAll('.commission-card[data-template="need"]').forEach((card, index) => {
+                const needId = card.querySelector('[data-debug]')?.dataset.needId;
+                if (needId) {
+                    const fieldName = `needStatus${needId}`;
+                    const publicRadio = card.querySelector('input[value="public"]');
+                    if (publicRadio) {
+                        const publicStatus = publicRadio.checked;
+                        initialFormData[fieldName] = publicStatus;
+                        console.log(`修正需求小卡 #${index}: ID=${needId}, 初始公開狀態=${publicStatus}`);
+                    }
+                }
+            });
+            
+            // 輸出修正後的小卡狀態
+            console.log('修正後的小卡狀態:');
+            for (const key in initialFormData) {
+                if (key.startsWith('workStatus')) {
+                    console.log(`- ${key}: ${initialFormData[key]}`);
+                } else if (key.startsWith('workSellnowStatus')) {
+                    console.log(`- ${key}: ${initialFormData[key]}`);
+                } else if (key.startsWith('needStatus')) {
+                    console.log(`- ${key}: ${initialFormData[key]}`);
+                }
+            }
+            
+            isInitialized = true;
+            console.log('===== 結束初始化表單跟蹤 =====');
+        } catch (error) {
+            console.error('初始化表單跟蹤時出錯:', error);
+        }
+    }
+    
+    // 檢測表單變更 - 增強版
+    function checkFormChanges() {
+        if (!isInitialized || isLeavingPage || isFormSubmitted) {
+            console.log('檢測被跳過 - 初始化狀態:', isInitialized, '離開狀態:', isLeavingPage, '提交狀態:', isFormSubmitted);
+            return false;
+        }
+        
+        try {
+            console.log('===== 開始檢測表單變更 =====');
+            
+            // 清空 changedFields，重新檢測所有變更
+            changedFields.clear();
+            const currentFormData = getFormSnapshot();
+            
+            // 特別處理示意圖排序 - 標準化當前資料以進行比較
+            if (currentFormData['image_orders']) {
+                const rawCurrent = currentFormData['image_orders'];
+                console.log('當前原始圖片排序:', rawCurrent);
+                
+                const normalizedCurrent = normalizeImageOrder(rawCurrent);
+                console.log('當前標準化後圖片排序:', normalizedCurrent);
+                
+                // 比較標準化後的數據
+                const isImageOrderChanged = initialSortOrder.imageOrders !== normalizedCurrent;
+                
+                console.log('示意圖順序是否變更:', isImageOrderChanged);
+                
+                if (isImageOrderChanged) {
+                    console.log('示意圖順序已變更');
+                    changedFields.add('sell_');
+                } else {
+                    console.log('示意圖順序未變更 (比較標準化後的順序)');
+                }
+                
+                // 替換當前表單數據中的圖片排序，確保後面的比較一致性
+                currentFormData['image_orders'] = normalizedCurrent;
+            }
+            
+            // 分別檢測不同類型的小卡狀態變更
+            const workDoneChanged = checkCardTypeChanges(currentFormData, initialFormData, 'workStatus', 'work_done_');
+            const workSellnowChanged = checkCardTypeChanges(currentFormData, initialFormData, 'workSellnowStatus', 'work_sellnow_');
+            const needChanged = checkCardTypeChanges(currentFormData, initialFormData, 'needStatus', 'need_');
+            
+            // 檢測其他欄位變更（排除已處理的小卡狀態和示意圖排序）
+            console.log('檢測其他欄位變更:');
+            for (const key in currentFormData) {
+                // 跳過已處理的欄位
+                if (key === 'image_orders' || 
+                    key.startsWith('workStatus') || 
+                    key.startsWith('workSellnowStatus') || 
+                    key.startsWith('needStatus')) {
+                    continue;
+                }
+                
+                const currentValue = currentFormData[key];
+                const initialValue = initialFormData[key];
+                
+                // 如果初始值不存在但當前值存在，或兩者不相等，則視為變更
+                if ((initialValue === undefined && currentValue) || 
+                    (JSON.stringify(initialValue) !== JSON.stringify(currentValue))) {
+                    
+                    console.log(`檢測到變更: ${key}, 從 [${initialValue}] 變更為 [${currentValue}]`);
+                    
+                    // 針對排序變更欄位的特殊處理
+                    if (key === 'acgn_list_order') {
+                        changedFields.add('involved_acgn');
+                        console.log('喜好作品排序已變更');
+                    } 
+                    else if (key === 'tag_list_order') {
+                        changedFields.add('key_tags');
+                        console.log('屬性Tag排序已變更');
+                    }
+                    else if (key === 'sell_items_order') {
+                        changedFields.add('sell_');
+                        console.log('接案價目表順序已變更');
+                    }
+                    else {
+                        // 使用欄位識別函數進行識別
+                        const fieldType = identifyFieldType(key);
+                        if (fieldType) {
+                            changedFields.add(fieldType);
+                            console.log(`添加變更欄位: ${fieldType} (來源: ${key})`);
+                        }
+                    }
+                } else {
+                    // 如果是小卡狀態欄位，輸出調試信息
+                    if (key.startsWith('workStatus') || key.startsWith('workSellnowStatus') || key.startsWith('needStatus')) {
+                        console.log(`欄位 ${key} 未變更: 當前值=${currentValue}, 初始值=${initialValue}`);
+                    }
+                }
+            }
+            
+            // 更新表單變更狀態
+            formChanged = changedFields.size > 0;
+            
+            console.log('檢測到的變更欄位清單:', Array.from(changedFields));
+            console.log('最終表單變更檢測結果:', formChanged);
+            console.log('===== 結束檢測表單變更 =====');
+            
+            return formChanged;
+        } catch (error) {
+            console.error('檢測表單變更時出錯:', error);
+            return false;
+        }
+    }
+    
+    // 檢測特定類型的小卡狀態變更
+    function checkCardTypeChanges(currentFormData, initialFormData, prefix, fieldType) {
+        console.log(`檢測 ${fieldType} 類型的小卡狀態變更:`);
+        let hasChanges = false;
+        
+        // 收集所有相關欄位
+        const relevantKeys = Object.keys(currentFormData).filter(key => key.startsWith(prefix));
+        console.log(`找到 ${relevantKeys.length} 個 ${prefix} 欄位`);
+        
+        // 檢查每個欄位是否有變更
+        for (const key of relevantKeys) {
+            const currentValue = currentFormData[key];
+            const initialValue = initialFormData[key];
+            
+            // 如果初始值不存在但當前值存在，或兩者不相等，則視為變更
+            if ((initialValue === undefined && currentValue) || 
+                (JSON.stringify(initialValue) !== JSON.stringify(currentValue))) {
+                
+                console.log(`檢測到 ${fieldType} 變更: ${key}, 從 [${initialValue}] 變更為 [${currentValue}]`);
+                
+                // 檢查是否是真實的變更
+                if (prefix === 'workStatus') {
+                    // 檢查對應的小卡是否存在
+                    const cardId = key.replace('workStatus', '');
+                    const card = document.querySelector(`.commission-card[data-template="work_done"] [data-debug][data-work-id="${cardId}"]`);
+                    if (card) {
+                        console.log(`找到對應的已成交作品小卡: ID=${cardId}`);
+                        changedFields.add(fieldType);
+                        hasChanges = true;
+                    } else {
+                        console.log(`未找到對應的已成交作品小卡: ID=${cardId}，忽略此變更`);
+                    }
+                } else if (prefix === 'workSellnowStatus') {
+                    // 檢查對應的小卡是否存在
+                    const cardId = key.replace('workSellnowStatus', '');
+                    const card = document.querySelector(`.commission-card[data-template="work_sellnow"] [data-debug][data-work-id="${cardId}"]`);
+                    if (card) {
+                        console.log(`找到對應的公開販售作品小卡: ID=${cardId}`);
+                        changedFields.add(fieldType);
+                        hasChanges = true;
+                    } else {
+                        console.log(`未找到對應的公開販售作品小卡: ID=${cardId}，忽略此變更`);
+                    }
+                } else if (prefix === 'needStatus') {
+                    // 檢查對應的小卡是否存在
+                    const cardId = key.replace('needStatus', '');
+                    const card = document.querySelector(`.commission-card[data-template="need"] [data-debug][data-need-id="${cardId}"]`);
+                    if (card) {
+                        console.log(`找到對應的需求小卡: ID=${cardId}`);
+                        changedFields.add(fieldType);
+                        hasChanges = true;
+                    } else {
+                        console.log(`未找到對應的需求小卡: ID=${cardId}，忽略此變更`);
+                    }
+                } else {
+                    // 其他類型的欄位，直接添加
+                    changedFields.add(fieldType);
+                    hasChanges = true;
+                }
+            } else {
+                console.log(`${fieldType} 欄位 ${key} 未變更: 當前值=${currentValue}, 初始值=${initialValue}`);
+            }
+        }
+        
+        console.log(`${fieldType} 類型的小卡狀態變更檢測結果: ${hasChanges}`);
+        return hasChanges;
+    }
+    
+    // 獲取變更欄位的顯示名稱
+    function getChangedFieldNames() {
+        const displayNames = [];
+        changedFields.forEach(field => {
+            const displayName = fieldDisplayNames[field];
+            if (displayName && !displayNames.includes(displayName)) {
+                displayNames.push(displayName);
+            }
+        });
+        
+        // 如果沒有找到任何顯示名稱但確實有變更，則添加一個默認提示
+        if (displayNames.length === 0 && changedFields.size > 0) {
+            displayNames.push('未命名欄位');
+            console.log('警告：找到變更但沒有對應的顯示名稱, 字段:', Array.from(changedFields));
+        }
+        
+        return displayNames;
+    }
+    
+    // 防抖動函數 - 使用一次性變量保存結果
+    let debounceTimer = null;
+    let lastChangeResult = false; // 最後一次變更檢測結果
+    
+    function debounceCheck(delay = 300) {
+        console.log('===== 開始防抖動檢測 =====');
+        console.log('當前防抖動計時器狀態:', debounceTimer ? '已設置' : '未設置');
+        
+        if (debounceTimer) {
+            console.log('清除現有防抖動計時器');
+            clearTimeout(debounceTimer);
+        }
+        
+        console.log('設置新的防抖動計時器，延遲:', delay, 'ms');
+        debounceTimer = setTimeout(function() {
+            console.log('防抖動計時器觸發，執行檢測');
+            lastChangeResult = checkFormChanges();
+            console.log('檢測結果:', lastChangeResult);
+            console.log('===== 結束防抖動檢測 =====');
+        }, delay);
+    }
+    
+    // 強制立即檢查是否有變更，不使用防抖動
+    function forceCheck() {
+        console.log('===== 開始強制檢測 =====');
+        
+        if (debounceTimer) {
+            console.log('清除現有防抖動計時器');
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+        
+        console.log('執行立即檢測');
+        const result = checkFormChanges();
+        console.log('檢測結果:', result);
+        
+        console.log('===== 結束強制檢測 =====');
+        return result;
+    }
+    
+    // 頁面載入時初始化
+    $(window).on('load', function() {
+        console.log('頁面完全載入，即將初始化變更檢測系統');
+        setTimeout(function() {
+            initializeFormTracking();
+        }, 500);
+    });
+    
+    // 立即初始化 - 不等待 window.load 事件
+    setTimeout(function() {
+        console.log('立即初始化變更檢測系統');
+        if (!isInitialized) {
+            initializeFormTracking();
+        }
+    }, 100);
+    
+    // 避免重複觸發的標記
+    let isProcessingEvent = false;
+    
+    // 監聽各種變更事件 - 使用更穩健的事件绑定
+    console.log('設置事件監聽器');
+    
+    // 避免重複綁定事件
+    $(document).off('input.formTracking change.formTracking');
+    $(document).off('click.formTracking');
+    
+    // 所有輸入元素的變更事件
+    $(document).on('input.formTracking change.formTracking', 'input, textarea, select', function(e) {
+        // 防止重複處理同一事件
+        if (isProcessingEvent) {
+            console.log('防止重複處理事件');
+            return;
+        }
+        
+        isProcessingEvent = true;
+        
+        try {
+            const elName = this.name || this.id || '未命名元素';
+            // 排除篩選文字輸入框
+            if (this.classList.contains('filter-input')) {
+                console.log('篩選文字輸入框變更，不觸發變更偵測:', elName);
+                isProcessingEvent = false;
+                return;
+            }
+            console.log('輸入元素變更:', elName);
+            debounceCheck();
+        } finally {
+            // 使用短延時重置標記，避免阻塞後續事件
+            setTimeout(() => { isProcessingEvent = false; }, 50);
+        }
+    });
+    
+    // 為動態添加的元素設置特殊監聽
+    $(document).on('click.formTracking', '#addAcgnButton, .delete-acgn, #addTagButton, .delete-tag, .tag-add-btn, .add-sell-item, .delete-sell-item, .delete-image, .replace-image', function(e) {
+        // 防止重複處理同一事件
+        if (isProcessingEvent) {
+            console.log('防止重複處理特殊元素事件');
+            return;
+        }
+        
+        isProcessingEvent = true;
+        
+        try {
+            const elClass = this.className || this.id || '未命名元素';
+            console.log('特殊元素操作:', elClass);
+            setTimeout(debounceCheck, 100);
+        } finally {
+            // 使用短延時重置標記，避免阻塞後續事件
+            setTimeout(() => { isProcessingEvent = false; }, 50);
+        }
+    });
+    
+    // 監聽表單提交
+    $('form').on('submit', function() {
+        console.log('表單提交');
+        isFormSubmitted = true;
+    });
+    
+    // 監聽所有連結點擊
+    $(document).on('click', 'a:not([href^="#"]):not([href^="javascript"]):not([type="submit"])', function(e) {
+        console.log('偵測到連結點擊:', this.href);
+        
+        // 強制檢測變更，不使用緩存結果
+        if (forceCheck()) {
+            console.log('檢測到未保存的變更，顯示確認對話框');
+            e.preventDefault();
+            const url = $(this).attr('href');
+            const changedFieldNames = getChangedFieldNames();
+            
+            let confirmMessage = '您對下列項目的修改尚未提交，確定要離開嗎？\n';
+            changedFieldNames.forEach(name => {
+                confirmMessage += '．' + name + '\n';
+            });
+            
+            showCustomConfirm(confirmMessage, function() {
+                console.log('確認離開，導航到:', url);
+                isLeavingPage = true;
+                window.location.href = url;
+            });
+        } else {
+            console.log('沒有檢測到變更，允許直接導航');
+        }
+    });
+    
+    // 禁用預設的離開確認
+    $(window).on('beforeunload', function() {
+        return undefined;
+    });
+    window.onbeforeunload = null;
+    
+    // 返回上層按鈕的點擊事件
+    const cancelButton = document.getElementById('cancelButton');
+    if (cancelButton) {
+        console.log('找到返回上層按鈕，設置事件監聽');
+        
+        // 移除可能的舊事件監聽器，避免重複綁定
+        $(cancelButton).off('click.formTracking');
+        
+        $(cancelButton).on('click.formTracking', function(e) {
+            console.log('返回上層按鈕被點擊');
+            e.preventDefault();
+            
+            // 強制檢測變更，不使用緩存結果
+            if (forceCheck()) {
+                console.log('檢測到未保存的變更');
+                const changedFieldNames = getChangedFieldNames();
+                
+                let confirmMessage = '您對下列項目的修改尚未提交，確定要離開嗎？\n';
+                changedFieldNames.forEach(name => {
+                    confirmMessage += '．' + name + '\n';
+                });
+                
+                showCustomConfirm(confirmMessage, function() {
+                    console.log('確認離開，返回上層');
+                    navigateBack();
+                });
+            } else {
+                console.log('沒有檢測到變更，直接返回');
+                navigateBack();
+            }
+        });
+    } else {
+        console.error('找不到返回上層按鈕');
+    }
+    
+    // 返回上層的導航函數
+    function navigateBack() {
+        isLeavingPage = true;
+        if (window.history.length > 1) {
+            console.log('使用瀏覽器歷史返回');
+            window.history.back();
+        } else {
+            console.log('導航到公開卡片列表頁面');
+            window.location.href = "{% url 'commission:Urls_publiccard_list' %}";
+        }
+    }
+    
+    // 確保按鈕遮罩層正確工作
+    $('.button-overlay').on('click', function() {
+        console.log('按鈕遮罩層被點擊:', this.dataset.target);
+        const targetButton = document.getElementById(this.dataset.target);
+        if (targetButton) {
+            $(this).addClass('removed');
+            targetButton.disabled = false;
+        }
+    });
+    
+    // 監聽拖曳排序完成事件
+    $(document).ready(function() {
+        // 直接添加監聽到 Sortable 事件
+        if (typeof Sortable !== 'undefined') {
+            console.log('===== 開始設置 Sortable 拖曳事件監聽 =====');
+            
+            // 查找所有已初始化的Sortable實例
+            const allSortables = [];
+            
+            document.querySelectorAll('*').forEach(el => {
+                // 檢查元素是否有Sortable實例
+                const sortableInstance = Sortable.get(el);
+                if (sortableInstance) {
+                    console.log(`找到Sortable實例: ${el.tagName} ${el.id ? '#'+el.id : ''} ${el.className ? '.'+el.className.replace(/\s+/g, '.') : ''}`);
+                    allSortables.push({
+                        element: el,
+                        instance: sortableInstance
+                    });
+                }
+            });
+            
+            console.log(`總共找到 ${allSortables.length} 個Sortable實例`);
+            
+            // 為每個Sortable實例添加更新事件處理
+            allSortables.forEach((sortable, index) => {
+                // 獲取原始回調
+                const originalOnUpdate = sortable.instance.option('onUpdate');
+                
+                // 設置新的回調
+                sortable.instance.option('onUpdate', function(evt) {
+                    // 執行原始回調
+                    if (typeof originalOnUpdate === 'function') {
+                        originalOnUpdate(evt);
+                    }
+                    
+                    // 在控制台顯示詳細信息
+                    console.log(`===== Sortable實例 #${index} 觸發更新事件 =====`);
+                    console.log(`容器: ${evt.target.tagName} ${evt.target.id ? '#'+evt.target.id : ''} ${evt.target.className ? '.'+evt.target.className.replace(/\s+/g, '.') : ''}`);
+                    console.log(`從位置 ${evt.oldIndex} 移動到 ${evt.newIndex}`);
+                    
+                    // 檢測容器是否與接案價目表相關
+                    let isSellRelated = false;
+                    if (evt.target.id && evt.target.id.toLowerCase().includes('sell')) {
+                        isSellRelated = true;
+                    } else if (evt.target.className && evt.target.className.toLowerCase().includes('sell')) {
+                        isSellRelated = true;
+                    } else if (evt.target.closest('#content-sell')) {
+                        isSellRelated = true;
+                    }
+                    
+                    if (isSellRelated) {
+                        console.log('識別為接案價目表相關容器，執行強制檢測');
+                        
+                        // 強制執行表單變更檢測
+                        setTimeout(function() {
+                            const isChanged = forceCheck();
+                            console.log('接案價目表排序變更，檢測結果:', isChanged);
+                            
+                            // 如果沒有檢測到變更，強制添加變更標記
+                            if (!isChanged) {
+                                console.log('檢測結果為false，強制設置接案價目表變更標記');
+                                changedFields.add('sell_');
+                                formChanged = true;
+                            }
+                        }, 50);
+                    } else {
+                        // 普通容器，進行標準檢測
+                        setTimeout(debounceCheck, 50);
+                    }
+                });
+            });
+            
+            console.log('===== 結束設置 Sortable 拖曳事件監聽 =====');
+        } else {
+            console.error('Sortable 庫未加載，無法設置拖曳事件監聽');
+        }
+    });
+    
+    console.log('變更檢測系統初始化完成');
+    
+    // 所有輸入元素的變更事件
+    $(document).on('input.formTracking change.formTracking', 'input, textarea, select', function(e) {
+        // 防止重複處理同一事件
+        if (isProcessingEvent) {
+            console.log('防止重複處理事件');
+            return;
+        }
+        
+        isProcessingEvent = true;
+        
+        try {
+            const elName = this.name || this.id || '未命名元素';
+            
+            // 排除篩選文字輸入框
+            if (this.classList.contains('filter-input')) {
+                console.log('篩選文字輸入框變更，不觸發變更偵測:', elName);
+                isProcessingEvent = false;
+                return;
+            }
+            
+            console.log('輸入元素變更:', elName);
+            debounceCheck();
+        } finally {
+            // 使用短延時重置標記，避免阻塞後續事件
+            setTimeout(() => { isProcessingEvent = false; }, 50);
+        }
+    });
+});
+// ... existing code ...
+</script>
+
+{% endblock %}

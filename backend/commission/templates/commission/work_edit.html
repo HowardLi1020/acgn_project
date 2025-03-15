@@ -330,10 +330,9 @@
                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                   </svg>
                 </div>
-
               {% endfor %}
             {% endif %}
-
+            <a href="{% url 'commission:Urls_upload_compare' %}?work_id={{ ViewKey_DbWorkInfo_work_id.work_id }}">AI比對測試</a>
           </div>
         {% else %}
           <!-- 當沒有預覽圖時顯示提示文字 -->

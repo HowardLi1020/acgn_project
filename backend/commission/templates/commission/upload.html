@@ -1,0 +1,285 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %} 
+{% block app_css %}
+<style>
+
+.upload-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.upload-title {
+    color: #15a362;
+    margin-bottom: 25px;
+    text-align: center;
+    /* font-size: 24px; */
+    /* margin-bottom: 20px;
+    color: #333;
+    text-align: center; */
+}
+
+.upload-description {
+    margin-bottom: 20px;
+    color: #666;
+    text-align: center;
+}
+
+.file-upload-area {
+    border: 2px dashed #ccc;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background-color: #fff;
+    transition: all 0.3s;
+}
+
+.file-upload-area:hover {
+    border-color: #15a362;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label { /*選擇圖片按鈕(待刪)*/
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #0066cc;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.file-label:hover { /*選擇圖片按鈕(待刪)*/
+    background-color: #0055aa;
+}
+
+.file-name {
+    margin-top: 10px;
+    font-style: italic;
+    color: #666;
+}
+
+.submit-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+    background-color: #218838;
+}
+
+.submit-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.info-box {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #edfdf6;
+    border-left: 5px solid #15a362;
+    border-radius: 5px;
+}
+
+.info-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #15a362;
+}
+
+/* 遮罩和載入動畫樣式 */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    display: none;
+}
+
+.loading-container {
+    text-align: center;
+}
+
+.loading-spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #0066cc;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+    margin: 0 auto 20px;
+}
+
+.loading-text {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.loading-status {
+    color: #f3f3f3;
+    font-size: 14px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block app_title %}
+<!-- 直接打文字即可替換各自應用程式的標題 -->
+委託專區 Commission 
+{% endblock %}
+
+{% block app_content %}
+<div class="container mt-4">
+    <div class="upload-container">
+        <h2 class="upload-title">作品相似比對</h2>
+        <p class="upload-description">上傳一張圖片，我們將從接案作品中尋找相似的圖片，並使用 AI 技術分析相似度。</p>
+        
+        <form action="{% url 'commission:Urls_upload_compare' %}" method="post" enctype="multipart/form-data" id="upload-form">
+            {% csrf_token %}
+            
+            <div class="file-upload-area" id="drop-area">
+                <input type="file" name="image" id="file-input" class="file-input" accept="image/*">
+                <label for="file-input" class="btn app-btn-primary">選擇圖片</label>
+                <p class="mt-2">或將圖片拖放到此處</p>
+                <div class="file-name" id="file-name"></div>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-title">關於圖片比對</div>
+                <p>使用 AI 模型 CLIP 進行圖片比對，該模型能夠理解圖片的視覺特徵和語義內容。此功能用於輔助檢測使用者上傳之作品是否與其他作品相似。</p>
+                <p>比對結果將顯示：</p>
+                <ul>
+                    <li>相似度百分比</li>
+                    <li>最相似的圖片</li>
+                    <li>Attention Rollout 視覺化分析（顯示 AI 關注的區域）</li>
+                </ul>
+                <p>※ AI判定結果僅供參考，不代表真實情形，請理性看待。</p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 遮罩和載入動畫 -->
+<div class="overlay" id="loading-overlay">
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">處理中，請稍候...</div>
+        <div class="loading-status" id="loading-status">正在比對中</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block app_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    const uploadForm = document.getElementById('upload-form');
+    const dropArea = document.getElementById('drop-area');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingStatus = document.getElementById('loading-status');
+    
+    // 文件選擇事件
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+            fileName.textContent = fileInput.files[0].name;
+            // 顯示載入遮罩
+            showLoadingOverlay();
+            // 自動提交表單
+            uploadForm.submit();
+        } else {
+            fileName.textContent = '';
+        }
+    });
+    
+    // 拖放功能
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.style.borderColor = '#0066cc';
+        dropArea.style.backgroundColor = '#f0f7ff';
+    }
+    
+    function unhighlight() {
+        dropArea.style.borderColor = '#ccc';
+        dropArea.style.backgroundColor = '#fff';
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileName.textContent = files[0].name;
+            // 顯示載入遮罩
+            showLoadingOverlay();
+            // 自動提交表單
+            uploadForm.submit();
+        }
+    }
+    
+    // 顯示載入遮罩並更新狀態文字
+    function showLoadingOverlay() {
+        loadingOverlay.style.display = 'flex';
+        
+        // 模擬處理階段，更新狀態文字
+        setTimeout(() => {
+            loadingStatus.textContent = '正在比對中';
+        }, 0);
+        
+        setTimeout(() => {
+            loadingStatus.textContent = '正在生成熱力圖';
+        }, 3000);
+        
+        setTimeout(() => {
+            loadingStatus.textContent = '正在分析結果';
+        }, 6000);
+    }
+});
+</script>
+{% endblock %}

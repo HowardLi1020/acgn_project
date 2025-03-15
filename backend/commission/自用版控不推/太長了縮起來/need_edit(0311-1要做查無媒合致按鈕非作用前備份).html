@@ -1,0 +1,1054 @@
+{% extends '[BASE]ALL.html' %} 
+{% load static %}
+{% block app_css %}
+<!-- 如果應用程式有自己的css放這邊 -->
+<style>
+    /* 隱藏頂端列 */
+    .app-header-inner {
+      display: none;
+    }
+    /* 取消主板 .app 的 padding-top 設置 */
+    .app {
+      padding-top: 0 !important;
+    }
+
+    /* 抬頭已選擇之媒合案件文字樣式 */
+    .status-text {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #5d6778;
+      font-weight: 500;
+    }
+
+    .needer-info-card {
+      background: linear-gradient(45deg, #f5fdfc, #eefaf1, #edf0c5);
+      border: 2px dashed #c4c4c4;
+      border-radius: 10px;
+    }
+
+    /* 新增CSS樣式 */
+    .app-card-settings {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      height: 100%;
+    }
+
+    .content-wrapper {
+      flex-shrink: 0;
+    }
+
+    .image-upload-placeholder {
+      width: calc(33.33% - 10px);
+      height: 100px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .image-preview-wrapper {
+        position: relative;
+        display: flex; /* 使用 flex 來垂直置中 */
+        justify-content: center; /* 水平置中 */
+        align-items: center; /* 垂直置中 */
+        margin-right: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px; /* 確保wrapper也有圓角 */
+        overflow: hidden; /* 防止內容溢出圓角 */
+    }
+
+    .image-preview-wrapper img {
+        position: relative;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+  .icon-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background-color: rgba(0, 0, 0, 0.26);
+    border-radius: 5px;
+    user-select: none;
+    cursor: default;
+  }
+
+  .image-preview-wrapper:hover .icon-container {
+    opacity: 1;
+  }
+
+  .icon-button {
+    background: rgba(255, 255, 255, 0.418);
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 40px;  /* 設置固定寬度 */
+    height: 40px; /* 設置固定高度,與寬度相同 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  .icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+    transform: scale(1.1);
+  }
+
+  .icon-button svg {
+    color: #333;  /* 深色圖標 */
+    width: 20px;
+    height: 20px;
+  }
+
+  .tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    white-space: nowrap;
+    font-size: 12px;
+    display: none;
+  }
+
+  .icon-button:hover .tooltip {
+    display: block;
+  }
+  /* 新增模態框的樣式 */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050; /* 確保在導航選單之上 */
+  }
+
+  .modal-image {
+    max-width: 90%;
+    max-height: 90%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+</style>
+{% endblock %} 
+{% block app_title %}
+<!-- 直接打文字即可替換各自應用程式的標題 -->
+<div class="d-flex justify-content-between align-items-center">
+    需求編輯 (案件ID：{{ ViewKey_DbNeedInfo_need_id.need_id }})
+    <div class="d-flex align-items-center gap-3">
+        <p class="status-text" {% if matched_work %}style="color: #198754"{% endif %}>
+            {% if matched_work %}
+                已媒合：{{ matched_work.work_title }}
+            {% else %}
+                尚未選擇媒合案件
+            {% endif %}
+        </p>
+        <a href="{% url 'commission:Urls_need_case_chose' %}?need_id={{ ViewKey_DbNeedInfo_need_id.need_id }}" class="btn btn-sm app-btn-primary" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-90deg-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M14.854 4.854a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 4H3.5A2.5 2.5 0 0 0 1 6.5v8a.5.5 0 0 0 1 0v-8A1.5 1.5 0 0 1 3.5 5h9.793l-3.147 3.146a.5.5 0 0 0 .708.708z"/>
+            </svg>
+            選擇媒合案件
+        </a>
+    </div>
+</div>
+{% endblock %} 
+{% block app_content %}
+<div class="row g-4 settings-section">
+
+  <div class="col-12 col-md-8">
+    <div class="app-card app-card-settings shadow-sm p-4" style="min-height: 100%;">
+      <div class="app-card-body">
+        <form class="settings-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="setting-input-1" class="form-label">需求標題 (50字內)<span class="ms-2" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-content="10字後的字元會於字卡省略，關係到搜尋曝光率，標題黨站出來！"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-info-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                <circle cx="8" cy="4.5" r="1"/>
+              </svg></span>
+            </label>
+            <input type="text" class="form-control" id="setting-input-1" name="need_title" value="{{ ViewKey_DbNeedInfo_need_id.need_title }}" required maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label for="setting-input-2" class="form-label">需求種類</label>
+            <input type="text" class="form-control" id="setting-input-2" name="need_category" value="{{ ViewKey_DbNeedInfo_need_id.need_category }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="setting-input-3" class="form-label">需求說明<span class="ms-2" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-content="建議明確表達各項細節，越能減少溝通成本"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-info-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                <circle cx="8" cy="4.5" r="1"/>
+              </svg></span>
+            </label>
+            <textarea class="form-control" id="setting-input-3" name="need_description" style="height: 110px;" required>{{ ViewKey_DbNeedInfo_need_id.need_description }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label for="setting-input-4" class="form-label">關聯原作</label>
+            <input type="text" class="form-control" id="setting-input-4" name="need_original_from" value="{{ ViewKey_DbNeedInfo_need_id.need_original_from }}" maxlength="150">
+          </div>
+          <div class="mb-3">
+              <label for="setting-input-6" class="form-label">酬金</label>
+              <input type="number" class="form-control" id="setting-input-6" name="need_price" value="{{ ViewKey_DbNeedInfo_need_id.need_price }}" step="1" min="0">
+            </div>
+            <div class="mb-3">
+                <label for="setting-input-7" class="form-label">截止時間</label>
+                <input type="datetime-local" class="form-control" id="setting-input-7" name="deadline" value="{{ ViewKey_DbNeedInfo_need_id.deadline|date:'Y-m-d\TH:i' }}">
+            </div>
+            <div class="mb-3">
+              <label for="setting-input-5" class="form-label">需求示意圖(最多5張)</label>
+              <input type="file" class="form-control" id="setting-input-5" name="need_ex_image" accept="image/*" multiple>
+            </div>
+            <div class="mb-3 d-flex align-items-center">
+                <label for="setting-input-8" class="form-label me-3 mb-0">案件狀態</label>
+                <div id="setting-input-8" class="d-flex">
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="need_status" id="status1" value="徵件中" {% if ViewKey_DbNeedInfo_need_id.need_status == '徵件中' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-success" for="status1">
+                      徵件中
+                    </label>
+                  </div>
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="need_status" id="status2" value="截止" {% if ViewKey_DbNeedInfo_need_id.need_status == '截止' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-danger" for="status2">
+                      截止
+                    </label>
+                  </div>
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" name="need_status" id="status3" value="已成交" {% if ViewKey_DbNeedInfo_need_id.need_status == '已成交' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-info" for="status3">
+                      已成交
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="need_status" id="status4" value="取消徵件" {% if ViewKey_DbNeedInfo_need_id.need_status == '取消徵件' %}checked{% endif %}>
+                    <label class="form-check-label badge bg-secondary" for="status4">
+                      取消徵件
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <a href="#" id="cancelButton" class="btn app-btn-secondary me-2">返回上層</a>
+                <button type="submit" class="btn app-btn-primary">保存更改</button>
+              </div>
+        </form>
+      </div>
+      <!--//app-card-body-->
+    </div>
+    
+    <!--//app-card-->
+  </div>
+  <div class="col-12 col-md-4 d-flex flex-column">
+    <div class="app-card app-card-settings shadow-sm p-4 mb-4 d-flex flex-column" style="flex-grow: 1;">
+      <div class="content-wrapper">
+        <div class="mb-2"><strong>發布時間：</strong> {{ ViewKey_DbNeedInfo_need_id.publish_time|date:"Y-m-d H:i:s" }}</div>
+        <div class="mb-2"><strong>最後更新：</strong> {{ ViewKey_DbNeedInfo_need_id.last_update|date:"Y-m-d H:i:s" }}</div>
+        <p></p>
+        <h6>需求示意圖預覽</h6>
+
+        <!-- 檢查是否有示意圖資料 -->
+        {% if ViewKey_DbNeedEdit_sketches %} {# 從後端獲取的示意圖資料集 #}
+          <!-- 建立彈性容器用於顯示圖片預覽 -->
+          <div class="d-flex flex-wrap justify-content-start mt-3" id="image-preview-container">
+
+            <!-- 遍歷所有示意圖並顯示 -->
+            {% for sketches in ViewKey_DbNeedEdit_sketches %} {# 迭代每張示意圖 #}
+              <!-- 建立圖片預覽包裝容器 -->
+              <div class="d-flex align-items-center justify-content-center image-preview-wrapper" style="width: calc(50% - 10px); margin-right: 10px; margin-bottom: 10px;">
+                <!-- 顯示示意圖 -->
+                <img src="{{ MEDIA_URL }}commission/needID_img/{{ sketches.image_url }}" alt="需求示意圖 {{ sketches.step }}" style="width: 100%; height: auto; object-fit: cover; border-radius: 5px;">
+              </div>
+            {% endfor %}
+
+            <!-- 如果示意圖數量少於5張，顯示上傳佔位符 -->
+            {% if ViewKey_DbNeedEdit_sketches|length < 5 %} {# 檢查是否還可以上傳更多圖片 #}
+
+              <!-- 根據已有圖片數量顯示剩餘可上傳數量的佔位符 -->
+              {% for i in "12345"|slice:ViewKey_DbNeedEdit_sketches.count %} {# 動態生成剩餘空位 #}
+
+                <!-- 建立圖片上傳佔位符 -->
+                <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="width: calc(33.33% - 10px); height: 100px; background-color: #e0e0e0; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;">
+                  <!-- 顯示加號圖示 -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                  </svg>
+                </div>
+
+              {% endfor %}
+            {% endif %}
+
+          </div>
+        {% else %}
+          <!-- 當沒有示意圖時顯示提示文字 -->
+          <p>目前沒有示意圖</p>
+
+          <!-- 建立空的圖片預覽容器 -->
+          <div class="d-flex flex-wrap justify-content-start mt-3" id="image-preview-container">
+
+            <!-- 顯示5個上傳佔位符 -->
+            {% for i in "12345" %} {# 生成5個上傳位置 #}
+              <!-- 建立圖片上傳佔位符 -->
+              <div class="d-flex align-items-center justify-content-center image-upload-placeholder" style="width: calc(33.33% - 10px); height: 100px; background-color: #e0e0e0; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;">
+
+                <!-- 顯示加號圖示 -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+
+                </svg>
+              </div>
+
+            {% endfor %}
+
+          </div>
+        {% endif %}
+        <!-- 隱藏的檔案上傳輸入框 -->
+        <input type="file" id="image-upload-input" style="display: none;" accept="image/*" multiple>
+
+      </div>
+
+      <!-- <div class="flex-grow-1"></div> -->
+    </div>
+    
+    <div class="app-card shadow-sm p-4 mt-auto rounded-3 needer-info-card">
+      <h3 class="section-title">需求人資訊</h3>
+      <!-- 需求人大頭貼 -->
+      <div class="mb-2">
+        {% if ViewKey_DbPublicCardInfo.user_avatar %}
+          <img style="width: 120px" src="{{ MEDIA_URL }}commission/publiccard/avatar/{{ ViewKey_DbPublicCardInfo.user_avatar }}" alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像" />
+        {% else %}
+          <!-- 無大頭貼 -->
+          <img style="width:50px" src="https://thumb.ac-illust.com/b1/b170870007dfa419295d949814474ab2_w.jpeg" alt="{{ ViewKey_DbPublicCardInfo.user_nickname }}的頭像" />
+        {% endif %}
+      </div>
+      <div class="mb-2"><strong>需求人ID：</strong> {{ ViewKey_DbNeedInfo_need_id.needer_id }}</div>
+      <div class="mb-2"><strong>需求人暱稱：</strong> {{ ViewKey_DbPublicCardInfo.user_nickname }}</div>
+      <div class="mb-2"><strong>需求人介紹：</strong> {{ ViewKey_DbPublicCardInfo.user_introduction }}</div>
+    </div>
+  </div>
+</div>
+<!--//row-->
+{% endblock %} 
+{% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 追蹤表單變更
+    const form = document.querySelector('.settings-form');
+    let originalFormData = new FormData(form); // 用於追蹤原始表單數據
+    const changedFields = new Set(); // 用於追蹤已更改的欄位
+    // 追蹤所有選擇的文件
+    let allSelectedFiles = [];
+
+    // 監聽所有輸入欄位的變更
+    form.querySelectorAll('input, textarea').forEach(input => {
+      input.addEventListener('change', function() {
+        const currentValue = this.type === 'file' ? 
+          (this.files.length > 0 ? this.files[0].name : '') : 
+          this.value;
+        const originalValue = originalFormData.get(this.name);
+        
+        if (currentValue !== originalValue) {
+          changedFields.add(this.name);
+        } else {
+          changedFields.delete(this.name);
+        }
+      });
+    });
+
+    // 當重新整理頁面時，重置表單
+    window.addEventListener('beforeunload', function() {
+      form.reset();
+    });
+
+    let imageDeleted = false; // 追蹤是否有原有圖片被刪除
+    let newImageChanges = new Set(); // 追蹤新增的圖片變更
+
+    // 處理文件選擇
+    function handleFileSelection(files) {
+      let currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+      let placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+      const remainingPlaceholders = placeholders.length;
+      
+      // 決定要處理的文件數量
+      // const filesToProcess = Math.min(files.length, placeholders.length);
+      // const filesToProcess = remainingPlaceholders > 0 
+      //   ? Math.min(files.length, remainingPlaceholders) 
+      //   : Math.min(files.length, maxImages - currentImages.length);
+      // 本次修改：移除這行，因為它會覆蓋之前的文件
+    // allSelectedFiles = [...allSelectedFiles, ...files];
+    
+    // 本次修改：決定要處理的文件數量
+    const maxTotalImages = 5;
+    const currentTotal = allSelectedFiles.length;
+    const filesToProcess = Math.min(
+        files.length, 
+        maxTotalImages - currentTotal
+    );
+    
+    // 本次修改：將新文件添加到 allSelectedFiles
+    for (let i = 0; i < filesToProcess; i++) {
+        allSelectedFiles.push(files[i]);
+    }
+
+    let fileIndex = 0;
+
+      // 更新圖片預覽
+      // updateImagePreview(allSelectedFiles);
+
+      function processNextFile() {
+        if (fileIndex >= filesToProcess) {
+            adjustImageSizes();
+            updatePlaceholders();
+            return;
+        }
+
+    const file = files[fileIndex];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'image-preview-wrapper';
+      wrapper.dataset.isNewImage = 'true';
+      wrapper.dataset.position = placeholders[fileIndex].dataset.position; // 記錄位置
+
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.width = '100%';
+      img.style.height = 'auto';
+      img.style.objectFit = 'cover';
+
+      const iconContainer = createIconContainer();
+
+          wrapper.appendChild(img);
+          wrapper.appendChild(iconContainer);
+
+          if (placeholders.length > 0) {
+            // 優先填充灰色加號 DIV
+            imagePreviewContainer.replaceChild(wrapper, placeholders[0]);
+            newImageChanges.add(wrapper); // 記錄新增的圖片
+            changedFields.add('need_ex_image');
+            placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+          } else {
+            // 如果沒有灰色加號 DIV，則添加到現有圖片後面
+            imagePreviewContainer.appendChild(wrapper);
+          }
+
+          currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+          imagePreviewContainer.replaceChild(wrapper, placeholders[fileIndex]);
+      fileIndex++;
+      processNextFile();
+        };
+
+        reader.readAsDataURL(file);
+      }
+
+      processNextFile();
+      
+
+    }
+ // 更新圖片預覽的函數
+  function updateImagePreview() {
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        imagePreviewContainer.innerHTML = ''; // 清空現有預覽
+// 顯示所有已選擇的圖片
+allSelectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'image-preview-wrapper';
+                wrapper.dataset.isNewImage = 'true';
+                wrapper.dataset.fileIndex = index;
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                img.style.objectFit = 'cover';
+
+                const iconContainer = createIconContainer();
+                
+                wrapper.appendChild(img);
+                wrapper.appendChild(iconContainer);
+                imagePreviewContainer.appendChild(wrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+// 添加剩餘的預留位置
+const remainingSlots = 5 - allSelectedFiles.length;
+        for (let i = 0; i < remainingSlots; i++) {
+            const placeholder = createPlaceholder();
+            imagePreviewContainer.appendChild(placeholder);
+        }
+        
+      // 將所有選擇的文件添加到預覽中
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-preview-wrapper';
+
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.objectFit = 'cover';
+
+        const iconContainer = createIconContainer();
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(iconContainer);
+        imagePreviewContainer.appendChild(wrapper);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+    // 全域變數，用於追蹤要刪除的圖片
+    let deletedImages = [];
+    // 刪除示意圖的函數
+    function deleteImage(wrapper) {
+      if (wrapper.dataset.isNewImage === 'true') {
+        // 如果刪除的是新增的圖片
+        newImageChanges.delete(wrapper);
+        if (newImageChanges.size === 0) {
+          changedFields.delete('need_ex_image');
+        }
+      } else {
+        // 如果刪除的是原有的圖片
+        imageDeleted = true;
+      }
+      wrapper.remove();
+      updatePlaceholders();
+    }
+
+    // 檢視原圖的函數
+    function showImageModal(imgSrc) {
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay'; // 使用新樣式
+      const modalImage = document.createElement('img');
+      modalImage.src = imgSrc;
+      modalImage.className = 'modal-image'; // 使用新樣式
+
+      modalOverlay.appendChild(modalImage);
+      document.body.appendChild(modalOverlay);
+
+      modalOverlay.addEventListener('click', function() {
+        document.body.removeChild(modalOverlay);
+      });
+    }
+
+    // 處理表單提交
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+
+        // 添加所有累積的文件
+        allSelectedFiles.forEach((file, index) => {
+        // formData.append('need_ex_image', file);
+        // 新增：顯示每個上傳的檔案資訊
+        console.log(`(1添加所有累積的文件)上傳檔案 ${index + 1}:`, {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        });
+    });
+      
+      // 檢查是否有實際的變更
+      const hasRealChanges = changedFields.size > 0 || (imageDeleted || newImageChanges.size > 0);
+
+     // 修改表單提交處理
+    if (hasRealChanges) {
+      changedFields.forEach(fieldName => {
+        const input = form.querySelector(`[name="${fieldName}"]`);
+        
+        // 移除非檔案類型的判斷式 else if 部分
+        if (input && input.type !== 'file') {
+          formData.append(fieldName, input.value);
+        }
+      });
+
+    // 統一在此處處理檔案上傳
+    allSelectedFiles.forEach((file, index) => {
+    formData.append('need_ex_image', file);  // 使用固定欄位名稱
+
+    });
+
+    // 處理要刪除的圖片
+    if (deletedImages.length > 0) {
+        formData.append('deleted_images', JSON.stringify(deletedImages));
+    }
+
+      // 處理圖片更新（包含替換和新增）
+      const imageWrappers = document.querySelectorAll('.image-preview-wrapper');
+      imageWrappers.forEach((wrapper, index) => {
+          if (wrapper.dataset.isReplaced === 'true' && wrapper.file) {
+              // 處理替換的圖片
+              formData.append('replaced_images', JSON.stringify({
+                  original: wrapper.dataset.originalFileName,
+                  new: wrapper.file.name,
+                  index: index
+              }));
+              formData.append(`replacement_file_${index}`, wrapper.file);
+          } else if (wrapper.dataset.isNewImage === 'true') {
+              // 處理新增的圖片
+              const img = wrapper.querySelector('img');
+              if (img && wrapper.file) {
+                  // formData.append('need_ex_image', wrapper.file);
+              }
+          }
+      });
+        // 假設這段代碼在處理替換圖片時被調用
+        const replacedImages = [];
+        document.querySelectorAll('.image-preview-wrapper').forEach((wrapper, index) => {
+            if (wrapper.dataset.isReplaced === 'true') {
+                replacedImages.push({
+                    original: wrapper.dataset.originalFileName,
+                    index: index
+                });
+            }
+        });
+
+        // 將 replacedImages 轉換為 JSON 字符串並附加到表單數據中
+        formData.append('replaced_images', JSON.stringify(replacedImages));
+        // 新增：顯示最終要發送的 FormData 內容
+        console.log('FormData 內容:');
+        for (let pair of formData.entries()) {
+            if (pair[1] instanceof File) {
+                console.log(pair[0], {
+                    fileName: pair[1].name,
+                    fileSize: pair[1].size,
+                    fileType: pair[1].type
+                });
+            } else {
+                console.log(pair[0], pair[1]);
+            }
+        }
+
+        fetch('{% url "commission:Urls_need_edit" ViewKey_DbNeedInfo_need_id.need_id %}', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert('更新成功！');
+            sessionStorage.setItem('updatedFields', JSON.stringify(Array.from(changedFields)));
+            window.location.reload(true);
+          } else {
+            alert('更新失敗：' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        alert('發生錯誤，請稍後再試');
+        // 發生錯誤時也恢復被隱藏的圖片
+        document.querySelectorAll('.image-preview-wrapper[style*="display: none"]')
+            .forEach(wrapper => wrapper.style.display = '');
+        deletedImages = []; // 重置刪除清單
+        });
+      } else {
+        alert('沒有任何更改');
+      }
+    });
+
+    // 當無上一頁可返回時，返回commission/need_list/
+    const cancelButton = document.getElementById('cancelButton');
+    cancelButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = "{% url 'commission:Urls_need_list' %}";
+        }
+    });
+    const imageUploadInput = document.getElementById('image-upload-input');
+    const settingInput5 = document.getElementById('setting-input-5');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const maxImages = 5;
+
+    // 當點擊灰色加號方框時，觸發文件選擇
+    imagePreviewContainer.addEventListener('click', function(event) {
+      if (event.target.closest('.image-upload-placeholder')) {
+        imageUploadInput.click();
+      }
+    });
+
+    // 當左側的文件選擇工具被使用時，觸發右側的文件選擇工具
+    settingInput5.addEventListener('change', function(event) {
+      imageUploadInput.files = event.target.files;
+      handleFileSelection(event.target.files);
+      
+      // 將文件輸入視為更改
+      if (event.target.files.length > 0) {
+        changedFields.add('need_ex_image'); // 添加文件輸入到更改欄位
+      }
+    });
+
+    // 當右側的文件選擇工具被使用時，觸發左側的文件選擇工具
+    imageUploadInput.addEventListener('change', function(event) {
+      settingInput5.files = event.target.files;
+      handleFileSelection(event.target.files);
+      
+      // 將文件輸入視為更改
+      if (event.target.files.length > 0) {
+        changedFields.add('need_ex_image'); // 添加文件輸入到更改欄位
+      }
+    });
+
+    // 示意圖操作功能
+    function createIconContainer() {
+        // 宣告iconContainer為圖片操作按鈕
+        const iconContainer = document.createElement('div');
+        iconContainer.className = 'icon-container';
+        iconContainer.innerHTML = `
+            <button class="icon-button" title="檢視原圖">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11M13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/>
+                    <path d="M10.344 11.742q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1 6.5 6.5 0 0 1-1.398 1.4z"/>
+                    <path fill-rule="evenodd" d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5"/>
+                </svg>
+            </button>
+            <button class="icon-button replace-image" title="更換圖片">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                    <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                    <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2M14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1M2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1z"/>
+                </svg>
+            </button>
+            <button class="icon-button delete-image" title="刪除">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                </svg>
+            </button>
+        `;
+
+        // 監聽圖片操作按鈕事件
+        iconContainer.addEventListener('click', function(e) {
+            // 若點擊的不是按鈕，則顯示原圖
+            if (!e.target.closest('.icon-button')) {
+                e.stopPropagation(); // 停止事件冒泡
+                // 追查原圖路徑
+                const imgSrc = e.target.closest('.image-preview-wrapper').querySelector('img').src;
+                // 呼叫檢視原圖的函數
+                showImageModal(imgSrc);
+            }
+        });
+
+        // 當點擊「檢視原圖」按鈕時的事件處理
+        iconContainer.querySelector('.icon-button[title="檢視原圖"]').addEventListener('click', function(e) {
+            e.stopPropagation(); // 停止事件冒泡
+            // 追查原圖路徑
+            const imgSrc = e.target.closest('.image-preview-wrapper').querySelector('img').src;
+            // 呼叫檢視原圖的函數
+            showImageModal(imgSrc);
+        });
+
+        // 當點擊「更換圖片」按鈕時的事件處理
+        iconContainer.querySelector('.replace-image').addEventListener('click', function(e) {
+            e.stopPropagation(); // 停止事件冒泡
+            const wrapper = e.target.closest('.image-preview-wrapper');
+            // 呼叫更換示意圖的函數
+            replaceImage(wrapper);
+        });
+
+        // 當點擊「刪除」按鈕時的事件處理
+        iconContainer.querySelector('.delete-image').addEventListener('click', function(e) {
+            e.stopPropagation(); // 停止事件冒泡
+            const wrapper = e.target.closest('.image-preview-wrapper');
+            // 呼叫刪除示意圖的函數
+            deleteImage(wrapper);
+        });
+
+        return iconContainer;
+    }
+
+    // 更換示意圖的函數
+    function replaceImage(wrapper) {
+        const imageUploadInput = document.createElement('input');
+        imageUploadInput.type = 'file';
+        imageUploadInput.accept = 'image/*';
+        imageUploadInput.style.display = 'none';
+        document.body.appendChild(imageUploadInput);
+
+        // 儲存原始圖片的資訊
+        const originalImageUrl = wrapper.querySelector('img').src;
+        const originalFileName = originalImageUrl.split('/').pop();
+
+        imageUploadInput.click();
+
+        imageUploadInput.onchange = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                  wrapper.querySelector('img').src = e.target.result;
+                  wrapper.dataset.originalFileName = originalFileName; // 儲存原始檔案名
+                  wrapper.dataset.replacementFile = file.name; // 儲存新檔案名
+                  wrapper.dataset.isReplaced = 'true'; // 標記這是被替換的圖片
+                  changedFields.add('need_ex_image'); // 添加文件輸入到更改欄位
+                    // 儲存最後選擇的圖片
+                  //  wrapper.dataset.selectedImage = file; // 儲存選擇的圖片
+                };
+                reader.readAsDataURL(file);
+                // 將檔案存儲在wrapper中，以便之後提交
+                wrapper.file = file;
+            }
+            document.body.removeChild(imageUploadInput);
+        };
+    }
+
+    // 刪除示意圖的函數
+    function deleteImage(wrapper) {
+    const img = wrapper.querySelector('img');
+    const imgUrl = img.src;
+    const fileName = imgUrl.split('/').pop(); // 從 URL 取得檔案名稱
+    
+    if (wrapper.dataset.isNewImage === 'true') {
+        // 如果是新上傳的圖片，直接移除元素
+        wrapper.remove();
+        newImageChanges.delete(wrapper);
+        if (newImageChanges.size === 0) {
+            changedFields.delete('need_ex_image');
+        }
+    } else {
+        // 如果是既有的圖片，加入到待刪除清單
+        deletedImages.push(fileName);
+        wrapper.style.display = 'none'; // 先隱藏元素，但不立即移除
+        changedFields.add('deleted_images');
+    }
+    const fileIndex = parseInt(wrapper.dataset.fileIndex);
+        if (!isNaN(fileIndex)) {
+            allSelectedFiles.splice(fileIndex, 1); // 從陣列中移除該文件
+            updateImagePreview(); // 重新更新預覽
+        }
+      wrapper.remove();
+      updatePlaceholders();
+    }
+
+    // 檢視原圖的函數
+    function showImageModal(imgSrc) {
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay'; // 使用新樣式
+      const modalImage = document.createElement('img');
+      modalImage.src = imgSrc;
+      modalImage.className = 'modal-image'; // 使用新樣式
+
+      modalOverlay.appendChild(modalImage);
+      document.body.appendChild(modalOverlay);
+
+      modalOverlay.addEventListener('click', function() {
+        document.body.removeChild(modalOverlay);
+      });
+    }
+    // let imageDeleted = false; // 追蹤是否有原有圖片被刪除
+    // let newImageChanges = new Set(); // 追蹤新增的圖片變更
+
+    // 處理文件選擇
+    function handleFileSelection(files) {
+  let currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+  let placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+  const remainingPlaceholders = placeholders.length;
+  
+  // 決定要處理的文件數量
+  const filesToProcess = remainingPlaceholders > 0 
+    ? Math.min(files.length, remainingPlaceholders) 
+    : Math.min(files.length, maxImages);
+  
+  let fileIndex = 0;
+  let replacementIndex = 0;
+
+  function processNextFile() {
+    if (fileIndex >= filesToProcess) {
+      adjustImageSizes();
+      updatePlaceholders();
+      return;
+    }
+
+    const file = files[fileIndex];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-preview-wrapper';
+        wrapper.dataset.isNewImage = 'true'; // 標記這是新增的圖片
+
+
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.objectFit = 'cover';
+
+        const iconContainer = createIconContainer();
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(iconContainer);
+
+                if (placeholders.length > 0) {
+                  
+        // 優先填充灰色加號 DIV
+        imagePreviewContainer.replaceChild(wrapper, placeholders[0]);
+        
+          newImageChanges.add(wrapper); // 記錄新增的圖片
+          changedFields.add('need_ex_image');
+        placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+      } else {
+        // 如果沒有灰色加號 DIV，則替換現有圖片
+        if (currentImages[replacementIndex]) {
+          imagePreviewContainer.replaceChild(wrapper, currentImages[replacementIndex]);
+        } else {
+          imagePreviewContainer.appendChild(wrapper);
+        }
+        replacementIndex = (replacementIndex + 1) % maxImages;
+      }
+
+      currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+      fileIndex++;
+      processNextFile();
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  processNextFile();
+}
+const existingImages = document.querySelectorAll('.image-preview-wrapper');
+    existingImages.forEach(wrapper => {
+        const iconContainer = createIconContainer();
+        wrapper.appendChild(iconContainer);
+    });
+
+    function updatePlaceholders() {
+      const currentImages = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+      const placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+
+      // 移除所有現有的佔位符
+      placeholders.forEach(placeholder => placeholder.remove());
+
+      // 添加剩餘的灰色加號DIV
+      for (let i = currentImages.length; i < maxImages; i++) {
+        const placeholder = createPlaceholder();
+        imagePreviewContainer.appendChild(placeholder);
+      }
+    }
+
+    function createPlaceholder() {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'd-flex align-items-center justify-content-center image-upload-placeholder';
+      placeholder.style.width = 'calc(33.33% - 10px)';
+      placeholder.style.height = '100px';
+      placeholder.style.backgroundColor = '#e0e0e0';
+      placeholder.style.borderRadius = '5px';
+      placeholder.style.cursor = 'pointer';
+      placeholder.style.marginRight = '10px';
+      placeholder.style.marginBottom = '10px';
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '16');
+      svg.setAttribute('height', '16');
+      svg.setAttribute('fill', 'currentColor');
+      svg.classList.add('bi', 'bi-plus-circle');
+      svg.setAttribute('viewBox', '0 0 16 16');
+
+      const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path1.setAttribute('d', 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16');
+
+      const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path2.setAttribute('d', 'M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4');
+
+      svg.appendChild(path1);
+      svg.appendChild(path2);
+      placeholder.appendChild(svg);
+
+      return placeholder;
+    }
+
+    function adjustImageSizes() {
+      const images = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+      const placeholders = imagePreviewContainer.querySelectorAll('.image-upload-placeholder');
+      const totalItems = images.length + placeholders.length;
+
+      const setSize = (element, size) => {
+        element.style.width = size;
+        element.style.height = size === 'calc(33.33% - 10px)' ? '100px' : 'auto';
+      };
+
+      if (totalItems <= 3) {
+        images.forEach(img => setSize(img, 'calc(33.33% - 10px)'));
+        placeholders.forEach(placeholder => setSize(placeholder, 'calc(33.33% - 10px)'));
+      } else if (totalItems <= 6) {
+        images.forEach(img => setSize(img, 'calc(50% - 10px)'));
+        placeholders.forEach(placeholder => setSize(placeholder, 'calc(50% - 10px)'));
+      } else {
+        images.forEach(img => setSize(img, 'calc(25% - 10px)'));
+        placeholders.forEach(placeholder => setSize(placeholder, 'calc(25% - 10px)'));
+      }
+    }
+    // 初始化佔位符
+    updatePlaceholders();
+  });
+
+  // 在頁面載入時檢查是否有更新過的欄位
+
+    const updatedFields = JSON.parse(sessionStorage.getItem('updatedFields') || '[]');
+    
+    if (updatedFields.length > 0) {
+      // 清除儲存的欄位資訊
+      sessionStorage.removeItem('updatedFields');
+      
+      // 只對更新過的欄位添加視覺效果
+      updatedFields.forEach(fieldName => {
+        // 處理一般輸入欄位
+        const input = document.querySelector(`[name="${fieldName}"]`);
+        if (input) {
+          if (fieldName === 'need_status') {
+            const statusContainer = document.querySelector('#setting-input-8');
+            if (statusContainer) {
+              statusContainer.style.backgroundColor = '#e8f0fe';
+              statusContainer.style.boxShadow = '0 0 0 8px #e8f0fe'; // 使用 box-shadow 創造視覺空間
+              statusContainer.style.borderRadius = '0.1px'; // 添加圓角效果
+              setTimeout(() => {
+                statusContainer.style.transition = 'background-color 1s, box-shadow 1s';
+                statusContainer.style.backgroundColor = '';
+                statusContainer.style.boxShadow = '';
+              }, 2000); // 案件狀態更新後的視覺效果停留秒數
+            }
+          } else {
+            input.style.backgroundColor = '#e8f0fe';
+            
+            setTimeout(() => {
+              input.style.transition = 'background-color 1s';
+              input.style.backgroundColor = '';
+            }, 2000); // 其他輸入欄位資料更新後的視覺效果停留秒數
+          }
+        }
+      });
+    };
+</script>
+
+{% endblock %}

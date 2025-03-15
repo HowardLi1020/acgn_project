@@ -23,7 +23,8 @@ urlpatterns = [
     path('api/image-info/', views.ViewFn_image_info_api, name='Urls_image_info_api'), # 原始檔圖片DPI資訊API端點
     path('api/archive-info/', views.ViewFn_archive_info_api, name='Urls_archive_info_api'), # 壓縮檔資訊API端點
     path('api/need-info/', views.ViewFn_need_info_api, name='Urls_need_info_api'), # 選擇投稿需求案id之API端點
-    
+    path("upload/", views.upload_and_compare, name="Urls_upload_compare"), # [測試]上傳圖片並比對
+
     # 名片頁
     path('publiccard_list/', views.ViewFn_publiccard_list, name='Urls_publiccard_list'),
     path('publiccard/edit/<int:view_fn_publiccard_id>/', views.ViewFn_publiccard_edit, name='Urls_publiccard_edit'),

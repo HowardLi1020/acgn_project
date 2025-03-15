@@ -1,0 +1,215 @@
+{% extends '[BASE]ALL.html' %}
+{% load static %} 
+{% block app_css %}
+<style>
+/* 隱藏頂端列 */
+.app-header-inner {
+    display: none;
+}
+/* 取消主板 .app 的 padding-top 設置 */
+.app {
+    padding-top: 0 !important;
+}
+
+.image-comparison {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.image-box {
+    width: 300px;
+}
+.image-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.similarity-info {
+    font-size: 1.2em;
+    margin: 15px 0;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}
+.similarity-high {
+    background-color: #e7f5e7;
+    border-left: 5px solid #28a745;
+}
+.similarity-medium {
+    background-color: #fff3cd;
+    border-left: 5px solid #ffc107;
+}
+.similarity-low {
+    background-color: #f8f9fa;
+    border-left: 5px solid #6c757d;
+}
+.similarity-description {
+    margin-top: 10px;
+    font-style: italic;
+}
+.gradcam-info {
+    margin-top: 40px;
+    padding: 15px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+}
+.gradcam-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #0066cc;
+}
+.gradcam-description {
+    margin-bottom: 15px;
+    font-style: italic;
+}
+.error-message {
+    padding: 15px;
+    background-color: #fee;
+    border-left: 5px solid #f55;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.color-bar {
+    width: 200px;
+    height: 20px;
+    background: linear-gradient(to right, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000);
+    margin-right: 10px;
+    border-radius: 3px;
+}
+.legend-label {
+    display: flex;
+    justify-content: space-between;
+    width: 200px;
+    font-size: 0.8em;
+}
+</style>
+{% endblock %}
+
+{% block app_title %}
+<!-- 直接打文字即可替換各自應用程式的標題 -->
+AI 圖片比對結果
+{% endblock %} 
+
+{% block app_content %}
+<div class="container">
+    <!-- <h1 class="mb-4">AI 圖片比對結果</h1> -->
+    
+    {% if error_message %}
+    <div class="error-message">
+        <h3>處理過程中發生錯誤：</h3>
+        <p>{{ error_message }}</p>
+        <p>請嘗試上傳其他圖片或聯繫管理員。</p>
+    </div>
+    {% endif %}
+    
+    {% if best_match %}
+        {% if is_very_similar %}
+        <div class="similarity-info similarity-high">
+        {% elif similarity > 85 %}
+        <div class="similarity-info similarity-high">
+        {% elif similarity > 70 %}
+        <div class="similarity-info similarity-medium">
+        {% else %}
+        <div class="similarity-info similarity-low">
+        {% endif %}
+            <strong>相似度：</strong><span class="badge bg-primary">{{ similarity }}%</span>
+            {% if similarity_description %}
+            <div class="similarity-description">{{ similarity_description }}</div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <div class="image-comparison">
+        <div class="image-box">
+            <div class="image-title">上傳的圖片</div>
+            <img src="{{ MEDIA_URL }}uploads/{{ uploaded_image }}" class="img-fluid">
+        </div>
+        
+        {% if best_match %}
+        <div class="image-box">
+            <div class="image-title">最相似的圖片</div>
+            <img src="{{ best_match_image_url }}" class="img-fluid">
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if uploaded_gradcam_url or best_match_gradcam_url %}
+    <div class="gradcam-info">
+        <div class="gradcam-title">Grad-CAM 視覺化分析</div>
+        <div class="gradcam-description">
+            熱力圖顯示了 AI 模型在比較圖片時最關注的區域。紅色區域表示關注度高，藍色區域表示關注度低。
+        </div>
+        
+        <div class="heatmap-legend">
+            <div class="color-bar"></div>
+            <div>
+                <div class="legend-label">
+                    <span>低關注度</span>
+                    <span>高關注度</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="image-comparison">
+            {% if uploaded_gradcam_url %}
+            <div class="image-box">
+                <div class="image-title">上傳圖片的關注區域</div>
+                <img src="{{ uploaded_gradcam_url }}" class="img-fluid">
+            </div>
+            {% endif %}
+            
+            {% if best_match_gradcam_url %}
+            <div class="image-box">
+                <div class="image-title">匹配圖片的關注區域</div>
+                <img src="{{ best_match_gradcam_url }}" class="img-fluid">
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if is_very_similar %}
+        <div class="alert alert-info mt-3">
+            <strong>注意：</strong> 這些圖片非常相似，熱力圖顯示了模型認為最具特徵的區域。
+            {% if similarity > 98 %}相似度極高，可能是完全相同的圖片。{% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if work_info %}
+    <div class="card mt-4">
+        <div class="card-header">作品資訊</div>
+        <div class="card-body">
+            <h5 class="card-title">{{ work_info.work_title }}</h5>
+            <p class="card-text">{{ work_info.work_description }}</p>
+            {% if work_info.worker_id %}
+            <p><strong>作者ID:</strong> {{ work_info.worker_id }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if not best_match and not error_message %}
+    <div class="alert alert-warning">
+        沒有找到相似圖片。
+    </div>
+    {% endif %}
+    
+    <a href="{% url 'commission:Urls_upload_compare' %}" class="btn btn-primary mt-3">重新上傳比對</a>
+</div>
+{% endblock %}
+
+{% block app_script %}
+<!-- 如果應用程式有自己的JAVA Script放這邊 -->
+<script>
+// 頁面加載後執行
+document.addEventListener('DOMContentLoaded', function() {
+    // 可以在此添加頁面加載後的初始化代碼
+});
+</script>
+{% endblock %}
