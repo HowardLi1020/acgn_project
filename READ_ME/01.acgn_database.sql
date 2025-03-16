@@ -448,7 +448,7 @@ CREATE TABLE db_public_card_info (
     -- need_original_from VARCHAR(150),                  -- 需求關聯原作（關聯資料表：需求need_info）
     -- need_price DECIMAL(10),                           -- 酬金（關聯資料表：需求need_info）
     deal_count INT,                                   -- 成交計數
-    sell_public_status BOOLEAN DEFAULT TRUE,          -- 價目表 是否公開開關
+    sell_public_status BOOLEAN DEFAULT FALSE,          -- 價目表 是否公開開關
     work_sellnow_list_public_status BOOLEAN DEFAULT TRUE,     -- 公開作品列表 是否公開開關
     work_done_list_public_status BOOLEAN DEFAULT TRUE,-- 已成交作品列表 是否公開開關
     need_list_public_status BOOLEAN DEFAULT TRUE,     -- 發起需求列表 是否公開開關
