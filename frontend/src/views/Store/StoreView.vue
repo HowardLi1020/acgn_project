@@ -157,6 +157,9 @@ const navigateToMyProducts = () => {
 const navigateToPurchasedProducts = () => {
   router.push({ name: 'PurchasedProducts' })
 }
+const navigateToWishlist = () => {
+  router.push({ name: 'Wishlist' })
+}
 
 onMounted(() => {
   fetchCategories()
@@ -178,6 +181,10 @@ onMounted(() => {
     <button v-if="isMember" @click="navigateToPurchasedProducts" class="purchased-btn">
         購買紀錄
     </button>
+    <button v-if="isMember" @click="navigateToWishlist" class="wishlist-btn">
+        我的收藏
+    </button>
+
     <!-- 添加搜索欄 -->
     <div class="search-bar">
       <input
@@ -377,4 +384,5 @@ onMounted(() => {
     border-color: #4caf50;
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 }
+
 </style>

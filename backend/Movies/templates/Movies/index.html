@@ -18,7 +18,6 @@
 </form>
 
 <p> </p>
-<p> </p>
 
 <!-- 新增電影按鈕 -->
 <a href="{% url 'Movies:add_movie' %}" class="btn btn-success mb-3">新增電影</a>
@@ -34,7 +33,7 @@
                 <th>電影類型</th>
                 <th>導演</th>
                 <th>演員</th>
-                <th>電影描述</th> <!-- 新增的電影描述欄位 -->
+                <th>電影描述</th>
                 <th>編輯</th>
             </tr>
         </thead>
@@ -49,7 +48,7 @@
                 <td>{{ movie.movie_genre }}</td>
                 <td>{{ movie.director }}</td>
                 <td>{{ movie.cast }}</td>
-                <td>{{ movie.movie_description }}</td> <!-- 顯示電影描述 -->
+                <td>{{ movie.movie_description }}</td>
                 <td>
                     <a href="{% url 'Movies:edit' movie.movie_id %}" class="btn btn-primary">修改</a>
                     <a href="{% url 'Movies:delete' movie.movie_id %}" class="btn btn-danger">刪除</a>
@@ -57,7 +56,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8">沒有找到符合條件的電影。</td> <!-- 修改 colspan -->
+                <td colspan="8">沒有找到符合條件的電影。</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -66,29 +65,21 @@
     <!-- 分頁按鈕 -->
     <nav aria-label="Page navigation example">
         <ul class="pagination">
-            <!-- 回首頁按鈕 -->
-            <li class="page-item">
-                <a class="page-link page-ajax" href="/Movies/" aria-label="首頁">首頁</a>
-            </li>
-
-            <!-- 上一頁 -->
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="上一頁">上一頁</a>
+                <a class="page-link page-ajax" href="?page={{ page_obj.previous_page_number }}&keyword={{ query }}">上一頁</a>
             </li>
             {% endif %}
 
-            <!-- 頁碼按鈕 -->
-            {% for num in page_obj.paginator.page_range %}
+            {% for num in page_range %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link page-ajax" href="?page={{ num }}{% if query %}&keyword={{ query }}{% endif %}">{{ num }}</a>
+                <a class="page-link page-ajax" href="?page={{ num }}&keyword={{ query }}">{{ num }}</a>
             </li>
             {% endfor %}
 
-            <!-- 下一頁 -->
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}{% if query %}&keyword={{ query }}{% endif %}" aria-label="下一頁">下一頁</a>
+                <a class="page-link page-ajax" href="?page={{ page_obj.next_page_number }}&keyword={{ query }}">下一頁</a>
             </li>
             {% endif %}
         </ul>
@@ -113,6 +104,7 @@
                 type: 'GET',
                 success: function(response) {
                     $('#movies-list').html($(response).find('#movies-list').html());
+                    window.history.pushState(null, "", url); // 更新網址
                 },
                 error: function() {
                     alert('頁面載入失敗');
@@ -132,6 +124,7 @@
                 type: 'GET',
                 success: function(response) {
                     $('#movies-list').html($(response).find('#movies-list').html());
+                    window.history.pushState(null, "", url); // 更新網址
                 },
                 error: function() {
                     alert('搜尋失敗');

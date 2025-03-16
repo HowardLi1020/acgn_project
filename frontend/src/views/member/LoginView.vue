@@ -3,6 +3,7 @@ import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import Swal from 'sweetalert2'
 import { useUserStore } from '@/stores/user';
+import { fetchPersonalLikes } from '@/stores/user'; // 引用 API 方法
 import api from '@/utils/api'; // 你的 Axios 實例
 
 const route = useRoute(); // 獲取當前路由
@@ -107,24 +108,54 @@ const handleSubmit = async (event) => {
         const data = await response.json();
         console.log("Login Response:", data);  // 打印 API 響應
 
-        const { user, tokens, personalLikes } = data;
+        const { user, tokens } = data;
 
         // 使用 Pinia 儲存用戶資料
-        userStore.login(user, tokens.access, tokens.refresh, personalLikes);
-        // localStorage 檢查
-        console.log("Access Token in LocalStorage:", localStorage.getItem('access_token'));
-        console.log("Refresh Token in LocalStorage:", localStorage.getItem('refresh_token'));
+        userStore.login(user, tokens.access, tokens.refresh);
+        
+        // 調用 fetchPersonalLikes() 獲取個人喜好
+        const personalLikes = await fetchPersonalLikes();
 
-        // 登入成功，跳轉到中心頁
-        router.push({ name: 'center', params: { user_id: user.user_id } });
-        } catch (error) {
+        if (personalLikes.length > 0) {
+          // 提取第一個喜好的 type_name
+          const firstPersonalLike = personalLikes[0].type_name;
+
+          Swal.fire({
+            title: '登入成功',
+            text: `即將為您跳轉到 ${firstPersonalLike || '未知項目'}`,
+            icon: 'success',
+            confirmButtonText: '確定',
+            timer: 3000,
+            timerProgressBar: true,
+            willClose: () => {
+              // 根據個人喜好進行跳轉
+              const routesMap = {
+                "ACGN綜合論壇(首頁)": '/',
+                "周邊商店": '/store',
+                "討論區(電影相關)": '/Forum?category=movies',
+                "討論區(動畫相關)": '/Forum?category=animations',
+                "討論區(遊戲相關)": '/Forum?category=games',
+                "委託專區": '/commission',
+                "會員專區": '/center/:user_id',
+              };
+
+              const targetRoute = routesMap[firstPersonalLike] || '/'; // 默認跳轉到首頁
+              router.push(targetRoute);
+            }
+          });
+        } else {
+          // 如果沒有個人喜好，則進入會員中心
+          router.push({ name: 'center', params: { user_id: user.user_id } });
+        }
+
+    } catch (error) {
         errors.value.general =
           error.response?.data?.error || '登入失敗，請檢查您的電子郵箱和密碼';
         console.error('登入失敗:', error);
-        } finally {
+    } finally {
         isSubmitting.value = false;
-        }
-        };
+    }
+};
 
 onMounted( async() => {
   // 頁面載入提示信息
@@ -140,8 +171,13 @@ onMounted( async() => {
       timer: 3000,
       timerProgressBar: true
     })
-  }
-})
+    }
+  // 滾動到頁面頂部
+  window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+  });
+});
 </script>
 
 <template>
@@ -209,11 +245,15 @@ onMounted( async() => {
 		<!-- 放第三方登入圖示 -->
 		<hr />
 		<div class="text-center">或使用第三方登入/註冊
-			<img class="rounded-circle" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
-			<button @click.prevent="handleLineLogin">
-        <img class="rounded-circle" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      <button>
+        <img class="rounded-circle img-float" src="@/assets/img/member/google.png" alt="logo" width="50" height="50">
       </button>
-		  <img class="rounded-circle" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
+			<button @click.prevent="handleLineLogin">
+        <img class="rounded-circle img-float" src="@/assets/img/member/line.png" alt="logo" width="50" height="50">
+      </button>
+      <button>
+        <img class="rounded-circle img-float" src="@/assets/img/member/fb.png" alt="logo" width="50" height="50">
+      </button>
 		</div>
 
         <div class="auth-option text-center pt-5">
@@ -262,9 +302,21 @@ onMounted( async() => {
 
 .app-link:hover {
   text-decoration: underline;
+  color: rgb(102, 102, 241);
 }
 
 .rounded-circle {
   border: 2px solid #fff; /* 可選：添加白色邊框 */
+}
+
+button {
+  border: none;        /* 移除圖片邊框 */
+  outline: none;       /* 移除點擊方框 */
+}
+
+.img-float:hover {
+  transform: translateY(-10px);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); /* 加陰影 */
 }
 </style>

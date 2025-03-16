@@ -6,24 +6,42 @@ from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
 
 def index(request):
-    query = request.GET.get('keyword', '')
-    
+    query = request.GET.get('keyword', '').strip()
+    animation_list = Animations.objects.all()
+
+    # 搜尋條件
     if query:
-        animation_list = Animations.objects.filter(
-            Q(animation_title__icontains=query) |
-            Q(animation_genre__icontains=query) |
-            Q(animation_studio__icontains=query)
-        ).order_by('release_date')
-    else:
-        animation_list = Animations.objects.all().order_by('release_date')
-    
-    paginator = Paginator(animation_list, 5)  # 每頁顯示5筆資料
+        if query.isdigit() and len(query) == 4:  # 如果是年份
+            animation_list = animation_list.filter(release_date__year=query)
+        else:  # 關鍵字搜尋
+            animation_list = animation_list.filter(
+                Q(animation_title__icontains=query) |
+                Q(animation_genre__icontains=query) |
+                Q(animation_studio__icontains=query)
+            )
+
+    animation_list = animation_list.order_by('release_date')
+    paginator = Paginator(animation_list, 5)  # 每頁顯示 5 筆資料
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
+    # 計算分頁範圍 (最多顯示 5 頁)
+    max_pages = 5  
+    current_page = page_obj.number
+    total_pages = paginator.num_pages
+
+    start_page = max(1, current_page - 2)
+    end_page = min(total_pages, start_page + max_pages - 1)
+
+    if end_page - start_page < max_pages - 1:
+        start_page = max(1, end_page - max_pages + 1)
+
+    page_range = range(start_page, end_page + 1)
+
     return render(request, 'Animations/index.html', {
         'page_obj': page_obj,
-        'query': query  # 傳遞搜索查詢關鍵字
+        'query': query,  
+        'page_range': page_range,  
     })
 
 def add_animations(request):

@@ -35,6 +35,12 @@ onMounted(() => {
     }
 });
 
+// 驗證電子郵件格式
+const validateEmail = (email) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+};
+
 // 驗證表單
 const validateForm = () => {
     let isValid = true;
@@ -216,6 +222,7 @@ const handleSubmit = async (event) => {
 
 .app-link:hover {
   text-decoration: underline;
+  color: rgb(102, 102, 241);
 }
 
 .alert {

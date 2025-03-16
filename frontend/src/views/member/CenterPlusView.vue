@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRouter } from 'vue-router';
 import draggable from "vuedraggable";
 import { useUserStore } from '@/stores/user';
@@ -18,14 +18,15 @@ const formData = ref({
     personal_like: '未設定',
     vip_status: '0',
     payment_set: '未設定',
+    user_address: '',
     privicy_set: '',
 })
 
 // 定義初始數據
-const initialPersonalLikes = ["論壇(首頁)", "周邊商店", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"];
+const initialPersonalLikes = ["ACGN綜合論壇(首頁)", "周邊商店", "討論區(電影相關)", "討論區(動畫相關)", "討論區(遊戲相關)", "委託專區" ,"會員專區"];
 const personalLikes = ref([...initialPersonalLikes]); // 使用初始數據
 
-onMounted(() => {
+onMounted(async () => {
     // 同步 Pinia Store 与 localStorage
     userStore.syncWithLocalStorage();
 
@@ -37,7 +38,7 @@ onMounted(() => {
       return;
     }
 
-    fetchPersonalLikes(); // 獲取個人喜好
+    await fetchPersonalLikes(); // 獲取個人喜好
 
     if (userId) {
         const storedLikes = localStorage.getItem(`personalLikes_${userId}`);
@@ -69,7 +70,7 @@ onMounted(() => {
         console.warn('未找到會員資料');
       }
     } catch (error) {
-      console.error('加載會員資料時出錯:', error);
+      console.error('解析 localStorage 中的會員資料時發生錯誤', error);
     }
 });
 
@@ -80,8 +81,7 @@ onBeforeUnmount(() => {
 });
 
 // 定義狀態
-const showPopup = ref(false);
-// const personalLikes = ref(["論壇(首頁)", "周邊商店", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"]); // 初始數據
+const showPopup = ref(false); // 控制顯示編輯排序彈窗
 const LikesData = ref({
   personal_like: "", // 存儲用戶選擇的喜好
 });
@@ -124,7 +124,7 @@ const fetchPersonalLikes = async () => {
     // 當 personal_likes 為空陣列時，保持預設值
     if (responseData.personal_likes.length === 0) {
       console.warn('用戶無個人喜好資料，使用預設資料');
-      personalLikes.value = ["論壇(首頁)", "周邊商店", "委託專區", "討論區(電影相關)", "討論區(動漫相關)", "討論區(遊戲相關)"];
+      personalLikes.value = ["ACGN綜合論壇(首頁)", "周邊商店", "討論區(電影相關)", "討論區(動畫相關)", "討論區(遊戲相關)", "委託專區" ,"會員專區"];
     } else {
       // 將後端返回的資料映射為字符串陣列
       personalLikes.value = responseData.personal_likes.map(item => item.type_name || '未命名項目');
@@ -187,24 +187,17 @@ const ChangeInfo = async(event) => {
         return;
     }
 
-    // 移除重複的項目
-    const removeDuplicates = (array) => [...new Set(array)];
-    LikesData.value.personal_like = removeDuplicates(LikesData.value.personal_like);
-
-    // 確保 `personal_likes` 是列表
-    if (!Array.isArray(LikesData.value.personal_like)) {
-      console.error('personal_likes 必須為列表格式');
-      alert('個人喜好數據格式錯誤，請重試');
-      return;
-    }
-
     try {
-        // 構建請求的 payload，加入 user_id
+        // 構建請求的 payload
         const payload = {
             user_id: userId,
-            personal_likes: LikesData.value.personal_like,
+            personal_likes: LikesData.value.personal_like.map((item, index) => ({
+                type_name: item,
+                sort_order: index + 1
+            })),
+            user_address: memberData.value.user_address  // 添加地址數據
         };
-        console.log('LikesData請求:', JSON.stringify(payload));
+        console.log('更新請求:', JSON.stringify(payload));
 
         // 發送請求
         const response = await fetch(`${API_URL}${userId}/`, {
@@ -218,32 +211,17 @@ const ChangeInfo = async(event) => {
         
         if (!response.ok) {
             const errorResponse = await response.json();
-            console.error('喜好更新失敗，HTTP状态碼:', response.status, '錯誤詳情:', errorResponse);
             throw new Error(errorResponse.error || '更新失敗');
         }
 
-        // 解析後端返回資料
-        const updatedLikesData  = await response.json();
-        console.log('更新 LikesData 成功:', updatedLikesData );
-
-        // 更新 Pinia store
-        userStore.updatePersonalLikes(updatedLikesData.personal_likes);
+        const updatedData = await response.json();
+        console.log('更新成功:', updatedData);
+        
+        // 更新本地數據
+        memberData.value.user_address = updatedData.user_address;
         
         alert('資料更新成功！');
 
-        // 檢查後端返回的資料結構
-        if (!Array.isArray(updatedLikesData.personal_likes)) {
-            console.error('後端返回的資料格式錯誤:', updatedLikesData);
-            alert('後端返回資料錯誤，請重試');
-            return;
-        }
-
-        // 更新前端資料，提取 type_name 進行顯示
-        LikesData.value.personal_like = updatedLikesData.personal_likes.map(item => item.type_name);
-        // LikesData.value.personal_like = updatedLikesData.personal_likes;
-        personalLikes.value = [...updatedLikesData.personal_likes]; // 更新顯示的排序
-
-        console.log('更新後的個人喜好:', LikesData.value.personal_like);
     } catch (error) {
         console.error('更新失败:', error);
         alert('更新失敗，請檢查後端或網絡連線');
@@ -347,8 +325,12 @@ const handleLogout = async () => {
             </select>
         </div>
         <div class="mb-3">
+            <label for="InputAddress" class="form-label">地址設定</label>
+            <input type="text" class="form-control" id="InputAddress" name="privicy" v-model="memberData.user_address" placeholder="台北市大安區復興南路一段390號2樓">
+        </div>
+        <div class="mb-3">
             <label for="PrivicySet" class="form-label">隱私設定</label>
-            <input type="password" class="form-control" id="PrivicySet" name="privicy" v-model="memberData.privicy_set">
+            <input type="text" class="form-control" id="PrivicySet" name="privicy" v-model="memberData.privicy_set">
         </div>
 
         <div class="text-center mt-4">

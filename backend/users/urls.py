@@ -48,7 +48,7 @@ urlpatterns = [
     path('phone_reconfirm/<str:token>/', views.phone_reconfirm, name='phone_reconfirm'),
 
     # http://127.0.0.1:8000/users/personal/
-    path('personal/', views.personal, name="personal"),
+    path('personal/', views.personal, name='personal'),
     
     # # http://127.0.0.1:8000/users/verify-code/
     # path('verify-code/', views.verify_code, name='verify_code'),

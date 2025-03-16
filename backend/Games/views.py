@@ -6,30 +6,42 @@ from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
 
 def index(request):
-    query = request.GET.get('keyword', '')
+    query = request.GET.get('keyword', '').strip()
+    game_list = Games.objects.all()
 
+    # 搜尋條件
     if query:
-        try:
-            # 如果输入为年份，则按年份过滤
-            year = int(query)
-            game_list = Games.objects.filter(release_date__year=year).order_by('release_date')
-        except ValueError:
-            # 如果不是年份，则按关键词过滤
-            game_list = Games.objects.filter(
+        if query.isdigit() and len(query) == 4:  # 如果是年份
+            game_list = game_list.filter(release_date__year=query)
+        else:  # 關鍵字搜尋
+            game_list = game_list.filter(
                 Q(game_title__icontains=query) |
                 Q(game_genre__icontains=query) |
                 Q(developer__icontains=query)
-            ).order_by('release_date')
-    else:
-        game_list = Games.objects.all().order_by('release_date')
+            )
 
-    paginator = Paginator(game_list, 5)  # 每頁顯示5個遊戲
+    game_list = game_list.order_by('release_date')
+    paginator = Paginator(game_list, 5)  # 每頁顯示 5 筆資料
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # 計算分頁範圍 (最多顯示 5 頁)
+    max_pages = 5  
+    current_page = page_obj.number
+    total_pages = paginator.num_pages
+
+    start_page = max(1, current_page - 2)
+    end_page = min(total_pages, start_page + max_pages - 1)
+
+    if end_page - start_page < max_pages - 1:
+        start_page = max(1, end_page - max_pages + 1)
+
+    page_range = range(start_page, end_page + 1)
+
     return render(request, 'Games/index.html', {
         'page_obj': page_obj,
-        'query': query  # 傳遞搜索查詢關鍵字
+        'query': query,  
+        'page_range': page_range,  
     })
 
 

@@ -36,13 +36,9 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif"];
 // 獲取分類、品牌、系列列表
 const fetchCategories = async () => {
     try {
-        const response = await fetch(`${apiUrl}/store/categories/`);
-        if (response.ok) {
-            categories.value = await response.json(); // 確保這裡的數據格式正確
-            console.log("Fetched categories:", categories.value); // 添加日誌
-        } else {
-            console.error("Error fetching categories:", response.statusText);
-        }
+        const response = await storeAPI.getCategories();
+        categories.value = response;
+        console.log("Fetched categories:", categories.value);
     } catch (error) {
         console.error("Error fetching categories:", error);
     }
@@ -50,8 +46,8 @@ const fetchCategories = async () => {
 
 const fetchBrands = async () => {
     try {
-        const response = await fetch(`${apiUrl}/store/brands/`);
-        brands.value = await response.json();
+        const response = await storeAPI.getBrands();
+        brands.value = response;
     } catch (error) {
         console.error("Error fetching brands:", error);
     }
@@ -59,8 +55,8 @@ const fetchBrands = async () => {
 
 const fetchSeries = async () => {
     try {
-        const response = await fetch(`${apiUrl}/store/series/`);
-        series.value = await response.json();
+        const response = await storeAPI.getSeries();
+        series.value = response;
     } catch (error) {
         console.error("Error fetching series:", error);
     }
@@ -69,37 +65,63 @@ const fetchSeries = async () => {
 // 新增分類、品牌、系列
 const addCategory = async () => {
     try {
-        const response = await fetch(`${apiUrl}/store/create_category/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name: newCategory.value }),
-        });
-        if (response.ok) {
-            await fetchCategories();
-            newCategory.value = "";
+        // 驗證輸入
+        if (!newCategory.value.trim()) {
+            Swal.fire({
+                title: "錯誤",
+                text: "分類名稱不能為空",
+                icon: "error"
+            });
+            return;
         }
+
+        await storeAPI.createCategory({ name: newCategory.value.trim() });
+        await fetchCategories();
+        newCategory.value = "";
+        
+        Swal.fire({
+            title: "成功",
+            text: "分類創建成功",
+            icon: "success"
+        });
     } catch (error) {
         console.error("Error adding category:", error);
+        Swal.fire({
+            title: "錯誤",
+            text: error.message || "創建分類失敗",
+            icon: "error"
+        });
     }
 };
 
 const addBrand = async () => {
     try {
-        const response = await fetch(`${apiUrl}/store/create_brand/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name: newBrand.value }),
-        });
-        if (response.ok) {
-            await fetchBrands();
-            newBrand.value = "";
+        // 驗證輸入
+        if (!newBrand.value.trim()) {
+            Swal.fire({
+                title: "錯誤",
+                text: "品牌名稱不能為空",
+                icon: "error"
+            });
+            return;
         }
+
+        await storeAPI.createBrand({ name: newBrand.value.trim() });
+        await fetchBrands();
+        newBrand.value = "";
+        
+        Swal.fire({
+            title: "成功",
+            text: "品牌創建成功",
+            icon: "success"
+        });
     } catch (error) {
         console.error("Error adding brand:", error);
+        Swal.fire({
+            title: "錯誤",
+            text: error.message || "創建品牌失敗",
+            icon: "error"
+        });
     }
 };
 
@@ -115,23 +137,9 @@ const addSeries = async () => {
             return;
         }
 
-        const response = await fetch(`${apiUrl}/store/create_series/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name: newSeries.value.trim() })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || '創建系列失敗');
-        }
-
-        // 成功處理
-        await fetchSeries();  // 重新獲取系列列表
-        newSeries.value = ""; // 清空輸入框
+        await storeAPI.createSeries({ name: newSeries.value.trim() });
+        await fetchSeries();
+        newSeries.value = "";
         
         Swal.fire({
             title: "成功",
@@ -259,6 +267,11 @@ const removeImage = (index) => {
     imagePreviews.value.splice(index, 1);
 };
 
+// 返回商店頁面
+const backToStore = () => {
+  router.push('/store');
+};
+
 onMounted(async () => {
     await nextTick(); // 確保 DOM 更新
 
@@ -271,6 +284,7 @@ onMounted(async () => {
 <template>
     <div class="create-product-container">
         <h1>創建新商品</h1>
+        <button @click="backToStore" class="back-button">返回商店</button>
         <form @submit.prevent="handleSubmit" class="create-product-form">
             <div class="form-group">
                 <label for="product_name">商品名稱</label>
@@ -292,41 +306,6 @@ onMounted(async () => {
                     rows="3"
                     required
                 ></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="category">分類</label>
-                <select
-                    id="category"
-                    v-model="formData.category"
-                    class="form-control"
-                    required
-                >
-                    <option
-                        v-for="category in categories"
-                        :key="category.category_id"
-                        :value="category.category_id"
-                    >
-                        {{ category.category_name }}
-                    </option>
-                </select>
-
-                <!-- 新增分類 -->
-                <div class="add-new-item">
-                    <input
-                        v-model="newCategory"
-                        type="text"
-                        class="form-control"
-                        placeholder="新增分類"
-                    />
-                    <button
-                        type="button"
-                        @click="addCategory"
-                        class="btn btn-secondary"
-                    >
-                        新增
-                    </button>
-                </div>
             </div>
 
             <div class="form-group">
@@ -365,7 +344,44 @@ onMounted(async () => {
             </div>
 
             <div class="form-group">
-                <label for="series">類別</label>
+                <label for="category">分類</label>
+                <select
+                    id="category"
+                    v-model="formData.category"
+                    class="form-control"
+                    required
+                >
+                    <option
+                        v-for="category in categories"
+                        :key="category.category_id"
+                        :value="category.category_id"
+                    >
+                        {{ category.category_name }}
+                    </option>
+                </select>
+
+                <!-- 新增分類 -->
+                <div class="add-new-item">
+                    <input
+                        v-model="newCategory"
+                        type="text"
+                        class="form-control"
+                        placeholder="新增分類"
+                    />
+                    <button
+                        type="button"
+                        @click="addCategory"
+                        class="btn btn-secondary"
+                    >
+                        新增
+                    </button>
+                </div>
+            </div>
+
+            
+
+            <div class="form-group">
+                <label for="series">系列</label>
                 <select
                     id="series"
                     v-model="formData.series"
@@ -572,5 +588,19 @@ onMounted(async () => {
 }
 .hidden {
     display: none !important;  /* 使用 !important 確保一定會被隱藏 */
+}
+
+.back-button {
+  margin-bottom: 20px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #45a049;
 }
 </style>

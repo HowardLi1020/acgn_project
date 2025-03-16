@@ -39,4 +39,5 @@ urlpatterns = [
     # 收藏
     path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
     path('wishlist/check/<int:product_id>/', views.check_wishlist, name='check_wishlist'),
+    path('wishlist/list/', views.get_wishlist, name='get_wishlist'),
 ]

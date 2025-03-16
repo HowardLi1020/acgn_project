@@ -40,6 +40,12 @@ const fetchPurchasedProducts = async () => {
   }
 };
 
+// 返回商店頁面
+const backToStore = () => {
+  router.push('/store');
+};
+
+
 onMounted(() => {
   fetchPurchasedProducts();
 });
@@ -48,6 +54,7 @@ onMounted(() => {
 <template>
     <div class="purchased-products">
       <h1>購買紀錄</h1>
+      <button @click="backToStore" class="back-button">返回商店</button>
       
       <LoadingSpinner v-if="isLoading" />
       
@@ -165,5 +172,19 @@ onMounted(() => {
   text-align: center;
   color: #e74c3c;
   padding: 20px;
+}
+
+.back-button {
+  margin-bottom: 20px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #45a049;
 }
 </style>

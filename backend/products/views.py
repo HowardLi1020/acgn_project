@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from products.models import Products, ProductBrands, ProductCategories, ProductSeries, ProductImages, ProductReviews, ProductWishlist
 from users.models import  MemberBasic
-from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, SeriesSerializer, ReviewSerializer
+from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, SeriesSerializer, ReviewSerializer, ProductDetailSerializer
 from rest_framework import generics
 from rest_framework.views import APIView
 import logging
@@ -453,22 +453,13 @@ class SeriesListView(generics.ListAPIView):
 class ProductDetail(APIView):
     def get(self, request, product_id):
         try:
-            product = Products.objects.filter(product_id=product_id).first()
+            product = Products.objects.select_related('brand', 'category', 'series').filter(product_id=product_id).first()
             if not product:
                 return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # 使用 ProductSerializer
-            serializer = ProductSerializer(product)
-            product_data = serializer.data
-
-            # 獲取品牌、分類和系列的 ID
-            product_data.update({
-                "brand": product.brand_id,
-                "category": product.category_id,
-                "series": product.series_id,
-            })
-
-            return Response(product_data, status=status.HTTP_200_OK)
+            # 使用 ProductDetailSerializer
+            serializer = ProductDetailSerializer(product)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error(f"Error getting product details: {e}")
@@ -912,3 +903,53 @@ def get_purchased_products(request):
         logger.error(f"獲取購買紀錄時發生錯誤: {str(e)}")
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+@api_view(['GET'])
+def get_wishlist(request):
+    try:
+        # 從 Authorization header 獲取 token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'detail': '請先登入'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        token = auth_header.split(' ')[1]
+        
+        try:
+            # 解碼 JWT token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return Response({'detail': '無效的用戶信息'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # 獲取用戶的收藏商品
+            wishlist_items = ProductWishlist.objects.filter(user_id=user_id).select_related('product')
+            
+            # 構建響應數據
+            products_data = []
+            for item in wishlist_items:
+                product = item.product
+                product_image = ProductImages.objects.filter(product=product, is_main=1).first() or ProductImages.objects.filter(product=product).first()
+                
+                product_data = {
+                    'product_id': product.product_id,
+                    'product_name': product.product_name,
+                    'price': float(product.price),
+                    'stock': product.stock,
+                    'image_url': str(product_image.image_url) if product_image else '',
+                    'brand_name': product.brand.brand_name if product.brand else '未指定',
+                    'category_name': product.category.category_name if product.category else '未指定',
+                    'series_name': product.series.series_name if product.series else '未指定',
+                    'added_date': item.added_date.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                products_data.append(product_data)
+            
+            return Response({'products': products_data}, status=status.HTTP_200_OK)
+            
+        except jwt.ExpiredSignatureError:
+            return Response({'detail': 'token已過期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return Response({'detail': '無效的token'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+    except Exception as e:
+        logger.error(f"獲取收藏列表時發生錯誤: {str(e)}")
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
