@@ -10,7 +10,7 @@
 
 
 {% block app_title %}
-<h3>ACGN-後台管理</h3>
+<!-- <h3>ACGN-後台管理</h3> -->
 {% endblock %}
 
 
@@ -19,10 +19,137 @@
     <div class="inner">
         <div class="app-card-body p-3 p-lg-4">
             <h2 class="mb-3">Welcome 歡迎您回來 , {{ auth.superuser_name }} !~*</h2>
+            <!-- <div class="app-card app-card-progress-list h-100 shadow-sm">
+                <h4 class="mb-3">🎮🕹️⏰ 準備迎接新活動，2025.7.24 ~ 2025.7.28</h4>
+            </div> -->
+            <div class="app-card app-card-progress-list h-100 shadow-sm">
+                <div class="app-card-header p-3">
+                    <h4 class="app-card-title">活動資訊 🎮🕹️⏰ 2025.7.24 ~ 2025.7.28</h4>
+                </div>
+                <div class="app-card-body p-4">
+                    <div class="item p-3">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="title mb-1">👉【第七屆台灣國際電玩電競產業展】</div>
+                            </div>
+                            <div class="col">
+                                <div class="title mb-1">👉【第九屆台北國際電影玩具暨玩具創作大展】</div>
+                            </div>
+                            <div class="col">
+                                <div class="title mb-1">👉【第二十四屆漫畫博覽會】</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="title mb-1 text-end">
+                                    <span class="badge bg-primary">🚩 台北世貿一館 同步展出</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="app-card app-card-progress-list h-100 shadow-sm">
+
             <div class="row gx-5 gy-3">
-                <div class="col-12 col-lg-9">
-                    <!-- <div>ACGN_後台管理頁面 最新消息</div> -->
-                    <img class="logo-icon me-2" width=700px; height=500px src="{% static 'admins\images\demo用.png' %}" alt="logo">
+                <!-- <div class="col-12 col-lg-9"> -->
+                    <div class="row g-4">
+                        <!-- 快速統計卡片 -->
+                        <div class="col-12 col-lg-4">
+                            <div class="app-card app-card-stat shadow-sm h-100">
+                                <div class="app-card-body p-3 p-lg-4">
+                                    <h4 class="stats-type mb-1">本月收入</h4>
+                                    <div class="stats-figure">$65,120</div>
+                                    <div class="stats-meta text-success">
+                                        <i class="fa fa-arrow-up"></i> 12%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="app-card app-card-stat shadow-sm h-100">
+                                <div class="app-card-body p-3 p-lg-4">
+                                    <h4 class="stats-type mb-1">活躍用戶</h4>
+                                    <div class="stats-figure">2,468</div>
+                                    <div class="stats-meta text-success">
+                                        <i class="fa fa-arrow-up"></i> 8%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="app-card app-card-stat shadow-sm h-100">
+                                <div class="app-card-body p-3 p-lg-4">
+                                    <h4 class="stats-type mb-1">新訂單</h4>
+                                    <div class="stats-figure">87</div>
+                                    <div class="stats-meta text-danger">
+                                        <i class="fa fa-arrow-down"></i> 5%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 圖表區域 -->
+                        <div class="col-12 col-lg-6">
+                            <div class="app-card app-card-chart h-100 shadow-sm">
+                                <div class="app-card-header p-3">
+                                    <h4 class="app-card-title">收入趨勢</h4>
+                                </div>
+                                <div class="app-card-body p-3">
+                                    <div class="chart-container">
+                                        <canvas id="dashboard-line-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="app-card app-card-chart h-100 shadow-sm">
+                                <div class="app-card-header p-3">
+                                    <h4 class="app-card-title">商品類別分布</h4>
+                                </div>
+                                <div class="app-card-body p-3">
+                                    <div class="chart-container">
+                                        <canvas id="dashboard-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 活動進度 -->
+                        <div class="col-12">
+                            <div class="app-card app-card-progress-list h-100 shadow-sm">
+                                <div class="app-card-header p-3">
+                                    <h4 class="app-card-title">活動報名</h4>
+                                </div>
+                                <div class="app-card-body p-3">
+                                    <div class="item p-2">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <div class="title mb-1">第七屆台灣國際電玩電競產業展</div>
+                                                <div class="progress" style="height: 0.5rem;">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 76%;" aria-valuenow="76" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="text-muted">76%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="item p-2">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <div class="title mb-1">第九屆台北國際電影玩具展</div>
+                                                <div class="progress" style="height: 0.5rem;">
+                                                    <div class="progress-bar bg-info" role="progressbar" style="width: 54%;" aria-valuenow="54" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="text-muted">54%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div><!--//col-->
 
                 
@@ -37,55 +164,204 @@
 </div><!--//app-card-->
 
 </div><!--//app-card-->
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <!-- Total Sales -->
+    <div class="col-6 col-lg-3">
+        <div class="app-card app-card-stat shadow-sm h-100">
+            <div class="app-card-body p-3 p-lg-4">
+                <h4 class="stats-type mb-1">總銷售金額</h4>
+                <div class="stats-figure">$15,628</div>
+                <div class="stats-meta text-success">
+                    <i class="fa fa-arrow-up"></i> 5%
+                </div>
+            </div>
+            <a class="app-card-link-mask" href="#"></a>
+        </div>
+    </div>
+
+    <!-- Expenses -->
+    <div class="col-6 col-lg-3">
+        <div class="app-card app-card-stat shadow-sm h-100">
+            <div class="app-card-body p-3 p-lg-4">
+                <h4 class="stats-type mb-1">活動參與總人數</h4>
+                <div class="stats-figure">620</div>
+                <div class="stats-meta text-danger">
+                    <i class="fa fa-arrow-down"></i> 3%
+                </div>
+            </div>
+            <a class="app-card-link-mask" href="#"></a>
+        </div>
+    </div>
+
+    <!-- Projects -->
+    <div class="col-6 col-lg-3">
+        <div class="app-card app-card-stat shadow-sm h-100">
+            <div class="app-card-body p-3 p-lg-4">
+                <h4 class="stats-type mb-1">媒合案件</h4>
+                <div class="stats-figure">23</div>
+                <div class="stats-meta">
+                    成交數
+                </div>
+            </div>
+            <a class="app-card-link-mask" href="#"></a>
+        </div>
+    </div>
+
+    <!-- Invoices -->
+    <div class="col-6 col-lg-3">
+        <div class="app-card app-card-stat shadow-sm h-100">
+            <div class="app-card-body p-3 p-lg-4">
+                <h4 class="stats-type mb-1">發起討論話題</h4>
+                <div class="stats-figure">6</div>
+                <div class="stats-meta">待確認</div>
+            </div>
+            <a class="app-card-link-mask" href="#"></a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Section -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-6">
+        <div class="app-card app-card-progress-list h-100 shadow-sm">
+            <div class="app-card-header p-3">
+                <h4 class="app-card-title">近期活動</h4>
+            </div>
+            <div class="app-card-body p-4">
+                <div class="item p-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="title mb-1">EVER創作祭
+                                [Only] 小型同人展
+                                2025-03-22(六)
+                                台北教育大學大禮堂</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-muted">75%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="item p-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="title mb-1">AniMkt動漫市集
+                                [綜合] 小型同人展 [暫定]
+                                2025-03-22(六) ～ 2025-03-23(日)
+                                高雄新光三越左營店10樓</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-muted">45%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="item p-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="title mb-1">台灣劇場趴
+                                [Only] 小型同人展
+                                2025-03-30(日) 理想間</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-muted">30%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats List -->
+    <div class="col-12 col-lg-6">
+        <div class="app-card app-card-stats-list h-100 shadow-sm">
+            <div class="app-card-header p-3">
+                <h4 class="app-card-title">用戶分析</h4>
+            </div>
+            <div class="chart-container">
+                <img class="logo-icon me-2" src="{% static 'admins\images\註冊會員.png' %}" alt="logo">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-6">		        
+        <div class="app-card app-card-chart h-100 shadow-sm">
+            <div class="app-card-body p-3 p-lg-4">
+                <div class="mb-3 d-flex">   
+                    <select class="form-select form-select-sm ms-auto d-inline-flex w-auto">
+                        <option value="1" selected>月銷售量</option>
+                        <option value="2">周訂單數</option>
+                        <option value="3">日訂單數</option>
+                        <option value="3">年訂單數</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <img class="logo-icon me-2" src="{% static 'admins\images\商品銷售類別圖.png' %}" alt="logo">
+                </div>
+            </div><!--//app-card-body-->
+        </div><!--//app-card-->
+    </div><!--//col-->
+    <div class="col-12 col-lg-6">		        
+        <div class="app-card app-card-chart h-100 shadow-sm">
+            <div class="app-card-body p-3 p-lg-4">
+                <div class="mb-3 d-flex">   
+                    <select class="form-select form-select-sm ms-auto d-inline-flex w-auto">
+                        <option value="1" selected>月銷售量</option>
+                        <option value="2">周訂單數</option>
+                        <option value="3">日訂單數</option>
+                        <option value="3">年訂單數</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <img class="logo-icon me-2" src="{% static 'admins\images\商品銷售.png' %}" alt="logo">
+                </div>
+            </div><!--//app-card-body-->
+        </div><!--//app-card-->
+    </div><!--//col-->
+</div><!--//row-->
+
 <div class="row g-4 mb-4">
     <div class="col-12 col-lg-6">
         <div class="app-card app-card-chart h-100 shadow-sm">
-            <div class="app-card-header p-3 border-0">
-                <h4 class="app-card-title">Area Line Chart Demo</h4>
-            </div><!--//app-card-header-->
-            <div class="app-card-body p-4">					   
+            <div class="app-card-body p-3 p-lg-4">
+                <div class="mb-3 d-flex">   
+                    <select class="form-select form-select-sm ms-auto d-inline-flex w-auto">
+                        <option value="1" selected>周收益總額</option>
+                        <option value="2">日收益總額</option>
+                        <option value="3">月收益總額</option>
+                        <option value="3">年收益總額</option>
+                    </select>
+                </div>
                 <div class="chart-container">
-                    <img class="logo-icon me-2" src="{% static 'admins\images\arealine.png' %}" alt="logo">
-                    <!-- <canvas id="chart-line" style="display: block; width: 846px; height: 423px;" class="chartjs-render-monitor"></canvas> -->
+                    <canvas id="canvas-linechart"></canvas>
                 </div>
             </div><!--//app-card-body-->
         </div><!--//app-card-->
     </div><!--//col-->
     <div class="col-12 col-lg-6">		        
         <div class="app-card app-card-chart h-100 shadow-sm">
-            <div class="app-card-header p-3 border-0">
-                <h4 class="app-card-title">Bar Chart Demo</h4>
-            </div><!--//app-card-header-->
-            <div class="app-card-body p-4">					   
-                <div class="chart-container">
-                    <img class="logo-icon me-2" src="{% static 'admins\images\barline.png' %}" alt="logo">
-                    <!-- <canvas id="chart-bar" ></canvas> -->
+            <div class="app-card-body p-3 p-lg-4">
+                <div class="mb-3 d-flex">   
+                    <select class="form-select form-select-sm ms-auto d-inline-flex w-auto">
+                        <option value="1" selected>周訂單數</option>
+                        <option value="2">日訂單數</option>
+                        <option value="3">月訂單數</option>
+                        <option value="3">年訂單數</option>
+                    </select>
                 </div>
-            </div><!--//app-card-body-->
-        </div><!--//app-card-->
-    </div><!--//col-->
-    <div class="col-12 col-lg-6">		        
-        <div class="app-card app-card-chart h-100 shadow-sm">
-            <div class="app-card-header p-3 border-0">
-                <h4 class="app-card-title">Pie Chart Demo</h4>
-            </div><!--//app-card-header-->
-            <div class="app-card-body p-4">					   
                 <div class="chart-container">
-                    <img class="logo-icon me-2" src="{% static 'admins\images\pie.png' %}" alt="logo">
-                    <!-- <canvas id="chart-bar" ></canvas> -->
-                </div>
-            </div><!--//app-card-body-->
-        </div><!--//app-card-->
-    </div><!--//col-->
-    <div class="col-12 col-lg-6">		        
-        <div class="app-card app-card-chart h-100 shadow-sm">
-            <div class="app-card-header p-3 border-0">
-                <h4 class="app-card-title">Doughnut Chart Demo</h4>
-            </div><!--//app-card-header-->
-            <div class="app-card-body p-4">					   
-                <div class="chart-container">
-                    <img class="logo-icon me-2" src="{% static 'admins\images\doughnut.png' %}" alt="logo">
-                    <!-- <canvas id="chart-doughnut" ></canvas> -->
+                    <canvas id="canvas-barchart" ></canvas>
                 </div>
             </div><!--//app-card-body-->
         </div><!--//app-card-->
@@ -123,7 +399,87 @@ assets\js\charts-demo.js
 <!-- Page Specific JS -->
 <script src="{% static 'js/app.js' %}"></script>
 {% block app_script %}
+<script>
+// 收入趨勢圖
+const dashboardLineChart = new Chart(document.getElementById('dashboard-line-chart'), {
+    type: 'line',
+    data: {
+        labels: ['一月', '二月', '三月', '四月', '五月', '六月'],
+        datasets: [{
+            label: '月收入',
+            data: [25000, 29000, 32000, 35000, 33000, 35000],
+            fill: true,
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    drawBorder: false
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
 
+// 商品類別分布圖
+const dashboardPieChart = new Chart(document.getElementById('dashboard-pie-chart'), {
+    type: 'pie',
+    data: {
+        labels: ['電玩遊戲', '動漫周邊', '玩具模型', '漫畫書籍'],
+        datasets: [{
+            data: [35, 25, 20, 20],
+            backgroundColor: [
+                '#4e73df',
+                '#1cc88a',
+                '#36b9cc',
+                '#f6c23e'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// 監聽下拉選單變化
+document.querySelectorAll('.form-select').forEach(select => {
+    select.addEventListener('change', function() {
+        // 這裡可以根據選擇的值更新對應的圖表
+        const value = this.value;
+        // 示例：更新圖表數據
+        if (value === '2') { // 假設 2 代表周數據
+            dashboardLineChart.data.labels = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
+            dashboardLineChart.data.datasets[0].data = [5000, 6000, 7500, 8000, 7000, 9000, 8500];
+            dashboardLineChart.update();
+        }
+    });
+});
+</script>
 {% endblock %}
     </body>
 </html>
