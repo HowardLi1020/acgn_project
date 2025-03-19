@@ -280,6 +280,15 @@
         const workId = this.dataset.workId;
         const radio = this.parentElement.querySelector('.work-selection');
         const wasChecked = radio.checked;
+        const workTitle = radio.dataset.workTitle;
+
+        // 新增確認對話框
+        const confirmSelection = confirm(`您確定要選擇這個案件嗎？選擇後將立即成交\n\n案件：${workTitle}\n`);
+
+        if (!confirmSelection) {
+          // 如果使用者取消，則不執行任何操作
+          return;
+        }
 
         // 清除所有選中狀態
         workItems.forEach(otherItem => otherItem.classList.remove('selected'));
