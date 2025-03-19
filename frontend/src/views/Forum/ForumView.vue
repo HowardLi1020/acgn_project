@@ -3,21 +3,27 @@ import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import Carousel from './Carousel.vue';
+import DiscussionSection from "@/views/Forum/DiscussionSection.vue";
+// 導入向量搜索推薦模組
+import RecommendationModule from './recommendation/RecommendationModule.vue';
 
 // Vue Router
 const router = useRouter();
 const route = useRoute();
 
 // State Management
+// State Management
 const currentCategory = ref(route.query.category || "games");
 const currentPage = ref(parseInt(route.query.page) || 1);
-const itemsPerPage = 24;
+const itemsPerPage = ref(24);
 const searchQuery = ref(route.query.search || "");
 const items = ref([]);
 const selectedGenre = ref(route.query.genre || "all");
 const carouselItems = ref([]);
 const carouselCategory = ref("");
 const carouselScrollPosition = ref(0);
+// 新增：推薦模組顯示控制
+const showRecommendation = ref(false);
 
 // 存儲所有類別的資料
 const allCategoryData = ref({
@@ -84,6 +90,8 @@ const fetchCurrentCategoryData = async () => {
   }
 };
 
+// 不再使用預加載和狀態控制
+
 // Available Genres Computation - 修改為處理多重類別
 const availableGenres = computed(() => {
   const genres = new Set();
@@ -146,6 +154,11 @@ const carouselTitle = computed(() => {
   }
   
   return baseTitle;
+});
+
+// 判斷當前是否在首頁
+const isHomePage = computed(() => {
+  return route.path === '/Forum' || route.path === '/Forum/';
 });
 
 // 處理輪播滾動位置變化
@@ -212,9 +225,22 @@ const navigateToDetail = (item) => {
   });
 };
 
-// Utility Functions
+// 新增：控制推薦模組顯示
+const toggleRecommendation = () => {
+  showRecommendation.value = !showRecommendation.value;
+  
+  // 如果關閉推薦，滾動回頁面頂部
+  if (!showRecommendation.value) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+// Utility Functions - 使用與輪播組件相同的圖片處理邏輯
 const getGameImage = (gameTitle) => {
-  return gameTitle ? `/images/games/${encodeURIComponent(gameTitle)}.jpg` : "";
+  if (!gameTitle) return '/images/default-poster.jpg';
+  
+  // 使用與輪播組件相同的方式處理
+  return `/images/games/${encodeURIComponent(gameTitle)}.jpg`;
 };
 
 // Filtered and Paginated Items - 修改為正確處理多重類別
@@ -241,12 +267,12 @@ const filteredItems = computed(() => {
 });
 
 const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(filteredItems.value.length / itemsPerPage));
+  return Math.max(1, Math.ceil(filteredItems.value.length / itemsPerPage.value));
 });
 
 const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
   return filteredItems.value.slice(start, end);
 });
 
@@ -375,6 +401,8 @@ const restoreCarouselState = () => {
   }
 };
 
+// 不再監聽圖片狀態
+
 // Lifecycle Hooks
 onMounted(async () => {
   console.log('[Forum] Component mounted');
@@ -447,7 +475,7 @@ watch(
 
 // 監視過濾後列表大小變化，確保頁碼有效
 watch(filteredItems, (newItems) => {
-  const maxPage = Math.max(1, Math.ceil(newItems.length / itemsPerPage));
+  const maxPage = Math.max(1, Math.ceil(newItems.length / itemsPerPage.value));
   if (currentPage.value > maxPage) {
     currentPage.value = maxPage;
     
@@ -558,6 +586,21 @@ watch(filteredItems, (newItems) => {
             {{ genre === 'all' ? '全部類型' : genre }}
           </option>
         </select>
+        
+        <!-- 新增：推薦功能按鈕 -->
+        <button 
+          class="btn btn-recommendation" 
+          @click="toggleRecommendation"
+          :class="{ 'active': showRecommendation }"
+        >
+          <span v-if="!showRecommendation">💡 智能推薦</span>
+          <span v-else>✖️ 關閉推薦</span>
+        </button>
+      </div>
+      
+      <!-- 新增：推薦模組 (條件渲染) -->
+      <div v-if="showRecommendation" class="recommendation-wrapper">
+        <RecommendationModule />
       </div>
 
       <!-- Content Grid -->
@@ -565,6 +608,7 @@ watch(filteredItems, (newItems) => {
         <div v-for="(item, index) in paginatedItems" :key="index" class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
           <div class="card">
             <div class="poster-container">
+              <!-- 遊戲圖片處理 -->
               <img
                 v-if="currentCategory === 'games'"
                 :src="getGameImage(item.game_title)"
@@ -572,7 +616,9 @@ watch(filteredItems, (newItems) => {
                 alt="Game Poster"
                 @click="navigateToDetail(item)"
                 @error="$event.target.src = '/images/default-poster.jpg'"
+                draggable="false"
               />
+              <!-- 其他類別圖片 -->
               <img
                 v-else
                 :src="item.poster"
@@ -580,6 +626,7 @@ watch(filteredItems, (newItems) => {
                 alt="Poster"
                 @click="navigateToDetail(item)"
                 @error="$event.target.src = '/images/default-poster.jpg'"
+                draggable="false"
               />
             </div>
             <div class="card-body">
@@ -634,7 +681,7 @@ watch(filteredItems, (newItems) => {
       </div>
     </div>
 
-    <!-- 新增：討論區部分 -->
+    <!-- 討論區部分 -->
     <div v-if="isHomePage" class="discussion-wrapper">
       <div class="section-divider">
         <h2 class="section-title">社群討論</h2>
@@ -651,245 +698,6 @@ watch(filteredItems, (newItems) => {
     </div>
   </div>
 </template>
-
-<script>
-import DiscussionSection from "@/views/Forum/DiscussionSection.vue";  // 新增導入s
-
-export default {
-  components: {
-    Carousel,
-    DiscussionSection  // 註冊討論區組件
-  },
-  data() {
-    return {
-      // 以下為您原有的資料屬性
-      currentCategory: 'games',
-      searchQuery: '',
-      selectedGenre: 'all',
-      currentPage: 1,
-      itemsPerPage: 18,
-      showCarousel: true,
-      carouselCategory: 'games', // 默認展示遊戲
-      carouselScrollPosition: 0,
-      gamesData: [],
-      animationsData: [],
-      moviesData: [],
-      availableGenres: ['all'],
-      carouselGenres: ['all'],
-    };
-  },
-  computed: {
-    // 判斷當前是否在首頁 (新增)
-    isHomePage() {
-      return this.$route.path === '/Forum' || this.$route.path === '/Forum/';
-    },
-    // 以下為您原有的計算屬性
-    carouselTitle() {
-      const titles = {
-        games: '熱門遊戲推薦',
-        animations: '本季新番推薦',
-        movies: '新上映電影推薦'
-      };
-      return titles[this.carouselCategory] || '推薦內容';
-    },
-    carouselItems() {
-      switch (this.carouselCategory) {
-        case 'games':
-          return this.gamesData;
-        case 'animations':
-          return this.animationsData;
-        case 'movies':
-          return this.moviesData;
-        default:
-          return [];
-      }
-    },
-    currentData() {
-      switch (this.currentCategory) {
-        case 'games':
-          return this.gamesData;
-        case 'animations':
-          return this.animationsData;
-        case 'movies':
-          return this.moviesData;
-        default:
-          return [];
-      }
-    },
-    filteredItems() {
-      let items = this.currentData;
-      
-      // genre filter (not 'all')
-      if (this.selectedGenre !== 'all') {
-        items = items.filter(item => {
-          const genres = item.genre || item.genres || [];
-          return genres.includes(this.selectedGenre);
-        });
-      }
-      
-      // search filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        items = items.filter(item => {
-          // Get the relevant fields based on the current category
-          const title = (
-            this.currentCategory === 'games' ? item.game_title :
-            this.currentCategory === 'animations' ? item.animation_title :
-            item.movie_title
-          ).toLowerCase();
-          
-          const description = (
-            this.currentCategory === 'games' ? item.game_description :
-            this.currentCategory === 'animations' ? item.animation_description :
-            item.movie_description
-          ).toLowerCase();
-          
-          const year = item.year ? item.year.toString() : '';
-          const genres = item.genre || item.genres || [];
-          const genresStr = genres.join(' ').toLowerCase();
-          
-          return (
-            title.includes(query) ||
-            description.includes(query) ||
-            year.includes(query) ||
-            genresStr.includes(query)
-          );
-        });
-      }
-      
-      return items;
-    },
-    paginatedItems() {
-      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-      const endIndex = startIndex + this.itemsPerPage;
-      return this.filteredItems.slice(startIndex, endIndex);
-    },
-    totalPages() {
-      return Math.ceil(this.filteredItems.length / this.itemsPerPage);
-    }
-  },
-  watch: {
-    currentCategory() {
-      this.currentPage = 1;
-      this.updateAvailableGenres();
-    },
-    searchQuery() {
-      this.currentPage = 1;
-    }
-  },
-  mounted() {
-    this.fetchData();
-  },
-  methods: {
-    // 您原有的方法
-    async fetchData() {
-      try {
-        // Fetch games
-        const gamesResponse = await fetch('/games.json');
-        this.gamesData = await gamesResponse.json();
-        
-        // Fetch animations
-        const animationsResponse = await fetch('/animations.json');
-        this.animationsData = await animationsResponse.json();
-        
-        // Fetch movies
-        const moviesResponse = await fetch('/movies.json');
-        this.moviesData = await moviesResponse.json();
-        
-        this.updateAvailableGenres();
-        this.updateCarouselGenres();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    },
-    updateAvailableGenres() {
-      let allGenres = new Set(['all']);
-      
-      this.currentData.forEach(item => {
-        const genres = item.genre || item.genres || [];
-        genres.forEach(genre => allGenres.add(genre));
-      });
-      
-      this.availableGenres = Array.from(allGenres);
-      this.selectedGenre = 'all'; // Reset genre selection when changing category
-    },
-    updateCarouselGenres() {
-      let allGenres = new Set(['all']);
-      
-      this.carouselItems.forEach(item => {
-        const genres = item.genre || item.genres || [];
-        genres.forEach(genre => allGenres.add(genre));
-      });
-      
-      this.carouselGenres = Array.from(allGenres);
-    },
-    changeCategory(category) {
-      this.currentCategory = category;
-      this.carouselCategory = category;
-      this.searchQuery = '';
-      this.updateCarouselGenres();
-    },
-    navigateToDetail(item) {
-      let category, id;
-      
-      if (item.game_id) {
-        category = 'games';
-        id = item.game_id;
-      } else if (item.animation_id) {
-        category = 'animations';
-        id = item.animation_id;
-      } else if (item.movie_id) {
-        category = 'movies';
-        id = item.movie_id;
-      }
-      
-      if (category && id) {
-        this.$router.push(`/detail/${category}/${id}`);
-      }
-    },
-    getGameImage(title) {
-      // Replace spaces with hyphens and remove special characters
-      const sanitizedTitle = title
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .toLowerCase();
-      
-      return `/images/games/${sanitizedTitle}.jpg`;
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        window.scrollTo(0, 0);
-      }
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        window.scrollTo(0, 0);
-      }
-    },
-    clearSearch() {
-      this.searchQuery = '';
-      this.currentPage = 1;
-    },
-    handleSearchKeyDown(event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        // 搜尋已經在watch中自動處理了
-      }
-    },
-    handleGenreChange() {
-      this.currentPage = 1;
-    },
-    handleCarouselGenreChange() {
-      // 輪播篩選
-    },
-    handleCarouselScroll(position) {
-      this.carouselScrollPosition = position;
-    }
-  }
-};
-</script>
 
 <style scoped>
 .content-wrapper {
@@ -967,6 +775,42 @@ export default {
   font-size: 16px;
 }
 
+/* 推薦功能按鈕樣式 */
+.btn-recommendation {
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.btn-recommendation:hover {
+  background-color: #5846e7;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-recommendation.active {
+  background-color: #e74c3c;
+}
+
+/* 推薦模組容器 */
+.recommendation-wrapper {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .card {
   margin-bottom: 5px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -1038,7 +882,7 @@ export default {
   font-size: 1.1rem;
 }
 
-/* 新增：討論區樣式 */
+/* 討論區樣式 */
 .discussion-wrapper {
   max-width: 1600px;
   margin: 60px auto;
@@ -1089,6 +933,11 @@ export default {
   .genre-select {
     width: 100%;
     margin-bottom: 10px;
+  }
+  
+  .btn-recommendation {
+    width: 100%;
+    margin-top: 10px;
   }
   
   .carousel-header {

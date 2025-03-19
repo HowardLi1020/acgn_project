@@ -337,7 +337,11 @@ const routes =[
     path: '/:pathMatch(.*)*',
     redirect: '/Forum'
   },
-
+  {
+    path: '/recommendations',
+    name: 'Recommendations',
+    component: () => import('@/views/Forum/recommendation/RecommendationsPage.vue')
+},
 
 
 
