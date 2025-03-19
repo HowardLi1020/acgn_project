@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'Discussion_board',
     'discussion',
     'entertainment',
+    'recommendation', #向量推薦 API
 ]
 
 # JWT 配置

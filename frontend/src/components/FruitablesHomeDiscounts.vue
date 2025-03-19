@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 const commissionData = [
     {
         id: 1,
-        image: "http://127.0.0.1:8000/media/commission/avatar/1019_avatar.png",
+        image: "http://127.0.0.1:8000/media/commission/avatar/3.png",
         title: "圖標工匠",
         description: "APP設計師圖標，專注於SEO主題。",
         fullDescription: `專業APP圖標設計師，擅長：
@@ -18,7 +18,7 @@ const commissionData = [
     },
     {
         id: 2,
-        image: "http://127.0.0.1:8000/media/commission/avatar/1020_avatar.png",
+        image: "http://127.0.0.1:8000/media/commission/avatar/4.png",
         title: "展覽夢設計師",
         description: "空間設計師，精於藝術展覽空間規劃。",
         fullDescription: `資深空間設計師：
@@ -31,7 +31,7 @@ const commissionData = [
     },
     {
         id: 3,
-        image: "http://127.0.0.1:8000/media/commission/avatar/1006_avatar.png",
+        image: "http://127.0.0.1:8000/media/commission/avatar/2.png",
         title: "醉夢貓娘教主",
         description: "動漫迷，喜歡cosplay。",
         fullDescription: `專業Cosplayer：
@@ -49,7 +49,10 @@ const showDetails = (commission) => {
     Swal.fire({
         title: commission.title,
         html: `<div class="commission-details">
-            <img src="${commission.image}" class="commission-image" alt="${commission.title}">
+            <div class="commission-image-container" style="display: flex; justify-content: center;">
+                <img src="${commission.image}" class="commission-image" alt="${commission.title}" 
+                     style="width: 150px; height: 150px; object-fit: cover; display: block;">
+            </div>
             <div class="commission-text">
                 ${commission.fullDescription.replace(/\n/g, '<br>')}
             </div>
@@ -94,6 +97,12 @@ const showDetails = (commission) => {
     transition: transform 0.3s ease;
 }
 
+.commission-item img {
+    width: 400px;
+    height: 400px;
+    object-fit: cover;
+}
+
 .commission-item:hover {
     transform: translateY(-5px);
 }
@@ -108,12 +117,18 @@ const showDetails = (commission) => {
     padding: 20px;
 }
 
-:deep(.commission-image) {
+:deep(.commission-image-container) {
     width: 150px;
     height: 150px;
-    object-fit: cover;
-    border-radius: 50%;
     margin: 0 auto 20px;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+:deep(.commission-image) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: block;
 }
 

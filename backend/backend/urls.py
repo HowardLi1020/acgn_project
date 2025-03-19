@@ -49,6 +49,7 @@ urlpatterns = [
     path('Discussion_board/', include('Discussion_board.urls')),
     path("api/", include("discussion.urls")),
     path('api/', include('entertainment.urls')),
+    path('api/', include('recommendation.urls')),# 推薦系統 API
 ]
 
 if settings.DEBUG:
