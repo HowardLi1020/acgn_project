@@ -2472,11 +2472,28 @@ def upload_and_compare(request):
                 if len(top_matches) > 1:
                     similar_images = []
                     for i, (match, similarity, match_path) in enumerate(top_matches[1:], 1):
-                        similar_images.append({
+                        similar_image = {
                             'rank': i + 1,
                             'image_url': os.path.join(settings.MEDIA_URL, "commission", "workID_img", match.image_url),
                             'similarity': round(similarity * 100, 2)
-                        })
+                        }
+                        
+                        # 添加作品信息和作者暱稱
+                        if match.work:
+                            similar_image["work_info"] = match.work
+                            print(f"添加相似圖片作品信息: ID={match.work.work_id}, 標題={match.work.work_title}")
+                            
+                            # 查詢作者暱稱
+                            try:
+                                public_card_info = DbPublicCardInfo.objects.get(member_basic_id=match.work.worker_id)
+                                similar_image["user_nickname"] = public_card_info.user_nickname
+                                print(f"添加相似圖片作者暱稱: {public_card_info.user_nickname}")
+                            except DbPublicCardInfo.DoesNotExist:
+                                print(f"未找到相似圖片 #{i+1} 對應的用戶暱稱")
+                            except Exception as e:
+                                print(f"查詢相似圖片 #{i+1} 用戶暱稱時出錯: {e}")
+                        
+                        similar_images.append(similar_image)
                     context["similar_images"] = similar_images
                     print(f"添加 {len(similar_images)} 張相似圖片")
                 

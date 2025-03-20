@@ -1,6 +1,7 @@
 {% extends '[BASE]ALL.html' %}
 {% load static %} 
 {% block app_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 <style>
 /* 隱藏頂端列 */
 .app-header-inner {
@@ -202,6 +203,7 @@
     height: 100px;
     overflow: hidden;
     margin-right: 15px;
+    position: relative; /* 添加相對定位 */
 }
 .similar-image-container img {
     width: 100%;
@@ -214,6 +216,27 @@
 .similar-image-similarity {
     font-weight: bold;
     color: #15a362;
+}
+/* 添加相似圖片作品信息樣式 */
+.similar-image-work-info {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    font-size: 0.9em;
+    border-left: 3px solid #15a362;
+}
+.similar-image-work-info strong {
+    color: #333;
+}
+.similar-image-work-info .work-title {
+    color: #15a362;
+    font-weight: 500;
+}
+.similar-image-work-info .work-description {
+    color: #666;
+    /* font-style: italic; */
+    margin-top: 3px;
 }
 .attention-section {
     margin-top: 30px;
@@ -275,6 +298,51 @@
     margin-top: 1rem;
     display: none; /* 預設隱藏 */
 }
+
+/* 放大鏡按鈕樣式 */
+.icon-button {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.icon-button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+.icon-button.view-original {
+    font-size: 14px;
+}
+/* 模態窗口樣式 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    cursor: pointer;
+}
+.modal-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    background-color: white;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
 </style>
 {% endblock %}
 
@@ -314,7 +382,7 @@
             </div>
             
             <div class="similarity-bar">
-                <div class="similarity-bar-fill" style="width:{{ similarity }}%"></div>
+                <div class="similarity-bar-fill" style="width: {% if similarity %}{{ similarity }}{% else %}0{% endif %}%;"></div>
             </div>
             
             {% if similarity_description %}
@@ -338,6 +406,9 @@
                     {% if uploaded_attention_url %}
                     <img src="/media/{{ uploaded_attention_url }}" class="img-fluid heatmap-image" alt="上傳圖片的注意力分佈" style="display: none; position: absolute; top: 10px; object-fit: contain; opacity: 0.7; transition: opacity 0.3s ease-in-out;">
                     {% endif %}
+                    <button class="icon-button view-original" title="放大檢視">
+                        <i class="fa fa-search-plus"></i>
+                    </button>
                 </div>
             </div>
             
@@ -348,6 +419,9 @@
                     {% if best_match_attention_url %}
                     <img src="/media/{{ best_match_attention_url }}" class="img-fluid heatmap-image" alt="匹配圖片的注意力分佈" style="display: none; position: absolute; top: 10px;  object-fit: contain; opacity: 0.7; transition: opacity 0.3s ease-in-out;">
                     {% endif %}
+                    <button class="icon-button view-original" title="放大檢視">
+                        <i class="fa fa-search-plus"></i>
+                    </button>
                     {% if work_info %}
                     <div class="image-hover-info">
                         <div class="image-hover-info-header">作者：{% if user_nickname %}{{ user_nickname }}{% else %}ID {{ work_info.worker_id }}{% endif %}</div>
@@ -385,11 +459,22 @@
             <div class="similar-image-rank">#{{ image.rank }}</div>
             <div class="similar-image-container">
                 <img src="{{ image.image_url }}" alt="相似圖片 #{{ image.rank }}">
+                <button class="icon-button view-original" title="放大檢視">
+                    <i class="fa fa-search-plus"></i>
+                </button>
             </div>
             <div class="similar-image-info">
                 <div class="similar-image-similarity">相似度: {{ image.similarity }}%</div>
+                {% if image.work_info %}
+                <div class="similar-image-work-info">
+                    <div class="mb-1"><strong>作者：</strong>{% if image.user_nickname %}{{ image.user_nickname }}{% else %}ID {{ image.work_info.worker_id }}{% endif %}</div>
+                    <div class="work-title mb-1"><strong>標題：</strong>{{ image.work_info.work_title }}</div>
+                    <div class="work-description"><strong>描述：</strong>{{ image.work_info.work_description|truncatechars:50 }}</div>
+                </div>
+                {% endif %}
             </div>
         </div>
+        
         {% endfor %}
     </div>
     {% endif %}
@@ -472,7 +557,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 hoverInfo.classList.add('slide-down'); // 滑鼠移開也添加下滑 class
             }
         });
+        
+        // 為最佳匹配圖片添加放大鏡功能
+        const viewButton = box.querySelector('.icon-button.view-original');
+        if (viewButton) {
+            viewButton.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                const imgSrc = this.closest('.image-box').querySelector('.original-image').src;
+                showImageModal(imgSrc);
+            });
+        }
     });
+    
+    // 獲取所有相似圖片容器
+    const imageContainers = document.querySelectorAll('.similar-image-container');
+    
+    // 為每個圖片容器添加點擊事件
+    imageContainers.forEach(container => {
+        // 整個圖片容器的點擊事件
+        container.addEventListener('click', function() {
+            const imgSrc = this.querySelector('img').src;
+            showImageModal(imgSrc);
+        });
+        
+        // 防止放大鏡按鈕的點擊事件冒泡到父容器
+        const viewButton = container.querySelector('.icon-button.view-original');
+        if (viewButton) {
+            viewButton.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                const imgSrc = e.target.closest('.similar-image-container').querySelector('img').src;
+                showImageModal(imgSrc);
+            });
+        }
+    });
+    
+    // 檢視原圖的函數
+    function showImageModal(imgSrc) {
+        // 創建模態窗口覆蓋層
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        
+        // 創建圖片元素
+        const modalImage = document.createElement('img');
+        modalImage.src = imgSrc;
+        modalImage.className = 'modal-image';
+        
+        // 添加到頁面中
+        modalOverlay.appendChild(modalImage);
+        document.body.appendChild(modalOverlay);
+        
+        // 點擊模態窗口關閉它
+        modalOverlay.addEventListener('click', function() {
+            document.body.removeChild(modalOverlay);
+        });
+    }
 });
 </script>
 {% endblock %}
